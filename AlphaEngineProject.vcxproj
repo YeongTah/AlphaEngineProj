@@ -11,7 +11,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source File\Main.cpp" />
+    <ClCompile Include="Source File\actors.cpp" />
+    <ClCompile Include="Source File\collectibles.cpp" />
+    <ClCompile Include="Source File\grid_stub.cpp" />
+    <ClCompile Include="Source File\gs_play.cpp" />
+    <ClCompile Include="Source File\th_winmain_stub.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source File\actors.h" />
+    <ClInclude Include="Source File\collectibles.h" />
+    <ClInclude Include="Source File\grid.h" />
+    <ClInclude Include="Source File\gs_play.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
