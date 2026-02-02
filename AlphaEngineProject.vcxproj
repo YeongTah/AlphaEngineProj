@@ -13,6 +13,12 @@
   <ItemGroup>
     <ClCompile Include="Source File\Main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\Player.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Assets\Roboto-Regular.ttf" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
