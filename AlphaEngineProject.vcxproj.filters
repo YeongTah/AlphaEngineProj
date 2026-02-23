@@ -21,6 +21,9 @@
     <ClCompile Include="Source File\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source File\leveleditor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Player.png">
@@ -31,5 +34,10 @@
     <Font Include="Assets\Roboto-Regular.ttf">
       <Filter>Assets</Filter>
     </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source File\leveleditor.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

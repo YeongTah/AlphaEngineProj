@@ -1,8 +1,10 @@
 //																	--Files to include--						
 #include <crtdbg.h> // To check for memory leaks
 #include "AEEngine.h"
+#include "leveleditor.hpp"
 #include <math.h>   // Added for fabsf() -- fabsolute value function to ensure no negative results
-
+//jas change - coordinates for the entities, reset, and canmove function added readfile();
+//print_file(), generateLevel() and added mesh
 
 // MAIN
 //																--- Variables declaration start here ---
@@ -34,6 +36,7 @@ int coinCounter = 0; // To track how many coins the player has collected
 int turnCounter = 0; // To make the mummy move every 2nd turn
 
 s8 fontId = -1; // To store the loaded font ID
+AEGfxTexture* gDesertBlockTex = nullptr;
 
 //																--- Variables declaration end here ---
 
@@ -58,6 +61,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// Load the font from the Assets folder with a size of 32
 	fontId = AEGfxCreateFont("Assets/Roboto-Regular.ttf", 32);
+	gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
+
 
 	//  Check if the font loaded successfully
 	if (fontId < 0) {
@@ -91,26 +96,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		-0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
 	pMesh = AEGfxMeshEnd();
 	//																		2. Setup Player (Blue) 
-	player.x = -420.0f;
-	player.y = 0.0f;
-	player.size = 60.0f;
+	player.x = 225.0f;
+	player.y = -125.0f;
+	player.size = 40.0f;
 	player.r = 0.0f; player.g = 0.0f; player.b = 1.0f;
-	player.pTex = AEGfxTextureLoad("Assets/Player.png");
+	player.pTex = AEGfxTextureLoad("Assets/Player.jpg");
 	//																			3. Setup Mummy (Red) 
-	mummy.x = 300.0f;
-	mummy.y = 180.0f;
-	mummy.size = 60.0f;
+	mummy.x = 325.0f;
+	mummy.y = 175.0f;
+	mummy.size = 40.0f;
 	mummy.r = 1.0f; mummy.g = 0.0f; mummy.b = 0.0f;
 
 	//																			4. Setup Treasure (Yellow) 
-	exitPortal.x = 420.0f;
-	exitPortal.y = 0.0f;
+	exitPortal.x = 425.0f;
+	exitPortal.y = 25.0f;
 	exitPortal.size = 40.0f;
 	exitPortal.r = 1.0f; exitPortal.g = 1.0f; exitPortal.b = 0.0f;
 
 	//																			 5. Setup Coin (Orange) 
-	coin.x = 0.0f;       // Position it somewhere in the middle
-	coin.y = 60.0f;
+	coin.x = 25.0f;       // Position it somewhere in the middle
+	coin.y = 75.0f;
 	coin.size = 30.0f;   // Slightly smaller than the player
 	coin.r = 1.0f;
 	coin.g = 0.5f;
@@ -138,6 +143,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		// Changing the window title
 	AESysSetWindowTitle("Mummy Maze Balanced Prototype");
+	readfile();
+	print_file();
+	//loadLevelMap(1);
 
 	// reset the system modules
 	AESysReset();
@@ -151,7 +159,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AESysFrameStart();
 
 		//		--- set bg to grey
-		AEGfxSetBackgroundColor(0.5f, 0.5f, 0.5f);
+		AEGfxSetBackgroundColor(0.30f, 0.22f, 0.12f);
 		// Basic way to trigger exiting the application
 		// when ESCAPE is hit or when the window is closed
 		if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
@@ -165,7 +173,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 		bool playerMoved = false;
-		float gridStep = 60.0f;
+		float gridStep = 50.0f;
 		float nextX = player.x;
 		float nextY = player.y;
 
@@ -176,7 +184,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		else if (AEInputCheckTriggered(AEVK_D)) nextX += gridStep;
 
 		// Collision Check: Only move if the next position isn't the wall
-		if (nextX != player.x || nextY != player.y) {
+		if ((nextX != player.x || nextY != player.y) && canMove(nextX, nextY)) {
 			if (fabsf(nextX - wall.x) > 1.0f || fabsf(nextY - wall.y) > 1.0f) {
 				player.x = nextX;
 				player.y = nextY;
@@ -194,6 +202,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 		//													--- Basic Mummy AI (Balanced for winnable gameplay) ---
+
+		
 		if (playerMoved)
 		{
 			turnCounter++;
@@ -235,13 +245,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		if (fabsf(player.x - mummy.x) < 1.0f && fabsf(player.y - mummy.y) < 1.0f)
 		{
 			// Reset Player and Mummy
-			player.x = -420.0f; player.y = 0.0f;
-			mummy.x = 300.0f; mummy.y = 180.0f;
+			player.x = 225.0f;
+			player.y = -125.0f;
+			mummy.x = 325.0f;
+			mummy.y = 175.0f;
 			turnCounter = 0;
 
 			// --- RESET COIN HERE ---
-			coin.x = 0.0f;
-			coin.y = 60.0f;
+			coin.x = 25.0f;       // Position it somewhere in the middle
+			coin.y = 75.0f;
 			coinCounter = 0;
 
 			printf("Caught by the Mummy! Level Reset!\n");
@@ -252,13 +264,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		if (fabsf(player.x - exitPortal.x) < 1.0f && fabsf(player.y - exitPortal.y) < 1.0f)
 		{
 			// Reset Player and Mummy
-			player.x = -420.0f; player.y = 0.0f;
-			mummy.x = 300.0f; mummy.y = 180.0f;
+			player.x = 225.0f;
+			player.y = -125.0f;
+			mummy.x = 325.0f;
+			mummy.y = 175.0f;
 			turnCounter = 0;
 
 			// --- RESET COIN HERE ---
-			coin.x = 0.0f;      // Original coin X
-			coin.y = 60.0f;     // Original coin Y
+			coin.x = 25.0f;       // Position it somewhere in the middle
+			coin.y = 75.0f;
 			coinCounter = 0;    // Reset score to 0 for the new attempt
 
 			printf("You Escaped the Maze!\n");
@@ -354,12 +368,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AEGfxSetTransform(transform.m);
 		AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
+		generateLevel();
+
 		// Informing the system about the loop's end
 		AESysFrameEnd();
 
 	}
 
 	AEGfxTextureUnload(player.pTex);
+	AEGfxTextureUnload(gDesertBlockTex);
 	// free the system
 	AESysExit();
 }
