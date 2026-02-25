@@ -11,7 +11,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source File\GameStateManager.cpp" />
+    <ClCompile Include="Source File\Level1.cpp" />
+    <ClCompile Include="Source File\Level2.cpp" />
     <ClCompile Include="Source File\Main.cpp" />
+    <ClCompile Include="Source File\MainMenu.cpp" />
+    <ClCompile Include="Source File\pch.cpp" />
+    <ClCompile Include="Source File\System.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source File\GameStateList.h" />
+    <ClInclude Include="Source File\GameStateManager.h" />
+    <ClInclude Include="Source File\Level1.h" />
+    <ClInclude Include="Source File\Level2.h" />
+    <ClInclude Include="Source File\MainMenu.h" />
+    <ClInclude Include="Source File\pch.h" />
+    <ClInclude Include="Source File\System.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

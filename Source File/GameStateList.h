@@ -1,0 +1,26 @@
+/* Start Header ************************************************************************/
+/*!
+\file   GameStateList.h
+\author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
+\par    sharonjooai.lim@digipen.edu
+\date   January, 26, 2026
+\brief  This file declares the common game states, from levels to exiting and restart.
+
+Copyright (C) 2026 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents
+without the prior written consent of DigiPen Institute of
+Technology is prohibited.
+*/
+/* End Header **************************************************************************/
+
+#pragma once
+
+enum GS_STATES
+{
+	MAINMENUSTATE = 0,
+	GS_LEVEL1,
+	GS_LEVEL2,
+
+	GS_QUIT,
+	GS_RESTART
+};
