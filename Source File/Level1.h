@@ -27,3 +27,11 @@ void Level1_Draw();
 void Level1_Free();
 
 void Level1_Unload();
+
+struct Entity {
+	float x, y;          // Position in world space
+	//float width, height; // Size of the sprite			 -- Uncomment when textures are used --
+	AEGfxTexture* pTex;  // Pointer to the loaded texture   -- Uncomment when textures are used --
+	float size;          // Square dimensions
+	float r, g, b;       // Color components
+};

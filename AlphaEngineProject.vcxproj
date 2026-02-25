@@ -25,6 +25,7 @@
     <ClInclude Include="Source File\GameStateManager.h" />
     <ClInclude Include="Source File\Level1.h" />
     <ClInclude Include="Source File\Level2.h" />
+    <ClInclude Include="Source File\Main.h" />
     <ClInclude Include="Source File\MainMenu.h" />
     <ClInclude Include="Source File\pch.h" />
     <ClInclude Include="Source File\System.h" />
