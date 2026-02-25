@@ -14,6 +14,7 @@
     <ClCompile Include="Source File\GameStateManager.cpp" />
     <ClCompile Include="Source File\Level1.cpp" />
     <ClCompile Include="Source File\Level2.cpp" />
+    <ClCompile Include="Source File\leveleditor.cpp" />
     <ClCompile Include="Source File\Main.cpp" />
     <ClCompile Include="Source File\MainMenu.cpp" />
     <ClCompile Include="Source File\pch.cpp" />
@@ -27,6 +28,15 @@
     <ClInclude Include="Source File\MainMenu.h" />
     <ClInclude Include="Source File\pch.h" />
     <ClInclude Include="Source File\System.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\Player.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Assets\Roboto-Regular.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source File\leveleditor.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
