@@ -9,7 +9,8 @@
 int menuSelection = 0;
 // Useful macro to count number of items in an array
 #define array_count(a) (sizeof(a)/sizeof(*a))
-AEGfxVertexList* pMesh = nullptr; // Pointer for the square mesh
+//static AEGfxVertexList* pMesh = nullptr; // Pointer for the square mesh     
+//yt test there change to static 
 
 //----------------------------------------------------------------------------
 // Loads Main Menu
@@ -38,7 +39,7 @@ void MainMenu_Initialize()
 void MainMenu_Update()
 {
 
-    std::cout << "MainMenu:Update\n"; // Debug purposes
+    //std::cout << "MainMenu:Update\n"; // Debug purposes yt 25-2 comment up first, my computer cannot stand D:
 
     // Handle menu navigation
     //// Press W or UP to go to above button (need the also ensure that it goes back to bottom button after the top of the selections)
@@ -81,7 +82,7 @@ void MainMenu_Update()
 // ---------------------------------------------------------------------------
 void MainMenu_Draw()
 {
-    std::cout << "MainMenu:Draw\n"; // Debug purposes
+    //std::cout << "MainMenu:Draw\n"; // Debug purposes  yt 25-2 comment up first, my computer cannot stand D:
 
     //                                      CREATING SHAPES FOR EACH BUTTONS
     // Create a unit square mesh (centered at 0,0)

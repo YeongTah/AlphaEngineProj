@@ -21,7 +21,8 @@
 //																--- Variables declaration start here ---
 
 //																--- Variables declaration end here ---
-
+s8 fontId = -1;										//global variable for font ID, initialized to -1 to indicate not loaded
+AEGfxVertexList* pMesh = nullptr;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
     _In_ LPWSTR    lpCmdLine,
@@ -45,7 +46,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // Using custom window procedure
     AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, NULL);
-
+	
 		// Load the font from the Assets folder with a size of 32
 	fontId = AEGfxCreateFont("Assets/Roboto-Regular.ttf", 32);
 	gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
@@ -105,7 +106,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			AESysFrameStart();
 
 			// Update input status by calling input function
-			std::cout << "Input\n"; // Debug purposes
+			//std::cout << "Input\n"; // Debug purposes    -- yt 25-2 comment up first, my computer cannot stand D:
 
 			// Call update for current level
 			fpUpdate();

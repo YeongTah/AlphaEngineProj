@@ -37,7 +37,7 @@ Technology is prohibited.
 Entity player;
 Entity mummy;
 Entity exitPortal;  //may call it exit portal                // Added for Win Condition 
-AEGfxVertexList* pMesh = nullptr; // Pointer for the square mesh
+//static AEGfxVertexList* pMesh = nullptr; // Pointer for the square mesh
 Entity coin;      // Added for Coin Collection
 Entity wall;
 int coinCounter = 0; // To track how many coins the player has collected
@@ -117,7 +117,7 @@ void Level1_Initialize()
 // ---------------------------------------------------------------------------
 void Level1_Update()
 {
-	std::cout << "Level1:Update\n"; // Print onto standard output stream
+	//std::cout << "Level1:Update\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
     
     level1_counter--; // Decrement counter for level
     
@@ -371,7 +371,7 @@ void Level1_Draw()
 	// Informing the system about the loop's end
 	AESysFrameEnd();
     
-    std::cout << "Level1:Draw\n"; // Print onto standard output stream
+    //std::cout << "Level1:Draw\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
 }
 
 //----------------------------------------------------------------------------
