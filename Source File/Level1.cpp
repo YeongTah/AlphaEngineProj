@@ -92,24 +92,31 @@ void Level1_Initialize()
 	//						
 	//												Initialize Mummy  
 	// -- Uncomment when textures are used --	
-		//mummy.x = 200.0f;
-		//mummy.y = 200.0f;
-		//mummy.width = 64.0f;
-		//mummy.height = 64.0f;
-		//mummy.pTex = AEGfxTextureLoad("Assets/Mummy.png");
-	// \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+		mummy.x = 200.0f;
+		mummy.y = 200.0f;
+		mummy.width = 64.0f;
+		mummy.height = 64.0f;
+		mummy.pTex = AEGfxTextureLoad("Assets/Mummy.png");
+	
 
 //																Initialize Font System
 	
 
 	//																		Initialize Player
 	// -- Uncomment when textures are used --	
-	//player.x = 0.0f;
-		//player.y = 0.0f;
-		//player.width = 64.0f;
-		//player.height = 64.0f;
-		//player.pTex = AEGfxTextureLoad("Assets/Player.png"); // Ensure this path exists
-	//
+	player.x = 0.0f;
+		player.y = 0.0f;
+		player.width = 64.0f;
+		player.height = 64.0f;
+		player.pTex = AEGfxTextureLoad("Assets/Player.png"); // Ensure this path exists
+	
+
+			// Reset Player and Mummy
+	player.x = 225.0f;
+	player.y = -125.0f;
+	mummy.x = 325.0f;
+	mummy.y = 175.0f;
+	turnCounter = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -117,7 +124,7 @@ void Level1_Initialize()
 // ---------------------------------------------------------------------------
 void Level1_Update()
 {
-	//std::cout << "Level1:Update\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
+	std::cout << "Level1:Update\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
     
     level1_counter--; // Decrement counter for level
     
@@ -249,6 +256,9 @@ void Level1_Update()
 // ---------------------------------------------------------------------------
 void Level1_Draw()
 {
+	
+	std::cout << "Level1:Draw\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
+	
 	//																Create a unit square mesh (centered at 0,0)
 	AEGfxMeshStart();
 	AEGfxTriAdd(-0.5f, -0.5f, 0x00FFFFFF, 0.0f, 1.0f,
@@ -371,7 +381,6 @@ void Level1_Draw()
 	// Informing the system about the loop's end
 	AESysFrameEnd();
     
-    //std::cout << "Level1:Draw\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
 }
 
 //----------------------------------------------------------------------------
