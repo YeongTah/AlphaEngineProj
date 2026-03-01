@@ -92,31 +92,25 @@ void Level1_Initialize()
 	//						
 	//												Initialize Mummy  
 	// -- Uncomment when textures are used --	
-		mummy.x = 200.0f;
-		mummy.y = 200.0f;
-		mummy.width = 64.0f;
-		mummy.height = 64.0f;
-		mummy.pTex = AEGfxTextureLoad("Assets/Mummy.png");
+//		mummy.x = 200.0f;
+//		mummy.y = 200.0f;
+//		mummy.width = 64.0f;
+//		mummy.height = 64.0f;
+//		mummy.pTex = AEGfxTextureLoad("Assets/Mummy.png");
+//	
+//
+////																Initialize Font System
+//	
+//
+//	//																		Initialize Player
+//	// -- Uncomment when textures are used --	
+//	player.x = 0.0f;
+//		player.y = 0.0f;
+//		player.width = 64.0f;
+//		player.height = 64.0f;
+//		player.pTex = AEGfxTextureLoad("Assets/Player.png"); // Ensure this path exists
 	
 
-//																Initialize Font System
-	
-
-	//																		Initialize Player
-	// -- Uncomment when textures are used --	
-	player.x = 0.0f;
-		player.y = 0.0f;
-		player.width = 64.0f;
-		player.height = 64.0f;
-		player.pTex = AEGfxTextureLoad("Assets/Player.png"); // Ensure this path exists
-	
-
-			// Reset Player and Mummy
-	player.x = 225.0f;
-	player.y = -125.0f;
-	mummy.x = 325.0f;
-	mummy.y = 175.0f;
-	turnCounter = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -131,7 +125,9 @@ void Level1_Update()
     if (level1_counter == 0)
     {
         // Level 1 completed
-        next = GS_LEVEL2;
+		//next = GS_LEVEL2;
+
+		next = MAINMENUSTATE; // sharon: for now setting it as go back to main menu as havent set up level 2, hence the gsm would make it just loop until the system closes itself
     }
 
 	// MOVEMENT UPDATE
