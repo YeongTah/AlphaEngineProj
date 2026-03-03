@@ -3,6 +3,7 @@
 
 #include "MainMenu.h"
 #include "gamestatemanager.h"
+#include "Main.h"
 #include <iostream>
 #include <fstream>
 
@@ -19,8 +20,16 @@ void MainMenu_Load()
 {
     std::cout << "MainMenu:Load\n"; // Debug purposes
     // Load menu assets
-    // LoadTexture("menu_bg.png");
-    // LoadTexture("menu_cursor.png");
+
+        //																Create a unit square mesh (centered at 0,0)
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0x00FFFFFF, 0.0f, 1.0f,
+        0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
+        -0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
+    AEGfxTriAdd(0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
+        0.5f, 0.5f, 0x00FFFFFF, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
+    pMesh = AEGfxMeshEnd();
 
 }
 
@@ -40,23 +49,6 @@ void MainMenu_Update()
 {
 
     std::cout << "MainMenu:Update\n"; // Debug purposes yt 25-2 comment up first, my computer cannot stand D:
-
-    // Handle menu navigation
-    //// Press W or UP to go to above button (need the also ensure that it goes back to bottom button after the top of the selections)
-    //if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP))
-    //{
-    //    menuSelection--;
-    //    std::cout << "W pressed - moving selection up\n"; // Debug purposes
-    //}
-
-    //// Press S or Down to go to below button (need the also ensure that it goes back to top button after the end of the selections)
-    //if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
-    //{
-    //    menuSelection++;
-    //    std::cout << "S pressed - moving selection down\n"; // Debug purposes
-    //}
-
-
 
     // Move to next page
     // Trigger right mouse to go to next state
@@ -85,16 +77,6 @@ void MainMenu_Draw()
     std::cout << "MainMenu:Draw\n"; // Debug purposes  yt 25-2 comment up first, my computer cannot stand D:
 
     //                                      CREATING SHAPES FOR EACH BUTTONS
-    // Create a unit square mesh (centered at 0,0)
-    AEGfxMeshStart();
-    AEGfxTriAdd(-0.5f, -0.5f, 0x00FFFFFF, 0.0f, 1.0f,
-        0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
-        -0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
-    AEGfxTriAdd(0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
-        0.5f, 0.5f, 0x00FFFFFF, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
-    pMesh = AEGfxMeshEnd();
-
     // Array for buttons
     AEMtx33 buttons[4] = { 0 };
 
@@ -128,11 +110,11 @@ void MainMenu_Draw()
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
     // Tell the engine to get ready to draw something with texture.
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 
     // Set the the color to multiply to white, so that the sprite can 
     // display the full range of colors (default is black).
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Set blend mode to AE_GFX_BM_BLEND
     // This will allow transparency.
@@ -168,6 +150,12 @@ void MainMenu_Draw()
         // Tell Alpha Engine to draw the mesh with the above settings.
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
+        // Draw text
+        AEGfxPrint(fontId, "PLAY", -0.05f, 0.20f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxPrint(fontId, "INSTRUCTIONS", -0.13f, -0.08f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxPrint(fontId, "CREDITS", -0.081f, -0.36f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxPrint(fontId, "EXIT", -0.045f, -0.63f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+
     }
 }
 
@@ -185,4 +173,12 @@ void MainMenu_Free()
 void MainMenu_Unload()
 {
     std::cout << "MainMenu:Unload\n"; // Debug purposes
+
+    // Unload font
+    AEGfxDestroyFont(fontId);
+
+    if (pMesh) {
+        AEGfxMeshFree(pMesh);
+        pMesh = nullptr;
+    }
 }
