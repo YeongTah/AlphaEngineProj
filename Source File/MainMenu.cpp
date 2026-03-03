@@ -129,18 +129,26 @@ void MainMenu_Draw()
 
         if (0 == i) { // "Play" 
             AEGfxSetColorToAdd(0.5f, 0.0f, 0.0f, 1.0f); // Red
+            // presume this is the correct placement for printing of text
+            //AEGfxPrint(fontId, "Play", 0.0f, 100.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
         }
 
         if (1 == i) { // "Instruction" 
             AEGfxSetColorToAdd(1.0f, 0.0f, 0.0f, 1.0f); // Red
+            // presume this is the correct placement for printing of text
+            //AEGfxPrint(fontId, "Play", 0.0f, -25.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
         }
 
         if (2 == i) { // "Credits" 
             AEGfxSetColorToAdd(0.0f, 0.5f, 0.0f, 1.0f); 
+            // presume this is the correct placement for printing of text
+            //AEGfxPrint(fontId, "Play", 0.0f, -150.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
         }
 
         if (3 == i) { // "Exit" 
             AEGfxSetColorToAdd(0.0f, 0.0f, 0.5f, 1.0f); 
+            // presume this is the correct placement for printing of text
+            //AEGfxPrint(fontId, "Play", 0.0f, -275.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
         }
 
         // Tell Alpha Engine to use the matrix in 'transform' to apply onto all

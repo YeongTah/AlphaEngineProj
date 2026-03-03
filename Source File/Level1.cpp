@@ -125,23 +125,21 @@ void Level1_Initialize()
 	//						
 	//												Initialize Mummy  
 	// -- Uncomment when textures are used --	
-//		mummy.x = 200.0f;
-//		mummy.y = 200.0f;
-//		mummy.width = 64.0f;
-//		mummy.height = 64.0f;
-//		mummy.pTex = AEGfxTextureLoad("Assets/Mummy.png");
-//	
-//
-////																Initialize Font System
-//	
-//
-//	//																		Initialize Player
-//	// -- Uncomment when textures are used --	
-//	player.x = 0.0f;
-//		player.y = 0.0f;
-//		player.width = 64.0f;
-//		player.height = 64.0f;
-//		player.pTex = AEGfxTextureLoad("Assets/Player.png"); // Ensure this path exists
+		mummy.x = 200.0f;
+		mummy.y = 200.0f;
+		mummy.width = 64.0f;
+		mummy.height = 64.0f;
+	
+
+//																Initialize Font System
+	
+
+	//																		Initialize Player
+	// -- Uncomment when textures are used --	
+		player.x = 0.0f;
+		player.y = 0.0f;
+		player.width = 64.0f;
+		player.height = 64.0f;
 	
 
 }

@@ -18,8 +18,10 @@ Technology is prohibited.
 enum GS_STATES
 {
 	MAINMENUSTATE = 0,
+	LEVELPAGE,
 	GS_LEVEL1,
 	GS_LEVEL2,
+	GS_LEVEL3,
 
 	GS_QUIT,
 	GS_RESTART
