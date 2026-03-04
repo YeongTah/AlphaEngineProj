@@ -67,15 +67,7 @@ void Level1_Load()
 	player.pTex = AEGfxTextureLoad("Assets/Player.jpg");
 	gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
 
-	//																Create a unit square mesh (centered at 0,0)
-	AEGfxMeshStart();
-	AEGfxTriAdd(-0.5f, -0.5f, 0x00FFFFFF, 0.0f, 1.0f,
-		0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
-		-0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
-	AEGfxTriAdd(0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
-		0.5f, 0.5f, 0x00FFFFFF, 1.0f, 0.0f,
-		-0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
-	pMesh = AEGfxMeshEnd();
+	pMesh = CreateSquareMesh();
 
 }
 
