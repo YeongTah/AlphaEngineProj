@@ -122,24 +122,26 @@ void Level1_Initialize()
 		level1_initialised = true;
 	}
 
-	//						
-	//												Initialize Mummy  
-	// -- Uncomment when textures are used --	
-		mummy.x = 200.0f;
-		mummy.y = 200.0f;
-		mummy.width = 64.0f;
-		mummy.height = 64.0f;
-	
 
-//																Initialize Font System
-	
-
-	//																		Initialize Player
-	// -- Uncomment when textures are used --	
-		player.x = 0.0f;
-		player.y = 0.0f;
-		player.width = 64.0f;
-		player.height = 64.0f;
+	// sharon 3/3: Not sure if the below is necessary anymore. Have moved out the texture part to load instead
+//	//						
+//	//												Initialize Mummy  
+//	// -- Uncomment when textures are used --	
+//		mummy.x = 200.0f;
+//		mummy.y = 200.0f;
+//		mummy.width = 64.0f;
+//		mummy.height = 64.0f;
+//	
+//
+////																Initialize Font System
+//	
+//
+//	//																		Initialize Player
+//	// -- Uncomment when textures are used --	
+//		player.x = 0.0f;
+//		player.y = 0.0f;
+//		player.width = 64.0f;
+//		player.height = 64.0f;
 	
 
 }
@@ -149,7 +151,7 @@ void Level1_Initialize()
 // ---------------------------------------------------------------------------
 void Level1_Update()
 {
-	std::cout << "Level1:Update\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
+	// std::cout << "Level1:Update\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
    
     level1_counter--; // Decrement counter for level
     
@@ -170,7 +172,7 @@ void Level1_Update()
 	//	// Level 1 iteration completed
 	//	if (live1_counter > 0)
 	//	{
-	//		next = GS_RESTART; // Will restart Level 2
+	//		next = GS_RESTART; // Will restart Level 1
 	//	}
 	//	else
 	//	{
@@ -308,7 +310,7 @@ void Level1_Update()
 void Level1_Draw()
 {
 	
-	std::cout << "Level1:Draw\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
+	//std::cout << "Level1:Draw\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
 	
 	// Sharon 2/3: Creation of mesh AND player, wall, enemy positions is done in Load, not draw
 
@@ -379,15 +381,15 @@ void Level1_Draw()
 
 
 	//																		Render Wall (Dark Grey Square)			
-	/*AEGfxSetColorToMultiply(wall.r, wall.g, wall.b, 1.0f);
+	AEGfxSetColorToMultiply(wall.r, wall.g, wall.b, 1.0f);
 	AEMtx33Scale(&scale, wall.size, wall.size);
 	AEMtx33Trans(&trans, wall.x, wall.y);
 	AEMtx33Concat(&transform, &trans, &scale);
 	AEGfxSetTransform(transform.m);
-	AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);*/
+	AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-	// Does generate level create wall? if so, the above can be replaced
-	generateLevel();
+	// This generates the level for each level. need an additional source file for it
+	//generateLevel();
     
 }
 

@@ -7,11 +7,23 @@
 #include <iostream>
 #include <fstream>
 
+//																--- Variables declaration start here ---
+
 int menuSelection = 0;
 // Useful macro to count number of items in an array
 #define array_count(a) (sizeof(a)/sizeof(*a))
 //static AEGfxVertexList* pMesh = nullptr; // Pointer for the square mesh     
 //yt test there change to static 
+
+float button_x;
+float playbutton_y;
+float instructbutton_y;
+float creditbutton_y;
+float exitbutton_y;
+s32 mouseX;
+s32 mouseY;
+
+//																--- Variables declaration end here ---
 
 //----------------------------------------------------------------------------
 // Loads Main Menu
@@ -40,6 +52,13 @@ void MainMenu_Initialize()
 {
     menuSelection = 0; // Reset to "Play"
     std::cout << "MainMenu:Initialize\n"; // Debug purposes
+
+    button_x = 0.0f;
+    playbutton_y = 100.0f;
+    instructbutton_y = -25.0f;
+    creditbutton_y = -150.0f;
+    exitbutton_y = -275.0f;
+
 }
 
 //----------------------------------------------------------------------------
@@ -48,8 +67,43 @@ void MainMenu_Initialize()
 void MainMenu_Update()
 {
 
-    std::cout << "MainMenu:Update\n"; // Debug purposes yt 25-2 comment up first, my computer cannot stand D:
+    //std::cout << "MainMenu:Update\n"; // Debug purposes yt 25-2 comment up first, my computer cannot stand D:
 
+    // call mouse position
+    AEInputGetCursorPosition(&mouseX, &mouseY);
+    std::cout << "mouse X pos:" << mouseX << "\n"; // Debug purposes 
+    std::cout << "mouse Y pos:" << mouseY << "\n"; // Debug purposes 
+
+    //                      ===== IGNORE THESE COMMENTED OUT SECTION, NEED FIX THIS BEFORE BEING ABLE TO CLICK THE BOXES =====
+    //void TransformsScreentoWorld(s32 &mouseX, s32 &mouseY);
+        // do translation from screen to world (use function that returns the window width and height 	AEGfxGetWindowWidth (), 	AEGfxGetWindowHeight ()
+        //AEMtx33Trans(&mouseX, AEGfxGetWindowWidth()/2, AEGfxGetWindowHeight()/2);
+
+        //^ need to ownself calculate the translation not use the function
+
+    //        // Setting of camera view - Sharon
+    //    float camera_target = player_pos_y - 690.0f; // Camera will always move to this coordinate
+    //// Checks magnitude
+    //if (fabsf(camera_y - camera_target) > 0.1f)
+    //{
+    //    // Camera exists in cartesian coordinates - y upwards, x right
+    //    // Game exists in screen coordinates - y downwards, x right
+    //    // This negative flips the coordinate system
+    //    if (camera_y < camera_target)
+    //    {
+    //        camera_y += camera_speed * dt;
+    //        if (camera_y > camera_target) camera_y = camera_target;
+    //    }
+    //    else if (camera_y > camera_target)
+    //    {
+    //        camera_y -= camera_speed * dt;
+    //        if (camera_y < camera_target) camera_y = camera_target;
+    //    }
+    //}
+    //else
+    //{
+    //    camera_y = camera_target;
+    //}
     // Move to next page
     // Trigger right mouse to go to next state
     if (AEInputCheckTriggered(AEVK_LBUTTON))
@@ -74,34 +128,34 @@ void MainMenu_Update()
 // ---------------------------------------------------------------------------
 void MainMenu_Draw()
 {
-    std::cout << "MainMenu:Draw\n"; // Debug purposes  yt 25-2 comment up first, my computer cannot stand D:
+    //std::cout << "MainMenu:Draw\n"; // Debug purposes  yt 25-2 comment up first, my computer cannot stand D:
 
     //                                      CREATING SHAPES FOR EACH BUTTONS
     // Array for buttons
     AEMtx33 buttons[4] = { 0 };
 
     //                                      SET SIZES AND POSITIONS OF BUTTON
-    
+
     // "Play" button
     AEMtx33 button_scale;
     AEMtx33Scale(&button_scale, 300.f, 90.f);
     AEMtx33 button_tran;
-    AEMtx33Trans(&button_tran, 0.f, 100.f);
+    AEMtx33Trans(&button_tran, button_x, playbutton_y);
     AEMtx33Concat(&buttons[0], &button_tran, &button_scale);
 
     // "Instructions" button
     AEMtx33Scale(&button_scale, 300.f, 90.f);
-    AEMtx33Trans(&button_tran, 0.f, -25.f);
+    AEMtx33Trans(&button_tran, button_x, instructbutton_y);
     AEMtx33Concat(&buttons[1], &button_tran, &button_scale);
 
     // "Credits" button
     AEMtx33Scale(&button_scale, 300.f, 90.f);
-    AEMtx33Trans(&button_tran, 0.f, -150.f);
+    AEMtx33Trans(&button_tran, button_x, creditbutton_y);
     AEMtx33Concat(&buttons[2], &button_tran, &button_scale);
 
     // "Exit button"
     AEMtx33Scale(&button_scale, 300.f, 90.f);
-    AEMtx33Trans(&button_tran, 0.f, -275.f);
+    AEMtx33Trans(&button_tran, button_x, exitbutton_y);
     AEMtx33Concat(&buttons[3], &button_tran, &button_scale);
     
     //                                      START OF RENDERING HERE
@@ -129,26 +183,18 @@ void MainMenu_Draw()
 
         if (0 == i) { // "Play" 
             AEGfxSetColorToAdd(0.5f, 0.0f, 0.0f, 1.0f); // Red
-            // presume this is the correct placement for printing of text
-            //AEGfxPrint(fontId, "Play", 0.0f, 100.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
         }
 
         if (1 == i) { // "Instruction" 
-            AEGfxSetColorToAdd(1.0f, 0.0f, 0.0f, 1.0f); // Red
-            // presume this is the correct placement for printing of text
-            //AEGfxPrint(fontId, "Play", 0.0f, -25.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+            AEGfxSetColorToAdd(1.0f, 0.0f, 0.0f, 1.0f); // Orange
         }
 
         if (2 == i) { // "Credits" 
-            AEGfxSetColorToAdd(0.0f, 0.5f, 0.0f, 1.0f); 
-            // presume this is the correct placement for printing of text
-            //AEGfxPrint(fontId, "Play", 0.0f, -150.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+            AEGfxSetColorToAdd(0.0f, 0.5f, 0.0f, 1.0f); // Green
         }
 
         if (3 == i) { // "Exit" 
-            AEGfxSetColorToAdd(0.0f, 0.0f, 0.5f, 1.0f); 
-            // presume this is the correct placement for printing of text
-            //AEGfxPrint(fontId, "Play", 0.0f, -275.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.5f, 1.0f); // Blue
         }
 
         // Tell Alpha Engine to use the matrix in 'transform' to apply onto all
