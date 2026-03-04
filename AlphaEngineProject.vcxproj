@@ -19,6 +19,7 @@
     <ClCompile Include="Source File\LevelPage.cpp" />
     <ClCompile Include="Source File\Main.cpp" />
     <ClCompile Include="Source File\MainMenu.cpp" />
+    <ClCompile Include="Source File\MouseCoor.cpp" />
     <ClCompile Include="Source File\pch.cpp" />
     <ClCompile Include="Source File\System.cpp" />
   </ItemGroup>
@@ -31,6 +32,7 @@
     <ClInclude Include="Source File\LevelPage.h" />
     <ClInclude Include="Source File\Main.h" />
     <ClInclude Include="Source File\MainMenu.h" />
+    <ClInclude Include="Source File\MouseCoor.h" />
     <ClInclude Include="Source File\pch.h" />
     <ClInclude Include="Source File\System.h" />
   </ItemGroup>

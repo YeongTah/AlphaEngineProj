@@ -2,12 +2,22 @@
 #include "pch.h"
 
 #include "LevelPage.h"
+#include "main.h"
 #include "gamestatemanager.h"
 #include <iostream>
 #include <fstream>
 
+//																--- Variables declaration start here ---
 // Useful macro to count number of items in an array
 #define array_count(a) (sizeof(a)/sizeof(*a))
+
+float select_y;     // y coordinate for all selection mode
+float easy_x;       // x coordinate for easy mode
+float medium_x;     // x coordinate for medium mode
+float hard_x;       // x coordinate for hard mode
+float backbutton_x, backbutton_y; // x and y coordinate for back button
+
+//																--- Variables declaration end here ---
 
 //----------------------------------------------------------------------------
 // Loads Main Menu
@@ -15,18 +25,8 @@
 void LevelPage_Load()
 {
     std::cout << "LevelPage:Load\n"; // Debug purposes
-    // TO ADD: Load level selection options, not needed if just drawing the boxes
 
-        //                                      CREATING SHAPES FOR EACH BUTTONS
-    // Create a unit square mesh (centered at 0,0)
-    AEGfxMeshStart();
-    AEGfxTriAdd(-0.5f, -0.5f, 0x00FFFFFF, 0.0f, 1.0f,
-        0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
-        -0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
-    AEGfxTriAdd(0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
-        0.5f, 0.5f, 0x00FFFFFF, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
-    pMesh = AEGfxMeshEnd();
+    pMesh = CreateSquareMesh();
 
 }
 
@@ -36,6 +36,14 @@ void LevelPage_Load()
 void LevelPage_Initialize()
 {
     std::cout << "LevelPage:Initialize\n"; // Debug purposes
+
+    // Initialise selection mode and buttons positions
+    select_y = 250.0f;
+    easy_x = -400.0f;
+    medium_x = 0.0f;
+    hard_x = 400.0f;
+    backbutton_x = -750.0f;
+    backbutton_y = 400.0f;
 }
 
 //----------------------------------------------------------------------------
@@ -45,6 +53,10 @@ void LevelPage_Update()
 {
 
     std::cout << "LevelPage:Update\n"; // Debug purposes
+
+    // Get mouse position in world coordinates
+    s32 mouseX, mouseY;
+    TransformScreentoWorld(mouseX, mouseY);
 
     // Handle level selection
 
@@ -64,17 +76,18 @@ void LevelPage_Update()
         std::cout << "Left click triggered\n"; // Debug purposes
     }
 
-    // If "hard" difficulty is selected, move to level 3
-    if (AEInputCheckTriggered(AEVK_LBUTTON))
-    {
-        next = GS_LEVEL3;
-        std::cout << "Left click triggered\n"; // Debug purposes
-    }
+    //// Uncomment this only after creating level 3
+    //// If "hard" difficulty is selected, move to level 3
+    //if (AEInputCheckTriggered(AEVK_LBUTTON))
+    //{
+    //    next = GS_LEVEL3;
+    //    std::cout << "Left click triggered\n"; // Debug purposes
+    //}
 
     // Move back to main menu upon triggering "B"
     if (AEInputCheckTriggered(AEVK_B))
     {
-        next = MAINMENUSTATE;
+        next = previous;
         std::cout << "B key triggered" << '\n'; // Debug purposes
     }
 
@@ -101,25 +114,30 @@ void LevelPage_Draw()
 
     // "Easy" difficulty button
     AEMtx33 button_scale;
-    AEMtx33Scale(&button_scale, 300.f, 90.f);
+    AEMtx33Scale(&button_scale, 200.f, 400.f);
     AEMtx33 button_tran;
-    AEMtx33Trans(&button_tran, -400.f, 250.f);
+    AEMtx33Trans(&button_tran, easy_x, select_y);
     AEMtx33Concat(&Selection[0], &button_tran, &button_scale);
 
     // "Normal" difficulty button
-    AEMtx33Scale(&button_scale, 300.f, 90.f);
-    AEMtx33Trans(&button_tran, 0.f, 250.f);
+    AEMtx33Scale(&button_scale, 200.f, 400.f);
+    AEMtx33Trans(&button_tran, medium_x, select_y);
     AEMtx33Concat(&Selection[1], &button_tran, &button_scale);
 
     // "Hard" difficulty button
-    AEMtx33Scale(&button_scale, 300.f, 90.f);
-    AEMtx33Trans(&button_tran, 400.f, 250.f);
+    AEMtx33Scale(&button_scale, 200.f, 400.f);
+    AEMtx33Trans(&button_tran, hard_x, select_y);
     AEMtx33Concat(&Selection[2], &button_tran, &button_scale);
+
+    // "Back" button
+    AEMtx33Scale(&button_scale, 50.0f, 50.0f);
+    AEMtx33Trans(&button_tran, backbutton_x, backbutton_y);
+
 
     //                                      START OF RENDERING HERE
 
     // Set the background to purple.
-    AEGfxSetBackgroundColor(0.0f, 150.0f,150.0f);
+    AEGfxSetBackgroundColor(150.0f, 0.0f,150.0f);
 
     // Tell the engine to get ready to draw something with texture.
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -151,6 +169,10 @@ void LevelPage_Draw()
             AEGfxSetColorToAdd(0.5f, 0.0f, 0.0f, 1.0f); // Red
         }
 
+        if (3 == i) { // "Back button" 
+            AEGfxSetColorToAdd(0.0f, 0.5f, 0.0f, 0.5f); // light green but will change to texture later
+        }
+
         // Tell Alpha Engine to use the matrix in 'transform' to apply onto all
         // the vertices of the mesh that we are about to choose to draw in the next line.
         AEGfxSetTransform(Selection[i].m);
@@ -175,4 +197,12 @@ void LevelPage_Free()
 void LevelPage_Unload()
 {
     std::cout << "LevelPage:Unload\n"; // Debug purposes
+    
+    // Unload font
+    AEGfxDestroyFont(fontId);
+
+    if (pMesh) {
+        AEGfxMeshFree(pMesh);
+        pMesh = nullptr;
+    }
 }

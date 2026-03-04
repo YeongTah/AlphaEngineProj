@@ -172,6 +172,20 @@ void Level1_Update()
 	//	}
 	//}
 
+	// Quit game when ESCAPE is hit or when the window is closed
+	if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+	{
+		std::cout << "escape key triggered" << '\n'; // Debug purposes
+		next = GS_QUIT;
+	}
+
+	// Move to previous page when B is triggered
+	if (AEInputCheckTriggered(AEVK_B))
+	{
+		std::cout << "B key triggered" << '\n'; // Debug purposes
+		next = previous;
+	}
+
 	// MOVEMENT UPDATE
 	if (AEInputCheckTriggered(AEVK_W))      nextY += gridStep;
 	else if (AEInputCheckTriggered(AEVK_S)) nextY -= gridStep;

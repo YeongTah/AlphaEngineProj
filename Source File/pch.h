@@ -29,5 +29,6 @@ Technology is prohibited.
 #include "AEFrameRateController.h"
 #include "leveleditor.hpp"
 #include "Collision.h"
+#include "MouseCoor.h"
 
 #endif //PCH_H
