@@ -69,8 +69,9 @@ void MainMenu_Update()
     if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(button_x, playbutton_y,
         300.0f, 90.0f, mouseX, mouseY))
     {
-            next = GS_LEVEL1;
+        next = GS_LEVEL1;
         std::cout << "Left click triggered\n"; // Debug purposes
+        std::cout << "next state: " << next << "\n"; // Debug purposes
     }
 
     //                                           --- ONLY UNCOMMENT THE BELOW IF DONE WITH INSTRUCTIONS AND CREDITS PAGE ---
@@ -213,9 +214,6 @@ void MainMenu_Free()
 void MainMenu_Unload()
 {
     std::cout << "MainMenu:Unload\n"; // Debug purposes
-
-    // Unload font
-    AEGfxDestroyFont(fontId);
 
     if (pMesh) {
         AEGfxMeshFree(pMesh);

@@ -416,8 +416,6 @@ void Level1_Unload()
 
 	AEGfxTextureUnload(player.pTex);
 	AEGfxTextureUnload(gDesertBlockTex);
-	// Unload font
-	AEGfxDestroyFont(fontId);
 
 	if (pMesh) {
 		AEGfxMeshFree(pMesh);
