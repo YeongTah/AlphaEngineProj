@@ -161,6 +161,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	System_Exit();
 
 	// Unload font
+	// sharon 4/3: the destroy font below should retain in this file as the memory should be deleted upon exit. 
+	// sharon 4/3: It should not delete in each state otherwise no font is loaded after going to next state
 	AEGfxDestroyFont(fontId);
 
 	// free the system
