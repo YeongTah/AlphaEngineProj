@@ -22,6 +22,29 @@
 
 //																--- Variables declaration end here ---
 s8 fontId = -1;										//global variable for font ID, initialized to -1 to indicate not loaded
+
+//															--- helper header ----   yt 4/3 
+//// Function to create a standard 1x1 square mesh
+//AEGfxVertexList* CreateSquareMesh() {
+//	AEGfxMeshStart();
+//
+//	// Triangle 1
+//	AEGfxTriAdd(
+//		-0.5f, -0.5f, 0x00FFFFFF, 0.0f, 1.0f,
+//		0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
+//		-0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
+//
+//	// Triangle 2
+//	AEGfxTriAdd(
+//		0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
+//		0.5f, 0.5f, 0x00FFFFFF, 1.0f, 0.0f,
+//		-0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
+//
+//	return AEGfxMeshEnd();
+//}
+// to trigger for example in Level1_Load() like this: pMesh = CreateSquareMesh();
+
+
 AEGfxVertexList* pMesh = nullptr;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
