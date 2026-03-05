@@ -238,71 +238,32 @@ void Level1_Update()
 			std::cout << "Collected! Coins: " << coinCounter << "\n";
 		}
 
-		// Mummy only moves every 3rd turn (waits for 2 player movements)
-		//                                                    
-		//if (turnCounter % 2 == 0)
-		//{
-		//	float nextMummyX = mummy.x;
-		//	float nextMummyY = mummy.y;
-
-		//	// Calculate distance on both axes
-		//	float diffX = player.x - mummy.x;
-		//	float diffY = player.y - mummy.y;
-
-
-		//	// Move on the axis where the distance is greater (Prioritizing one direction to prevent diagonal teleporting)
-		//	if (fabsf(diffX) >= fabsf(diffY) && fabsf(diffX) > 1.0f)
-		//	{
-		//		if (diffX > 0) nextMummyX += gridStep;
-		//		else           nextMummyX -= gridStep;
-		//	}
-		//	else if (fabsf(diffY) > 1.0f)
-		//	{
-		//		if (diffY > 0) nextMummyY += gridStep;
-		//		else           nextMummyY -= gridStep;
-		//	}
-
-		//	// FIX: Use canMove to check the actual grid for walls
-		//	if (canMove(nextMummyX, nextMummyY)) {
-		//		mummy.x = nextMummyX;
-		//		mummy.y = nextMummyY;
-		//	}
-		//}
-
+		//				                                             -- Enemy movement one step toward player every 2 steps taken by player  --- YT 6/3
 		if (turnCounter % 2 == 0)
 		{
-			float nextMummyX = mummy.x;
-			float nextMummyY = mummy.y;
-
-			// 1. Calculate direction for both axes
+			//  Calculate the target direction based on player position
 			float diffX = player.x - mummy.x;
 			float diffY = player.y - mummy.y;
 
-			// 2. Determine intended movement for X
+			//  MOVE HORIZONTALLY FIRST
 			if (fabsf(diffX) > 1.0f) {
-				nextMummyX += (diffX > 0) ? gridStep : -gridStep;
+				float stepX = (diffX > 0) ? gridStep : -gridStep;
+				if (canMove(mummy.x + stepX, mummy.y)) {
+					mummy.x += stepX;
+				}
 			}
 
-			// 3. Determine intended movement for Y
+			//  MOVE VERTICALLY SECOND
+			// By checking mummy.x again, we ensure it moved to the new tile first
+			diffY = player.y - mummy.y;
 			if (fabsf(diffY) > 1.0f) {
-				nextMummyY += (diffY > 0) ? gridStep : -gridStep;
-			}
-
-			// 4. SMART COLLISION: Try diagonal first, then individual axes
-			// This prevents the mummy from getting stuck if a diagonal is blocked
-			if (canMove(nextMummyX, nextMummyY)) {
-				mummy.x = nextMummyX;
-				mummy.y = nextMummyY;
-			}
-			else if (canMove(nextMummyX, mummy.y)) {
-				// If diagonal is blocked, try moving only horizontally
-				mummy.x = nextMummyX;
-			}
-			else if (canMove(mummy.x, nextMummyY)) {
-				// If horizontal is blocked, try moving only vertically
-				mummy.y = nextMummyY;
+				float stepY = (diffY > 0) ? gridStep : -gridStep;
+				if (canMove(mummy.x, mummy.y + stepY)) {
+					mummy.y += stepY;
+				}
 			}
 		}
+
 		printf("Turn: %d | Player: (%.0f, %.0f) | Mummy: (%.0f, %.0f)\n",
 			turnCounter, player.x, player.y, mummy.x, mummy.y);
 
