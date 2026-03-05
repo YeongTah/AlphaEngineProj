@@ -1,4 +1,4 @@
-// collectibles.cpp - item and power-up application
+// collectibles.cpp - item and power-up application (C++14)
 #include <cstdlib>
 #include <cstdio>
 #include "collectibles.h"
@@ -28,12 +28,10 @@ s32 Col_Add(Collectibles* c, CollectibleType t, s32 x, s32 y) {
         c->data = static_cast<Collectible*>(newMem);
         c->capacity = nc;
     }
-
     c->data[c->count].type = t;
     c->data[c->count].x = x;
     c->data[c->count].y = y;
     c->data[c->count].active = true;
-
     return c->count++;
 }
 
@@ -47,14 +45,9 @@ s32 Col_FindAt(const Collectibles* c, s32 x, s32 y) {
 }
 
 void Col_ApplyAndConsume(Collectibles* c, s32 index, PlayerState* player) {
-    if (index < 0 || index >= c->count) {
-        return;
-    }
-
+    if (index < 0 || index >= c->count) return;
     Collectible* col = &c->data[index];
-    if (!col->active) {
-        return;
-    }
+    if (!col->active) return;
 
     switch (col->type) {
     case CT_GEM:
@@ -66,9 +59,11 @@ void Col_ApplyAndConsume(Collectibles* c, s32 index, PlayerState* player) {
     case CT_SANDGLASS:
         player->buffs.freezeEnemyTurns += 2;
         break;
+    case CT_HEART:
+        if (player->health < 5) player->health += 1; // small cap
+        break;
     default:
         break;
     }
-
     col->active = false;
 }

@@ -1,4 +1,4 @@
-﻿// actors.cpp - enemy implementation
+﻿// actors.cpp - enemy implementation (C++14)
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -29,59 +29,48 @@ s32 Actors_Add(Actors* a, ActorType t, s32 x, s32 y) {
         a->data = static_cast<Actor*>(newMem);
         a->capacity = nc;
     }
-
     a->data[a->count].type = t;
     a->data[a->count].x = x;
     a->data[a->count].y = y;
     a->data[a->count].alive = true;
-
     return a->count++;
 }
 
-// Helper functions
+// ---- helpers --------------------------------------------------------------
+
 static bool CanStep(const Grid* g, s32 x, s32 y) {
     if (!Grid_In(g, x, y)) {
         return false;
     }
-
     Tile t = g->tiles[Grid_Idx(g, x, y)];
-
-    // Can step on floor, key, exit, or open gate
-    if (t == TILE_FLOOR || t == TILE_KEY || t == TILE_EXIT) {
+    // Can step on floor, key, exit, save, or open gate
+    if (t == TILE_FLOOR ||
+        t == TILE_KEY ||
+        t == TILE_EXIT ||
+        t == TILE_SAVE) {
         return true;
     }
-
-    // Can step on gate only if open
     if (t == TILE_GATE && g->gateOpen) {
         return true;
     }
-
     return false;
 }
 
-// Move ONE step toward player
+// Greedy Manhattan one-step toward player (used by White & as fallback)
 static bool MoveOneStepTowardPlayer(const Grid* g, Actor* e, const Actor* p) {
-    // If enemy is already at player position, don't move
     if (e->x == p->x && e->y == p->y) {
         return false;
     }
-
     s32 bestDx = 0, bestDy = 0;
     s32 bestDist = 1000000;
-
-    // Check all 4 directions: right, left, down, up
-    const s32 dx[4] = { 1, -1, 0, 0 };
-    const s32 dy[4] = { 0, 0, 1, -1 };
-
-    for (s32 dir = 0; dir < 4; dir++) {
+    const s32 dx[4] = { 1, -1,  0, 0 };
+    const s32 dy[4] = { 0,  0,  1,-1 };
+    for (s32 dir = 0; dir < 4; ++dir) {
         s32 nx = e->x + dx[dir];
         s32 ny = e->y + dy[dir];
-
         if (CanStep(g, nx, ny)) {
-            // Manhattan distance to player
             s32 dist = (nx > p->x ? nx - p->x : p->x - nx) +
                 (ny > p->y ? ny - p->y : p->y - ny);
-
             if (dist < bestDist) {
                 bestDist = dist;
                 bestDx = dx[dir];
@@ -89,14 +78,38 @@ static bool MoveOneStepTowardPlayer(const Grid* g, Actor* e, const Actor* p) {
             }
         }
     }
-
-    // If we found a valid move, execute it
     if (bestDist < 1000000) {
         e->x += bestDx;
         e->y += bestDy;
         return true;
     }
+    return false;
+}
 
+// Scorpion: prefer horizontal first, then vertical fallback
+static bool MoveScorpionStep(const Grid* g, Actor* e, const Actor* p) {
+    if (e->x == p->x && e->y == p->y) return false;
+
+    s32 dx = 0, dy = 0;
+    // Horizontal intent
+    if (p->x > e->x) dx = 1;
+    else if (p->x < e->x) dx = -1;
+
+    if (dx != 0 && CanStep(g, e->x + dx, e->y)) {
+        e->x += dx; return true;
+    }
+    // Vertical fallback
+    if (p->y > e->y) dy = 1;
+    else if (p->y < e->y) dy = -1;
+
+    if (dy != 0 && CanStep(g, e->x, e->y + dy)) {
+        e->y += dy; return true;
+    }
+    // Side-step nudge (very simple)
+    if (dx == 0) {
+        if (CanStep(g, e->x + 1, e->y)) { e->x += 1; return true; }
+        if (CanStep(g, e->x - 1, e->y)) { e->x -= 1; return true; }
+    }
     return false;
 }
 
@@ -111,26 +124,38 @@ static void HandleKeyToggle(Grid* g, s32 x, s32 y) {
     }
 }
 
-// Perform ONE enemy step
+// Perform ONE enemy unit-step (type-dependent)
 static void DoOneEnemyStep(Grid* g, Actors* a, PlayerState* player, bool* playerCaught, s32 i) {
-    if (i == player->index) {
-        return;
-    }
-
-    if (!a->data[i].alive) {
-        return;
-    }
+    if (i == player->index) return;
+    if (!a->data[i].alive)  return;
 
     Actor* e = &a->data[i];
     Actor* p = &a->data[player->index];
 
-    // Try to move toward player
-    bool moved = MoveOneStepTowardPlayer(g, e, p);
+    bool moved = false;
+    switch (e->type) {
+    case AT_MUMMY_WHITE:
+        moved = MoveOneStepTowardPlayer(g, e, p);
+        break;
+    case AT_MUMMY_RED:
+        // up to two moves per phase
+        moved = MoveOneStepTowardPlayer(g, e, p);
+        if (!(*playerCaught) && moved && !(e->x == p->x && e->y == p->y)) {
+            MoveOneStepTowardPlayer(g, e, p);
+        }
+        break;
+    case AT_SCORPION:
+        moved = MoveScorpionStep(g, e, p);
+        break;
+    default:
+        moved = MoveOneStepTowardPlayer(g, e, p);
+        break;
+    }
 
-    // Handle key collection if enemy steps on it
+    // Enemy stepping on key may open gate
     HandleKeyToggle(g, e->x, e->y);
 
-    // Check player collision
+    // Check collision with player
     if (SameCell(e, p)) {
         if (player->buffs.immunitySteps > 0) {
             player->buffs.immunitySteps -= 1;
@@ -141,22 +166,18 @@ static void DoOneEnemyStep(Grid* g, Actors* a, PlayerState* player, bool* player
     }
 }
 
-// Enemies move only ONCE per turn
 void ResolveEnemyTurns(Grid* g, Actors* a, PlayerState* player, bool* playerCaught) {
     *playerCaught = false;
 
-    // Check if enemies are frozen
+    // Enemies frozen by sandglass
     if (player->buffs.freezeEnemyTurns > 0) {
         player->buffs.freezeEnemyTurns -= 1;
         return;
     }
 
-    // All enemies move once
+    // All enemies move (type behavior handled per step)
     for (s32 i = 0; i < a->count; ++i) {
         DoOneEnemyStep(g, a, player, playerCaught, i);
-
-        if (*playerCaught) {
-            return;
-        }
+        if (*playerCaught) return;
     }
 }
