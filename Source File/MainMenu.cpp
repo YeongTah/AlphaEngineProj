@@ -66,35 +66,35 @@ void MainMenu_Update()
 
     // Move to next page
     // Move to level 1 when click on play button
-    if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(button_x, playbutton_y,
+    if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, playbutton_y,
         300.0f, 90.0f, mouseX, mouseY))
     {
-        next = GS_LEVEL1;
-        std::cout << "Left click triggered\n"; // Debug purposes
+        next = LEVELPAGE;
+        std::cout << "Left click released\n"; // Debug purposes
         std::cout << "next state: " << next << "\n"; // Debug purposes
     }
 
     //                                           --- ONLY UNCOMMENT THE BELOW IF DONE WITH INSTRUCTIONS AND CREDITS PAGE ---
     //// Move to instructions page when click on instructions button
-    //if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(button_x, instructbutton_y,
+    //if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, instructbutton_y,
     //    300.0f, 90.0f, mouseX, mouseY))
     //{
     //    next = ? ? ? ;
     //}
 
     //// Move to credits page when click on credits button
-    //if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(button_x, creditbutton_y,
+    //if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, creditbutton_y,
     //    300.0f, 90.0f, mouseX, mouseY))
     //{
     //    next = ? ? ? ;
     //}
 
-    // Quit game when ESCAPE is hit or when the window is closed
-    if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist() || 
-        (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(button_x, exitbutton_y,
+    // Quit game when Q is hit or when the window is closed
+    if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist() ||
+        (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, exitbutton_y,
             300.0f, 90.0f, mouseX, mouseY)))
     {
-        std::cout << "escape key triggered" << '\n'; // Debug purposes
+        std::cout << "Q key Released" << '\n'; // Debug purposes
         next = GS_QUIT;
     }
 
@@ -148,17 +148,13 @@ void MainMenu_Draw()
     // Tell the engine to get ready to draw something with texture.
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 
-    // Set the the color to multiply to white, so that the sprite can 
-    // display the full range of colors (default is black).
+    // Set the the color to multiply to black (default so can render any colour in)
     AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Set blend mode to AE_GFX_BM_BLEND
     // This will allow transparency.
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
-
-    // Set the color to add to nothing, so that we don't alter the sprite's color
-    AEGfxSetColorToAdd(255.0f, 0.0f, 0.0f, 0.0f);
 
     // For each transform in the array...
     for (int i = 0; i < array_count(buttons); ++i) {

@@ -40,7 +40,7 @@ int turnCounter = 0; // To make the mummy move every 2nd turn
 
 AEGfxTexture* gDesertBlockTex = nullptr;
 
-int level1_counter = 1;
+int level1_counter = 0;
 int live1_counter = 3; // If want to include lives, adjust number of lives here
 
 bool playerMoved = false;
@@ -175,18 +175,18 @@ void Level1_Update()
 	//	}
 	//}
 
-	// Quit game when ESCAPE is hit or when the window is closed
-	if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+	// Move back to main menu upon triggering "B"
+	if (AEInputCheckReleased(AEVK_B) || (AEInputCheckReleased(AEVK_ESCAPE)))
 	{
-		std::cout << "escape key triggered" << '\n'; // Debug purposes
-		next = GS_QUIT;
+		next = LEVELPAGE;
+		std::cout << "Back key Released" << '\n'; // Debug purposes
 	}
 
-	// Move to previous page when B is triggered
-	if (AEInputCheckTriggered(AEVK_B))
+	// Quit game when Q is hit or when the window is closed
+	if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist())
 	{
-		std::cout << "B key triggered" << '\n'; // Debug purposes
-		next = previous;
+		next = GS_QUIT;
+		std::cout << "Q key Released" << '\n'; // Debug purposes
 	}
 
 	// MOVEMENT UPDATE

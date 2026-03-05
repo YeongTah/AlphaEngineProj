@@ -17,6 +17,8 @@ float medium_x;     // x coordinate for medium mode
 float hard_x;       // x coordinate for hard mode
 float backbutton_x, backbutton_y; // x and y coordinate for back button
 
+AEGfxTexture* backButton = nullptr;
+
 //																--- Variables declaration end here ---
 
 //----------------------------------------------------------------------------
@@ -25,6 +27,9 @@ float backbutton_x, backbutton_y; // x and y coordinate for back button
 void LevelPage_Load()
 {
     std::cout << "LevelPage:Load\n"; // Debug purposes
+
+    // Load back button image
+    backButton = AEGfxTextureLoad("Assets/Backbutton.png");
 
     pMesh = CreateSquareMesh();
 
@@ -38,7 +43,7 @@ void LevelPage_Initialize()
     std::cout << "LevelPage:Initialize\n"; // Debug purposes
 
     // Initialise selection mode and buttons positions
-    select_y = 250.0f;
+    select_y = 0.0f;
     easy_x = -400.0f;
     medium_x = 0.0f;
     hard_x = 400.0f;
@@ -52,7 +57,7 @@ void LevelPage_Initialize()
 void LevelPage_Update()
 {
 
-    std::cout << "LevelPage:Update\n"; // Debug purposes
+    //std::cout << "LevelPage:Update\n"; // Debug purposes
 
     // Get mouse position in world coordinates
     s32 mouseX, mouseY;
@@ -60,45 +65,51 @@ void LevelPage_Update()
 
     // Handle level selection
 
+    // Require the function below to ensure that the 
+    AEInputCheckCurr(AEVK_LBUTTON);
+
+
     // If "easy" difficulty is selected, move to level 1
-    if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(easy_x, select_y,
+    if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(easy_x, select_y,
         200.0f, 400.0f, mouseX, mouseY))
     {
         next = GS_LEVEL1;
 
-        std::cout << "Left click triggered\n"; // Debug purposes
+        std::cout << "lvl 1 Left click released\n"; // Debug purposes
     }
 
     // If "normal" difficulty is selected, move to level 2
-    if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(medium_x, select_y,
+    if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(medium_x, select_y,
         200.0f, 400.0f, mouseX, mouseY))
     {
         next = GS_LEVEL2;
 
-        std::cout << "Left click triggered\n"; // Debug purposes
+        std::cout << "lvl 2 Left click released\n"; // Debug purposes
     }
 
     //// Uncomment this only after creating level 3
     //// If "hard" difficulty is selected, move to level 3
-    //    if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(hard_x, select_y,
+    //    if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(hard_x, select_y,
     //200.0f, 400.0f, mouseX, mouseY))
     //{
     //    next = GS_LEVEL3;
-    //    std::cout << "Left click triggered\n"; // Debug purposes
+    //    std::cout << "lvl 3 Left click released\n"; // Debug purposes
     //}
 
-    // Move back to main menu upon triggering "B"
-    if (AEInputCheckTriggered(AEVK_B))
+    // Move back to main menu upon triggering "B", "ESCAPE" or clicking on the back button
+    if (AEInputCheckReleased(AEVK_B) || (AEInputCheckReleased(AEVK_ESCAPE)) || 
+        (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(backbutton_x, backbutton_y,
+            50.0f, 50.0f, mouseX, mouseY)))
     {
-        next = previous;
-        std::cout << "B key triggered" << '\n'; // Debug purposes
+        next = MAINMENUSTATE;
+        std::cout << "Back key released" << '\n'; // Debug purposes
     }
 
-    // Quit game when ESCAPE is hit or when the window is closed
-    if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+    // Quit game when Q is hit or when the window is closed
+    if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist())
     {
         next = GS_QUIT;
-        std::cout << "escape key triggered" << '\n'; // Debug purposes
+        std::cout << "Q key released" << '\n'; // Debug purposes
     }
 
 }
@@ -108,10 +119,10 @@ void LevelPage_Update()
 // ---------------------------------------------------------------------------
 void LevelPage_Draw()
 {
-    std::cout << "LevelPage:Draw\n"; // Debug purposes
+    //std::cout << "LevelPage:Draw\n"; // Debug purposes
 
     // Array for level selection button
-    AEMtx33 Selection[3] = { 0 };
+    AEMtx33 Selection[4] = { 0 };
 
     //                                      SET SIZES AND POSITIONS OF SELECTION
 
@@ -135,45 +146,51 @@ void LevelPage_Draw()
     // "Back" button
     AEMtx33Scale(&button_scale, 50.0f, 50.0f);
     AEMtx33Trans(&button_tran, backbutton_x, backbutton_y);
+    AEMtx33Concat(&Selection[3], &button_tran, &button_scale);
 
 
     //                                      START OF RENDERING HERE
 
     // Set the background to purple.
-    AEGfxSetBackgroundColor(150.0f, 0.0f,150.0f);
+    AEGfxSetBackgroundColor(100.0f, 0.0f, 100.0f);
 
     // Tell the engine to get ready to draw something with texture.
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 
-    // Set the the color to multiply to white, so that the sprite can 
-    // display the full range of colors (default is black).
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    // Set the the color to multiply to black (default so can render any colour in)
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Set blend mode to AE_GFX_BM_BLEND
     // This will allow transparency.
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
 
-    // Set the color to add to nothing, so that we don't alter the sprite's color
-    AEGfxSetColorToAdd(255.0f, 0.0f, 0.0f, 0.0f);
-
     // For each transform in the array...
     for (int i = 0; i < array_count(Selection); ++i) {
 
         if (0 == i) { // "Easy" 
-            AEGfxSetColorToAdd(0.0f, 0.5f, 0.0f, 1.0f); // Green
+            AEGfxSetColorToAdd(0.0f, 0.7f, 0.0f, 1.0f); // Green
         }
 
         if (1 == i) { // "Normal" 
-            AEGfxSetColorToAdd(0.0f, 0.0f, 0.5f, 1.0f); // Blue
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.7f, 1.0f); // Blue
         }
 
         if (2 == i) { // "Hard" 
-            AEGfxSetColorToAdd(0.5f, 0.0f, 0.0f, 1.0f); // Red
+            AEGfxSetColorToAdd(0.7f, 0.0f, 0.0f, 1.0f); // Red
         }
 
         if (3 == i) { // "Back button" 
-            AEGfxSetColorToAdd(0.0f, 0.5f, 0.0f, 0.5f); // light green but will change to texture later
+            
+            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+            // Set the the color to multiply to black (default so can render any colour in)
+            // Set up blending for transparency (this is the key fix!)
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(1.0f);
+
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Use white so the texture colors show correctly
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f); // Don't add any color
+            AEGfxTextureSet(backButton, 0, 0); // Bind the player texture
         }
 
         // Tell Alpha Engine to use the matrix in 'transform' to apply onto all
@@ -200,6 +217,8 @@ void LevelPage_Free()
 void LevelPage_Unload()
 {
     std::cout << "LevelPage:Unload\n"; // Debug purposes
+
+    AEGfxTextureUnload(backButton);
 
     if (pMesh) {
         AEGfxMeshFree(pMesh);
