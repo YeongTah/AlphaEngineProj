@@ -4,6 +4,7 @@
 #include <iostream>
 #include <math.h>
 
+//tile size is 50.0f  YT   5/3
 
 // GRID 
 int level[18][32];
@@ -17,10 +18,11 @@ typedef enum Objects
 {
     NON_WALKABLE = 1,
     PLAYER_SPAWN = 2,
-    ENEMY_SPAWN = 3
+    ENEMY_SPAWN = 3,
+    COIN = 4  // coin value in level1 txt -- YT
 } Objects;
 
-namespace {
+//namespace { // namespace commented out to make this fucntion public
 
     void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol)
     {
@@ -52,7 +54,7 @@ namespace {
 
         return level[row][col] == NON_WALKABLE;
     }
-}
+//}
 
 
 
@@ -149,8 +151,21 @@ void generateLevel(void)
                 AEGfxSetTransform(transform.m);
                 AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
             }
+            else if (level[row][col] == COIN) {
+                // Draw Coin as a smaller Yellow Square
+                AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+                AEGfxSetColorToMultiply(1.0f, 0.8f, 0.0f, 1.0f); // Gold/Yellow
+                AEMtx33 scale, trans, transform;
+                AEMtx33Scale(&scale, 30.0f, 30.0f); // Smaller than tile
+                AEMtx33Trans(&trans, x, y);
+                AEMtx33Concat(&transform, &trans, &scale);
+                AEGfxSetTransform(transform.m);
+                AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+            }
 
             //can be removed after the maze is finished
+
+
 
             // White border
             AEGfxSetRenderMode(AE_GFX_RM_COLOR);
