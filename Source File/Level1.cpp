@@ -82,13 +82,15 @@ void Level1_Initialize()
 	if (!level1_initialised) {
 		player.x = 225.0f;
 		player.y = -125.0f;
-		player.size = 40.0f;
+		/*	player.size = 40.0f;*/
+		player.size = 50.0f; // Adjusted to fit the grid better     as the size of grid is 50.0f in leveleditor -- YT
 		player.r = 0.0f; player.g = 0.0f; player.b = 1.0f;
 
 		mummy.x = 325.0f;
 		mummy.y = 175.0f;
-		mummy.size = 40.0f;
-		mummy.r = 1.0f; player.g = 0.0f; player.b = 0.0f;
+		//mummy.size = 40.0f;
+		mummy.size = 50.0f; // Adjusted to fit the grid better
+		mummy.r = 1.0f; mummy.g = 0.0f; mummy.b = 0.0f;
 
 		exitPortal.x = 425.0f;
 		exitPortal.y = 25.0f;
@@ -102,7 +104,8 @@ void Level1_Initialize()
 
 		wall.x = -60.0f;
 		wall.y = 0.0f;
-		wall.size = 60.0f;
+		//wall.size = 60.0f;
+		wall.size = 50.0f; // Adjusted to fit the grid better
 		wall.r = 0.2f; wall.g = 0.2f; wall.b = 0.2f;
 
 		nextX = player.x;
@@ -134,7 +137,7 @@ void Level1_Initialize()
 //		player.y = 0.0f;
 //		player.width = 64.0f;
 //		player.height = 64.0f;
-	
+
 
 }
 
@@ -144,18 +147,18 @@ void Level1_Initialize()
 void Level1_Update()
 {
 	// std::cout << "Level1:Update\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
-   
-    level1_counter--; // Decrement counter for level
-    
 
-    if (level1_counter == 0)
-    {
-        // Level 1 completed
+	level1_counter--; // Decrement counter for level
+
+
+	if (level1_counter == 0)
+	{
+		// Level 1 completed
 		//next = GS_LEVEL2;
 
 		level1_initialised = false; // Reset for next time
 		next = MAINMENUSTATE; // sharon: for now setting it as go back to main menu as havent set up level 2, hence the gsm would make it just loop until the system closes itself
-    }
+	}
 
 	//// sharon 2/3: Loop for level 1 with lives implemented. commented out for the time being until system is fixed
 	//if (level1_counter <= 0)
@@ -211,7 +214,7 @@ void Level1_Update()
 		player.y = testNextY;
 		playerMoved = true;
 	}
-	
+
 
 	//// Player Movement logic 
 	//if (AEInputCheckTriggered(AEVK_W)) { player.y += gridStep; playerMoved = true; }
@@ -235,8 +238,37 @@ void Level1_Update()
 			std::cout << "Collected! Coins: " << coinCounter << "\n";
 		}
 
-		//																	Mummy only moves every 3rd turn (waits for 2 player movements)
+		// Mummy only moves every 3rd turn (waits for 2 player movements)
 		//                                                    
+		//if (turnCounter % 2 == 0)
+		//{
+		//	float nextMummyX = mummy.x;
+		//	float nextMummyY = mummy.y;
+
+		//	// Calculate distance on both axes
+		//	float diffX = player.x - mummy.x;
+		//	float diffY = player.y - mummy.y;
+
+
+		//	// Move on the axis where the distance is greater (Prioritizing one direction to prevent diagonal teleporting)
+		//	if (fabsf(diffX) >= fabsf(diffY) && fabsf(diffX) > 1.0f)
+		//	{
+		//		if (diffX > 0) nextMummyX += gridStep;
+		//		else           nextMummyX -= gridStep;
+		//	}
+		//	else if (fabsf(diffY) > 1.0f)
+		//	{
+		//		if (diffY > 0) nextMummyY += gridStep;
+		//		else           nextMummyY -= gridStep;
+		//	}
+
+		//	// FIX: Use canMove to check the actual grid for walls
+		//	if (canMove(nextMummyX, nextMummyY)) {
+		//		mummy.x = nextMummyX;
+		//		mummy.y = nextMummyY;
+		//	}
+		//}
+
 		if (turnCounter % 2 == 0)
 		{
 			float nextMummyX = mummy.x;
@@ -271,7 +303,6 @@ void Level1_Update()
 				mummy.y = nextMummyY;
 			}
 		}
-
 		printf("Turn: %d | Player: (%.0f, %.0f) | Mummy: (%.0f, %.0f)\n",
 			turnCounter, player.x, player.y, mummy.x, mummy.y);
 
@@ -293,7 +324,7 @@ void Level1_Update()
 		//coin.x = 25.0f;       // Position it somewhere in the middle
 		//coin.y = 75.0f;
 		//coinCounter = 0;
-		
+
 		//							=== BETWEEN GS_RESTART AND MANUAL RESTART WHICH IS BETTER? NEED TO TEST ===
 		//next = GS_RESTART;
 		ResetLevel1();
@@ -346,9 +377,9 @@ void Level1_Update()
 // ---------------------------------------------------------------------------
 void Level1_Draw()
 {
-	
+
 	//std::cout << "Level1:Draw\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
-	
+
 	// Sharon 2/3: Creation of mesh AND player, wall, enemy positions is done in Load, not draw
 
 
@@ -425,12 +456,9 @@ void Level1_Draw()
 	//AEGfxSetTransform(transform.m);
 	//AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
+	// This generates the level for each level. need an additional source file for it   -- uncommmented this file to collaborate with level editor.
 	generateLevel();
 
-	// Informing the system about the loop's end
-	AESysFrameEnd();
-    
-    //std::cout << "Level1:Draw\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
 }
 
 //----------------------------------------------------------------------------

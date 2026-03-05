@@ -24,36 +24,36 @@ typedef enum Objects
 
 //namespace { // namespace commented out to make this fucntion public
 
-    void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol)
-    {
-        float left = -(COLS * TILE_SIZE) * 0.5f;
-        float top = + (ROWS * TILE_SIZE) * 0.5f;
+void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol)
+{
+    float left = -(COLS * TILE_SIZE) * 0.5f;
+    float top = +(ROWS * TILE_SIZE) * 0.5f;
 
-        outCol = (int)floorf((worldX - left) / TILE_SIZE);
-        outRow = (int)floorf((top - worldY) / TILE_SIZE);
-    }
+    outCol = (int)floorf((worldX - left) / TILE_SIZE);
+    outRow = (int)floorf((top - worldY) / TILE_SIZE);
+}
 
-    void GridToWorldCenter(int row, int col, float& outX, float& outY)
-    {
-        float left = -(COLS * TILE_SIZE) * 0.5f;
-        float top = +(ROWS * TILE_SIZE) * 0.5f;
+void GridToWorldCenter(int row, int col, float& outX, float& outY)
+{
+    float left = -(COLS * TILE_SIZE) * 0.5f;
+    float top = +(ROWS * TILE_SIZE) * 0.5f;
 
-        outX = left + col * TILE_SIZE + (TILE_SIZE * 0.5f);
-        outY = top - row * TILE_SIZE - (TILE_SIZE * 0.5f);
-    }
+    outX = left + col * TILE_SIZE + (TILE_SIZE * 0.5f);
+    outY = top - row * TILE_SIZE - (TILE_SIZE * 0.5f);
+}
 
-    // COLLISION
-    bool isBlockedAt(float worldX, float worldY)
-    {
-        int row, col;
-        WorldToGrid(worldX, worldY, row, col);
+// COLLISION
+bool isBlockedAt(float worldX, float worldY)
+{
+    int row, col;
+    WorldToGrid(worldX, worldY, row, col);
 
-        // Outside map = blocked
-        if (row < 0 || row >= ROWS || col < 0 || col >= COLS)
-            return true;
+    // Outside map = blocked
+    if (row < 0 || row >= ROWS || col < 0 || col >= COLS)
+        return true;
 
-        return level[row][col] == NON_WALKABLE;
-    }
+    return level[row][col] == NON_WALKABLE;
+}
 //}
 
 
@@ -156,7 +156,7 @@ void generateLevel(void)
                 AEGfxSetRenderMode(AE_GFX_RM_COLOR);
                 AEGfxSetColorToMultiply(1.0f, 0.8f, 0.0f, 1.0f); // Gold/Yellow
                 AEMtx33 scale, trans, transform;
-                AEMtx33Scale(&scale, 30.0f, 30.0f); // Smaller than tile
+                AEMtx33Scale(&scale, 50.0f, 50.0f); // Smaller than tile
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
                 AEGfxSetTransform(transform.m);
