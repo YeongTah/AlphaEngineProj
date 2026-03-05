@@ -18,6 +18,7 @@ Technology is prohibited.
 #include "GameStateManager.h"
 #include "MainMenu.h"
 #include "LevelPage.h"
+#include "Creator.h"
 #include "Level1.h"
 #include "Level2.h"
 #include "System.h"
@@ -69,6 +70,14 @@ void GSM_Update()
 		fpDraw = LevelPage_Draw; // Point to Main Menu Draw
 		fpFree = LevelPage_Free; // Point to Main Menu Free
 		fpUnload = LevelPage_Unload; // Point to Main Menu Unload
+		break;
+	case CREATOR: // For Creator Page
+		fpLoad = Credit_Load; // Point to Creator Load
+		fpInitialize = Credit_Initialize; // Point to Creator Initialise
+		fpUpdate = Credit_Update; // Point to Creator Update
+		fpDraw = Credit_Draw; // Point to Creator Draw
+		fpFree = Credit_Free; // Point to Creator Free
+		fpUnload = Credit_Unload; // Point to Creator Unload
 		break;
 
 	case GS_LEVEL1: // For level 1

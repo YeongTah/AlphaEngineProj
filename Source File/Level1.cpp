@@ -59,9 +59,9 @@ void Level1_Load()
 {
     std::cout << "Level1:Load\n"; // Print onto standard output stream
 
-	readfile();
-	print_file();
-	//loadLevelMap(1);
+	//readfile();
+	//print_file();
+	////loadLevelMap(1);
 
 	// Loading of blue player texture
 	player.pTex = AEGfxTextureLoad("Assets/Player.jpg");
@@ -193,7 +193,7 @@ void Level1_Update()
 	else if (AEInputCheckTriggered(AEVK_D)) nextX += gridStep;
 
 	// Collision Check: Only move if the next position isn't the wall
-	if ((nextX != player.x || nextY != player.y) && canMove(nextX, nextY)) {
+	if ((nextX != player.x || nextY != player.y)) {
 		if (fabsf(nextX - wall.x) > 1.0f || fabsf(nextY - wall.y) > 1.0f) {
 			player.x = nextX;
 			player.y = nextY;
