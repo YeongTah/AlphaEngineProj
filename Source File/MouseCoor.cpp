@@ -12,7 +12,7 @@ void TransformScreentoWorld(s32& mouseX, s32& mouseY) {
     // Get mouse screen coordinate
     s32 screenX, screenY;
     AEInputGetCursorPosition(&screenX, &screenY);
-    std::cout << "screen X pos:" << screenX << ", screen Y pos:" << screenY << "\n"; // Debug purposes 
+    //std::cout << "screen X pos:" << screenX << ", screen Y pos:" << screenY << "\n"; // Debug purposes, sharon 4/3: commented it out cos its working and its too much to read
 
     // Translate screen coordinates to world coordinates
     s32 worldX = screenX - (AEGfxGetWindowWidth() / 2);  // Subtract half width to move origin to center
@@ -22,5 +22,5 @@ void TransformScreentoWorld(s32& mouseX, s32& mouseY) {
     mouseX = worldX;
     mouseY = worldY;
 
-    std::cout << "world X pos:" << mouseX << "world Y pos:" << mouseY << "\n"; // Debug purposes
+    //std::cout << "world X pos:" << mouseX << "world Y pos:" << mouseY << "\n"; // Debug purposes, sharon 4/3: commented it out cos its working and its too much to read
 }

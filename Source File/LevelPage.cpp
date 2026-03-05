@@ -61,7 +61,8 @@ void LevelPage_Update()
     // Handle level selection
 
     // If "easy" difficulty is selected, move to level 1
-    if (AEInputCheckTriggered(AEVK_LBUTTON))
+    if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(easy_x, select_y,
+        200.0f, 400.0f, mouseX, mouseY))
     {
         next = GS_LEVEL1;
 
@@ -69,7 +70,8 @@ void LevelPage_Update()
     }
 
     // If "normal" difficulty is selected, move to level 2
-    if (AEInputCheckTriggered(AEVK_LBUTTON)) 
+    if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(medium_x, select_y,
+        200.0f, 400.0f, mouseX, mouseY))
     {
         next = GS_LEVEL2;
 
@@ -78,7 +80,8 @@ void LevelPage_Update()
 
     //// Uncomment this only after creating level 3
     //// If "hard" difficulty is selected, move to level 3
-    //if (AEInputCheckTriggered(AEVK_LBUTTON))
+    //    if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(hard_x, select_y,
+    //200.0f, 400.0f, mouseX, mouseY))
     //{
     //    next = GS_LEVEL3;
     //    std::cout << "Left click triggered\n"; // Debug purposes
@@ -197,9 +200,6 @@ void LevelPage_Free()
 void LevelPage_Unload()
 {
     std::cout << "LevelPage:Unload\n"; // Debug purposes
-    
-    // Unload font
-    AEGfxDestroyFont(fontId);
 
     if (pMesh) {
         AEGfxMeshFree(pMesh);
