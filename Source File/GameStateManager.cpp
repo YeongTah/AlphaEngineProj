@@ -17,6 +17,7 @@ Technology is prohibited.
 
 #include "GameStateManager.h"
 #include "MainMenu.h"
+#include "LevelPage.h"
 #include "Level1.h"
 #include "Level2.h"
 #include "System.h"
@@ -59,6 +60,15 @@ void GSM_Update()
 		fpDraw = MainMenu_Draw; // Point to Main Menu Draw
 		fpFree = MainMenu_Free; // Point to Main Menu Free
 		fpUnload = MainMenu_Unload; // Point to Main Menu Unload
+		break;
+
+	case LEVELPAGE: // For Level Selection Page
+		fpLoad = LevelPage_Load; // Point to Main Menu Load
+		fpInitialize = LevelPage_Initialize; // Point to Main Menu Initialise
+		fpUpdate = LevelPage_Update; // Point to Main Menu Update
+		fpDraw = LevelPage_Draw; // Point to Main Menu Draw
+		fpFree = LevelPage_Free; // Point to Main Menu Free
+		fpUnload = LevelPage_Unload; // Point to Main Menu Unload
 		break;
 
 	case GS_LEVEL1: // For level 1

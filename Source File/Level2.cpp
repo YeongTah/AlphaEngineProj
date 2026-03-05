@@ -75,7 +75,7 @@ void Level2_Update()
         }
         else
         {
-            next = GS_QUIT; // No lives left, quit
+            next = MAINMENUSTATE; // No lives left, quit, sharon 4/3: go to main menu instead of quitting for the time being so can debug the game properly
         }
     }
 }
