@@ -11,22 +11,28 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source File\Collision.cpp" />
     <ClCompile Include="Source File\GameStateManager.cpp" />
     <ClCompile Include="Source File\Level1.cpp" />
     <ClCompile Include="Source File\Level2.cpp" />
     <ClCompile Include="Source File\leveleditor.cpp" />
+    <ClCompile Include="Source File\LevelPage.cpp" />
     <ClCompile Include="Source File\Main.cpp" />
     <ClCompile Include="Source File\MainMenu.cpp" />
+    <ClCompile Include="Source File\MouseCoor.cpp" />
     <ClCompile Include="Source File\pch.cpp" />
     <ClCompile Include="Source File\System.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source File\Collision.h" />
     <ClInclude Include="Source File\GameStateList.h" />
     <ClInclude Include="Source File\GameStateManager.h" />
     <ClInclude Include="Source File\Level1.h" />
     <ClInclude Include="Source File\Level2.h" />
+    <ClInclude Include="Source File\LevelPage.h" />
     <ClInclude Include="Source File\Main.h" />
     <ClInclude Include="Source File\MainMenu.h" />
+    <ClInclude Include="Source File\MouseCoor.h" />
     <ClInclude Include="Source File\pch.h" />
     <ClInclude Include="Source File\System.h" />
   </ItemGroup>
@@ -86,7 +92,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -105,7 +111,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmodL.dll" "$(OutDir)" /s /r /y /q</
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>

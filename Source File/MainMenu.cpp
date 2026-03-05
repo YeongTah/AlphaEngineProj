@@ -3,14 +3,24 @@
 
 #include "MainMenu.h"
 #include "gamestatemanager.h"
+#include "Main.h"
 #include <iostream>
 #include <fstream>
 
-int menuSelection = 0;
+//																--- Variables declaration start here ---
+
 // Useful macro to count number of items in an array
 #define array_count(a) (sizeof(a)/sizeof(*a))
-//static AEGfxVertexList* pMesh = nullptr; // Pointer for the square mesh     
-//yt test there change to static 
+
+// button variables
+float button_x;         // x coordinate for all buttons
+float playbutton_y;     // y coordinate for play button
+float instructbutton_y; // y coordinate for instructions button
+float creditbutton_y;   // y coordinate for credits button
+float exitbutton_y;     // y coordinate for exit button
+float createbutton_x, createbutton_y; // x and y coordinate for creator button
+
+//																--- Variables declaration end here ---
 
 //----------------------------------------------------------------------------
 // Loads Main Menu
@@ -19,8 +29,8 @@ void MainMenu_Load()
 {
     std::cout << "MainMenu:Load\n"; // Debug purposes
     // Load menu assets
-    // LoadTexture("menu_bg.png");
-    // LoadTexture("menu_cursor.png");
+
+    pMesh = CreateSquareMesh();
 
 }
 
@@ -29,8 +39,17 @@ void MainMenu_Load()
 // ---------------------------------------------------------------------------
 void MainMenu_Initialize()
 {
-    menuSelection = 0; // Reset to "Play"
     std::cout << "MainMenu:Initialize\n"; // Debug purposes
+
+    // Initialise button positions 
+    button_x = 0.0f;
+    playbutton_y = 100.0f;
+    instructbutton_y = -25.0f;
+    creditbutton_y = -150.0f;
+    exitbutton_y = -275.0f;
+    createbutton_x = 680.0f;
+    createbutton_y = -370.0f;
+
 }
 
 //----------------------------------------------------------------------------
@@ -41,35 +60,39 @@ void MainMenu_Update()
 
     //std::cout << "MainMenu:Update\n"; // Debug purposes yt 25-2 comment up first, my computer cannot stand D:
 
-    // Handle menu navigation
-    //// Press W or UP to go to above button (need the also ensure that it goes back to bottom button after the top of the selections)
-    //if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP))
-    //{
-    //    menuSelection--;
-    //    std::cout << "W pressed - moving selection up\n"; // Debug purposes
-    //}
-
-    //// Press S or Down to go to below button (need the also ensure that it goes back to top button after the end of the selections)
-    //if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
-    //{
-    //    menuSelection++;
-    //    std::cout << "S pressed - moving selection down\n"; // Debug purposes
-    //}
-
-
+    // Get mouse position in world coordinates
+    s32 mouseX, mouseY;
+    TransformScreentoWorld(mouseX, mouseY);
 
     // Move to next page
-    // Trigger right mouse to go to next state
-    if (AEInputCheckTriggered(AEVK_LBUTTON))
+    // Move to level 1 when click on play button
+    if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(button_x, playbutton_y,
+        300.0f, 90.0f, mouseX, mouseY))
     {
-        //if (menuSelection == 0) 
-            next = GS_LEVEL1;
-       // else if (menuSelection == 3) next = GS_QUIT;
-        std::cout << "Right click triggered\n"; // Debug purposes
+        next = GS_LEVEL1;
+        std::cout << "Left click triggered\n"; // Debug purposes
+        std::cout << "next state: " << next << "\n"; // Debug purposes
     }
 
+    //                                           --- ONLY UNCOMMENT THE BELOW IF DONE WITH INSTRUCTIONS AND CREDITS PAGE ---
+    //// Move to instructions page when click on instructions button
+    //if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(button_x, instructbutton_y,
+    //    300.0f, 90.0f, mouseX, mouseY))
+    //{
+    //    next = ? ? ? ;
+    //}
+
+    //// Move to credits page when click on credits button
+    //if (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(button_x, creditbutton_y,
+    //    300.0f, 90.0f, mouseX, mouseY))
+    //{
+    //    next = ? ? ? ;
+    //}
+
     // Quit game when ESCAPE is hit or when the window is closed
-    if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+    if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist() || 
+        (AEInputCheckTriggered(AEVK_LBUTTON) && IsAreaClicked(button_x, exitbutton_y,
+            300.0f, 90.0f, mouseX, mouseY)))
     {
         std::cout << "escape key triggered" << '\n'; // Debug purposes
         next = GS_QUIT;
@@ -85,42 +108,37 @@ void MainMenu_Draw()
     //std::cout << "MainMenu:Draw\n"; // Debug purposes  yt 25-2 comment up first, my computer cannot stand D:
 
     //                                      CREATING SHAPES FOR EACH BUTTONS
-    // Create a unit square mesh (centered at 0,0)
-    AEGfxMeshStart();
-    AEGfxTriAdd(-0.5f, -0.5f, 0x00FFFFFF, 0.0f, 1.0f,
-        0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
-        -0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
-    AEGfxTriAdd(0.5f, -0.5f, 0x00FFFFFF, 1.0f, 1.0f,
-        0.5f, 0.5f, 0x00FFFFFF, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0x00FFFFFF, 0.0f, 0.0f);
-    pMesh = AEGfxMeshEnd();
-
     // Array for buttons
-    AEMtx33 buttons[4] = { 0 };
+    AEMtx33 buttons[5] = { 0 };
 
     //                                      SET SIZES AND POSITIONS OF BUTTON
-    
+
     // "Play" button
     AEMtx33 button_scale;
     AEMtx33Scale(&button_scale, 300.f, 90.f);
     AEMtx33 button_tran;
-    AEMtx33Trans(&button_tran, 0.f, 100.f);
+    AEMtx33Trans(&button_tran, button_x, playbutton_y);
     AEMtx33Concat(&buttons[0], &button_tran, &button_scale);
 
     // "Instructions" button
     AEMtx33Scale(&button_scale, 300.f, 90.f);
-    AEMtx33Trans(&button_tran, 0.f, -25.f);
+    AEMtx33Trans(&button_tran, button_x, instructbutton_y);
     AEMtx33Concat(&buttons[1], &button_tran, &button_scale);
 
     // "Credits" button
     AEMtx33Scale(&button_scale, 300.f, 90.f);
-    AEMtx33Trans(&button_tran, 0.f, -150.f);
+    AEMtx33Trans(&button_tran, button_x, creditbutton_y);
     AEMtx33Concat(&buttons[2], &button_tran, &button_scale);
 
     // "Exit button"
     AEMtx33Scale(&button_scale, 300.f, 90.f);
-    AEMtx33Trans(&button_tran, 0.f, -275.f);
+    AEMtx33Trans(&button_tran, button_x, exitbutton_y);
     AEMtx33Concat(&buttons[3], &button_tran, &button_scale);
+
+    // "Creator button"
+    AEMtx33Scale(&button_scale, 150.0f, 65.0f);
+    AEMtx33Trans(&button_tran, createbutton_x, createbutton_y);
+    AEMtx33Concat(&buttons[4], &button_tran, &button_scale);
     
     //                                      START OF RENDERING HERE
     
@@ -128,11 +146,11 @@ void MainMenu_Draw()
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
     // Tell the engine to get ready to draw something with texture.
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 
     // Set the the color to multiply to white, so that the sprite can 
     // display the full range of colors (default is black).
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Set blend mode to AE_GFX_BM_BLEND
     // This will allow transparency.
@@ -150,15 +168,19 @@ void MainMenu_Draw()
         }
 
         if (1 == i) { // "Instruction" 
-            AEGfxSetColorToAdd(1.0f, 0.0f, 0.0f, 1.0f); // Red
+            AEGfxSetColorToAdd(1.0f, 0.0f, 0.0f, 1.0f); // Orange
         }
 
         if (2 == i) { // "Credits" 
-            AEGfxSetColorToAdd(0.0f, 0.5f, 0.0f, 1.0f); 
+            AEGfxSetColorToAdd(0.0f, 0.5f, 0.0f, 1.0f); // Green
         }
 
         if (3 == i) { // "Exit" 
-            AEGfxSetColorToAdd(0.0f, 0.0f, 0.5f, 1.0f); 
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.5f, 1.0f); // Blue
+        }
+
+        if (4 == i) { // "Creator" 
+            AEGfxSetColorToAdd(0.5f, 0.5f, 0.5f, 1.0f); // Grey
         }
 
         // Tell Alpha Engine to use the matrix in 'transform' to apply onto all
@@ -167,6 +189,13 @@ void MainMenu_Draw()
 
         // Tell Alpha Engine to draw the mesh with the above settings.
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+
+        // Draw text
+        AEGfxPrint(fontId, "PLAY", -0.05f, 0.20f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxPrint(fontId, "INSTRUCTIONS", -0.13f, -0.08f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxPrint(fontId, "CREDITS", -0.081f, -0.36f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxPrint(fontId, "EXIT", -0.045f, -0.63f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxPrint(fontId, "Creator", 0.8f, -0.84f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
 
     }
 }
@@ -185,4 +214,9 @@ void MainMenu_Free()
 void MainMenu_Unload()
 {
     std::cout << "MainMenu:Unload\n"; // Debug purposes
+
+    if (pMesh) {
+        AEGfxMeshFree(pMesh);
+        pMesh = nullptr;
+    }
 }
