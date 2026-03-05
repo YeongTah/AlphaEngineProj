@@ -17,6 +17,8 @@ float medium_x;     // x coordinate for medium mode
 float hard_x;       // x coordinate for hard mode
 float backbutton_x, backbutton_y; // x and y coordinate for back button
 
+AEGfxTexture* backButton = nullptr;
+
 //																--- Variables declaration end here ---
 
 //----------------------------------------------------------------------------
@@ -25,6 +27,9 @@ float backbutton_x, backbutton_y; // x and y coordinate for back button
 void LevelPage_Load()
 {
     std::cout << "LevelPage:Load\n"; // Debug purposes
+
+    // Load back button image
+    backButton = AEGfxTextureLoad("Assets/Backbutton.png");
 
     pMesh = CreateSquareMesh();
 
@@ -52,7 +57,7 @@ void LevelPage_Initialize()
 void LevelPage_Update()
 {
 
-    std::cout << "LevelPage:Update\n"; // Debug purposes
+    //std::cout << "LevelPage:Update\n"; // Debug purposes
 
     // Get mouse position in world coordinates
     s32 mouseX, mouseY;
@@ -114,7 +119,7 @@ void LevelPage_Update()
 // ---------------------------------------------------------------------------
 void LevelPage_Draw()
 {
-    std::cout << "LevelPage:Draw\n"; // Debug purposes
+    //std::cout << "LevelPage:Draw\n"; // Debug purposes
 
     // Array for level selection button
     AEMtx33 Selection[4] = { 0 };
@@ -176,7 +181,16 @@ void LevelPage_Draw()
         }
 
         if (3 == i) { // "Back button" 
-            AEGfxSetColorToAdd(0.0f, 1.0f, 0.0f, 1.0f); // light green but will change to texture later
+            
+            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+            // Set the the color to multiply to black (default so can render any colour in)
+            // Set up blending for transparency (this is the key fix!)
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(1.0f);
+
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Use white so the texture colors show correctly
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f); // Don't add any color
+            AEGfxTextureSet(backButton, 0, 0); // Bind the player texture
         }
 
         // Tell Alpha Engine to use the matrix in 'transform' to apply onto all
@@ -203,6 +217,8 @@ void LevelPage_Free()
 void LevelPage_Unload()
 {
     std::cout << "LevelPage:Unload\n"; // Debug purposes
+
+    AEGfxTextureUnload(backButton);
 
     if (pMesh) {
         AEGfxMeshFree(pMesh);

@@ -40,7 +40,7 @@ int turnCounter = 0; // To make the mummy move every 2nd turn
 
 AEGfxTexture* gDesertBlockTex = nullptr;
 
-int level1_counter = 1;
+int level1_counter = 0;
 int live1_counter = 3; // If want to include lives, adjust number of lives here
 
 bool playerMoved = false;
