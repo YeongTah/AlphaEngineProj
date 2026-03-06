@@ -1,4 +1,4 @@
-/* Start Header ***************************************************************
+﻿/* Start Header ***************************************************************
 /*!
 \file Level1.cpp
 \author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
@@ -154,7 +154,7 @@ static void DrawButtonRect(float cx, float cy, float w, float h, float r, float 
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 } // -ths
 
-/* NEW: snap any world position to the exact center of the grid cell (prevents �on the lines�) -ths */
+/* NEW: snap any world position to the exact center of the grid cell (prevents “on the lines”) -ths */
 static void SnapToGridCenter(float inX, float inY, float& outX, float& outY)
 {
     int rr, cc;
@@ -272,6 +272,13 @@ void Level1_Initialize()
     std::cout << "Level1:Initialize\n"; // Print onto standard output stream
     // Initialise positions only once
     if (!level1_initialised) {
+
+        /* NEW: on fresh enter or Retry, reload the grid and re‑add buff tile if missing -ths */
+        readfile();                 // reload "level1.txt" so consumed tiles (like 8) come back -ths
+        EnsureBuffTilePresent();    // guarantees there is at least one black buff block -ths
+        print_file();               // optional: persist in case we just added one -ths
+        // ------------------------------------------------------------------ -ths
+
         // snap player to grid center as well (prevents partial offsets) -ths
         float px, py;
         GridToWorldCenter(ROWS / 2 + 1, COLS / 2 - 4, px, py); /* close to center-left -ths */
@@ -562,7 +569,7 @@ void Level1_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // --- Center "EXIT" over the exit tile (world -> NDC) --- -ths
+    // --- Center "EXIT" over/right of the exit tile (world -> NDC) --- -ths
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     {
         const float lblScale = 1.0f; // same size as before -ths
