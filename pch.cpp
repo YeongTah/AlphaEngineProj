@@ -1,10 +1,10 @@
 /* Start Header ************************************************************************/
 /*!
-\file   GameStateList.h
+\file   pch.cpp
 \author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
 \par    sharonjooai.lim@digipen.edu
-\date   January, 26, 2026
-\brief  This file declares the common game states, from levels to exiting and restart.
+\date   January, 25, 2026
+\brief  This file helps to precompile the functions within pch.h.
 
 Copyright (C) 2026 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents
@@ -12,20 +12,9 @@ without the prior written consent of DigiPen Institute of
 Technology is prohibited.
 */
 /* End Header **************************************************************************/
-#pragma once
 
-// Additional states for Pause / Win / Lose pages -ths
-enum GS_STATES
-{
-    MAINMENUSTATE = 0,
-    LEVELPAGE,
-    GS_LEVEL1,
-    GS_LEVEL2,
-    GS_LEVEL3,
-    GS_QUIT,
-    GS_RESTART,
+// pch.cpp: source file corresponding to the pre-compiled header
 
-    GS_PAUSE,   // Pause overlay page -ths
-    GS_WIN,     // Win page -ths
-    GS_LOSE     // Lose page -ths
-};
+#include "pch.h"
+
+// When you are using pre-compiled headers, this source file is necessary for compilation to succeed.

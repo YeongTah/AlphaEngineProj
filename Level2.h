@@ -1,10 +1,11 @@
 /* Start Header ************************************************************************/
 /*!
-\file   GameStateList.h
+\file   Level2.h
 \author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
 \par    sharonjooai.lim@digipen.edu
 \date   January, 26, 2026
-\brief  This file declares the common game states, from levels to exiting and restart.
+\brief  This file declares the function for Load, Initialize, Update, Draw, Free, Unload
+        to produce the level in the game.
 
 Copyright (C) 2026 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents
@@ -12,20 +13,17 @@ without the prior written consent of DigiPen Institute of
 Technology is prohibited.
 */
 /* End Header **************************************************************************/
+
 #pragma once
 
-// Additional states for Pause / Win / Lose pages -ths
-enum GS_STATES
-{
-    MAINMENUSTATE = 0,
-    LEVELPAGE,
-    GS_LEVEL1,
-    GS_LEVEL2,
-    GS_LEVEL3,
-    GS_QUIT,
-    GS_RESTART,
+void Level2_Load();
 
-    GS_PAUSE,   // Pause overlay page -ths
-    GS_WIN,     // Win page -ths
-    GS_LOSE     // Lose page -ths
-};
+void Level2_Initialize();
+
+void Level2_Update();
+
+void Level2_Draw();
+
+void Level2_Free();
+
+void Level2_Unload();

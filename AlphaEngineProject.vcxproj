@@ -11,6 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="LosePage.cpp" />
+    <ClCompile Include="PausePage.cpp" />
     <ClCompile Include="Source File\Collision.cpp" />
     <ClCompile Include="Source File\GameStateManager.cpp" />
     <ClCompile Include="Source File\Level1.cpp" />
@@ -22,8 +24,11 @@
     <ClCompile Include="Source File\MouseCoor.cpp" />
     <ClCompile Include="Source File\pch.cpp" />
     <ClCompile Include="Source File\System.cpp" />
+    <ClCompile Include="WinPage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="LosePage.h" />
+    <ClInclude Include="PausePage.h" />
     <ClInclude Include="Source File\Collision.h" />
     <ClInclude Include="Source File\GameStateList.h" />
     <ClInclude Include="Source File\GameStateManager.h" />
@@ -35,6 +40,7 @@
     <ClInclude Include="Source File\MouseCoor.h" />
     <ClInclude Include="Source File\pch.h" />
     <ClInclude Include="Source File\System.h" />
+    <ClInclude Include="WinPage.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Player.png" />
