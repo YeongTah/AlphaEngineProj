@@ -1,4 +1,4 @@
-﻿// th_winmain_stub.cpp - Windows entry point for Mummy Maze
+﻿// th_winmain_stub.cpp - Windows entry point for Mummy Maze (stable vsync & loop)
 #include <windows.h>
 #include <cstdlib>
 #include <ctime>
@@ -14,19 +14,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     // Initialize random seed
     srand(static_cast<unsigned int>(time(nullptr)));
 
-    // Game configuration
-    const s32  createConsole = 1;     // Show console for debugging
-    const bool enableVSync = true;  // Enable vertical sync
-    const s32  windowWidth = 800;
-    const s32  windowHeight = 600;
-    const u32  maxFrameRate = 60;
+    // Window & timing configuration
+    const s32 createConsole = 1;       // Show console for debugging
+    const bool enableVSync = true;    // Enable vertical sync
+    const s32 windowWidth = 800;     // 4:3 aspect recommended (e.g., 800x600, 960x720)
+    const s32 windowHeight = 600;
+    const u32 maxFrameRate = 60;
 
     // Initialize Alpha Engine
     if (!AESysInit(hInstance, nCmdShow, windowWidth, windowHeight,
         createConsole, maxFrameRate, enableVSync, nullptr)) {
         return 1;
     }
-
     AESysSetWindowTitle("Mummy Maze - Simple Version");
     AEGfxSetVSync(1);
 
@@ -35,9 +34,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 
     while (AESysDoesWindowExist()) {
         AESysFrameStart();
+
         if (AEInputCheckTriggered(AEVK_ESCAPE)) break; // quit
+
         GS_PlayUpdate();
         GS_PlayDraw();
+
         AESysFrameEnd();
     }
 
