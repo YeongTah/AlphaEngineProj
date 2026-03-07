@@ -51,6 +51,9 @@
     <ClCompile Include="Source File\MouseCoor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source File\Creator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Player.png">
@@ -97,6 +100,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source File\MouseCoor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source File\Creator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -59,9 +59,9 @@ void Level1_Load()
 {
 	std::cout << "Level1:Load\n"; // Print onto standard output stream
 
-	readfile();
-	print_file();
-	//loadLevelMap(1);
+	//readfile();
+	//print_file();
+	////loadLevelMap(1);
 
 	// Loading of blue player texture
 	player.pTex = AEGfxTextureLoad("Assets/Player.jpg");
