@@ -98,6 +98,13 @@ void MainMenu_Update()
         next = GS_QUIT;
     }
 
+    if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist() ||
+        (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(createbutton_x, createbutton_y,
+            150.0f, 65.0f, mouseX, mouseY)))
+    {
+        next = CREATOR;
+    }
+
 }
 
 //----------------------------------------------------------------------------
