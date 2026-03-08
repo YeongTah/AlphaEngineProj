@@ -4,8 +4,10 @@
 \author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
 \par    sharonjooai.lim@digipen.edu
 \date   January, 26, 2026
-\brief  This file defines the function Load, Initialize, Update, Draw, Free, Unload
-        to produce level 2 in the game, loading from Assets/level2.txt.
+\brief  Level 2 -- Medium difficulty.
+        Same structure as Level 1 but with TWO mummies chasing the player.
+        Loads its tile map from "Assets/level2.txt".
+        All L2-specific state is prefixed with "l2_" to avoid collisions with Level1 globals.
 
 Copyright (C) 2026 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents
@@ -26,32 +28,33 @@ Technology is prohibited.
 #include <fstream>
 #include <cmath>
 
-// IsAreaClicked has no header declaration - extern needed
+// IsAreaClicked has no header declaration -- extern needed
 extern bool IsAreaClicked(float area_center_x, float area_center_y, float area_width, float area_height,
     float click_x, float click_y);
 
 // ---- Level 2 local entities ----
-static Entity l2_player;
-static Entity l2_mummy;
-static Entity l2_mummy2; // second mummy for level 2
-static Entity l2_exitPortal;
-static Entity l2_coin;
-static AEGfxTexture* l2_DesertBlockTex = nullptr;
-static AEGfxTexture* l2_FloorTex = nullptr;
-static bool  l2_initialised = false;
-static int   l2_coinCounter = 0;
-static int   l2_turnCounter = 0;
-static bool  l2_playerMoved = false;
-static float l2_gridStep = 50.0f;
-static float l2_nextX = 0.0f;
-static float l2_nextY = 0.0f;
+// All prefixed l2_ so they don't conflict with Level1's globals.
+static Entity l2_player;      // Player entity (explorer.png)
+static Entity l2_mummy;       // First mummy enemy
+static Entity l2_mummy2;      // Second mummy (Level 2 exclusive -- adds difficulty)
+static Entity l2_exitPortal;  // Exit goal; reaching it triggers GS_WIN
+static Entity l2_coin;        // Legacy single coin entity
+static AEGfxTexture* l2_DesertBlockTex = nullptr; // Wall tile texture
+static AEGfxTexture* l2_FloorTex = nullptr; // Floor tile texture
+static bool  l2_initialised = false; // Prevents double-initialization
+static int   l2_coinCounter = 0;     // Total coins collected this session
+static int   l2_turnCounter = 0;     // Player move count; controls mummy move frequency
+static bool  l2_playerMoved = false; // True when player made a valid move this frame
+static float l2_gridStep = 50.0f; // World units per grid cell (= GRID_TILE_SIZE)
+static float l2_nextX = 0.0f;  // Unused pending-move X (kept for parity)
+static float l2_nextY = 0.0f;  // Unused pending-move Y (kept for parity)
 
-// ---- overlay flags ----
-static bool l2_paused = false;
-static bool l2_showWin = false;
-static bool l2_showLose = false;
+// ---- Overlay flags: set to true to show the respective full-screen overlay ----
+static bool l2_paused = false; // P key toggles; freezes game logic when true
+static bool l2_showWin = false; // Shown when player reaches exit portal
+static bool l2_showLose = false; // Shown when a mummy catches the player
 
-// ---- overlay button layout ----
+// ---- Retry/Exit button positions for Win/Lose overlays ----
 static const float kL2BtnRetryX = -200.0f;
 static const float kL2BtnRetryY = -130.0f;
 static const float kL2BtnExitX = 200.0f;
@@ -59,15 +62,23 @@ static const float kL2BtnExitY = -130.0f;
 static const float kL2BtnW = 280.0f;
 static const float kL2BtnH = 90.0f;
 
-// ---- powerup state ----
+// ---- Powerup state for Level 2 ----
+// Mirrors Level 1's gPower; all fields default to inactive.
 static struct L2PowerState {
-    bool speed = false;      int speedTurns = 0;
-    bool freeze = false;     int freezeTurns = 0;
-    bool invincible = false; int invTurns = 0;
-    int  invFrames = 0;
+    bool speed = false; int speedTurns = 0; // Speed boost (turn-based)
+    bool freeze = false; int freezeTurns = 0; // Enemy freeze (turn-based)
+    bool invincible = false; int invTurns = 0; // Invincibility (turn-based)
+    int  invFrames = 0;                          // Invincibility (frame-based)
 } l2Power;
 
+// Returns true if the player is currently protected from any enemy contact.
 static bool L2IsInvincibleNow() { return l2Power.invincible || (l2Power.invFrames > 0); }
+
+// ----------------------------------------------------------------------------
+// L2TickPowers
+// Decrements all turn-based powerup counters by 1.  Deactivates the powerup
+// when its counter reaches zero.  Call once per valid player move.
+// ----------------------------------------------------------------------------
 static void L2TickPowers()
 {
     if (l2Power.speed && --l2Power.speedTurns <= 0) l2Power.speed = false;
@@ -76,10 +87,15 @@ static void L2TickPowers()
 }
 
 
-//----------------------------------------------------------------------------
-// Finds nearest free (value==0) grid cell, avoiding a min distance from
-// (avoidRow, avoidCol) using Manhattan distance.
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// L2FindFreeSpawnCell
+// Searches outward from (startRow, startCol) in expanding square rings to find
+// the nearest empty (value == 0) cell at least 'minDist' Manhattan distance
+// from (avoidRow, avoidCol).
+// Writes the world-space center of the found cell to (outX, outY).
+// Falls back to the start cell if no valid cell is found within maxRadius.
+// Used by Level2_Initialize and ResetLevel2 to place all entities safely.
+// ----------------------------------------------------------------------------
 static void L2FindFreeSpawnCell(int startRow, int startCol, float& outX, float& outY,
     int avoidRow = -1, int avoidCol = -1, int minDist = 0, int maxRadius = 15)
 {
@@ -94,29 +110,34 @@ static void L2FindFreeSpawnCell(int startRow, int startCol, float& outX, float& 
         {
             for (int dc = -radius; dc <= radius; ++dc)
             {
-                if (abs(dr) != radius && abs(dc) != radius) continue;
+                if (abs(dr) != radius && abs(dc) != radius) continue; // outer ring only
                 int r = startRow + dr;
                 int c = startCol + dc;
                 if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS) continue;
-                if (level[r][c] != 0) continue;
+                if (level[r][c] != 0) continue; // skip walls and special tiles
                 if (avoidRow >= 0 && avoidCol >= 0)
-                {
-                    if (abs(r - avoidRow) + abs(c - avoidCol) < minDist) continue;
-                }
+                    if (abs(r - avoidRow) + abs(c - avoidCol) < minDist) continue; // too close
                 GridToWorldCenter(r, c, outX, outY);
                 std::cout << "L2 Spawn at grid (" << r << "," << c << ")\n";
                 return;
             }
         }
     }
+    // Fallback: use start cell even if not ideal
     GridToWorldCenter(startRow, startCol, outX, outY);
     std::cout << "L2 Spawn fallback at grid (" << startRow << "," << startCol << ")\n";
 }
 
 
-//----------------------------------------------------------------------------
-// Reads Assets/level2.txt into the shared level[][] grid.
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// L2LoadLevelTxt  <-- THIS IS THE FUNCTION THAT READS LEVEL 2's FILE
+// Opens "Assets/level2.txt" and fills the shared level[][] grid.
+//
+// File format: each cell written as <value>, rows separated by newlines.
+// Tile values: 0=floor, 1=wall, 4=coin, etc. (same as Level 1).
+//
+// If the file cannot be opened, all cells are set to 0 (open map).
+// ----------------------------------------------------------------------------
 static void L2LoadLevelTxt()
 {
     const char* path = "Assets/level2.txt";
@@ -138,25 +159,38 @@ static void L2LoadLevelTxt()
 }
 
 
-//----------------------------------------------------------------------------
-// Resets all Level 2 positions to safe free cells.
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// ResetLevel2
+// Repositions all Level 2 entities to safe spawn cells without reloading
+// textures or the tile map.  Called when a mummy catches the player.
+//
+// Spawn layout:
+//   - Player  : center-left (col 4)
+//   - Mummy 1 : top-right corner, min 10 cells from player
+//   - Mummy 2 : bottom-center, min 10 cells from player
+//   - Coin    : grid center
+// Also resets all counters and powerup state.
+// ----------------------------------------------------------------------------
 static void ResetLevel2()
 {
     float px = 0.0f, py = 0.0f;
 
+    // Player spawn: center-left area
     L2FindFreeSpawnCell(GRID_ROWS / 2, 4, px, py);
     l2_player.x = px; l2_player.y = py;
 
     int playerRow, playerCol;
     WorldToGrid(l2_player.x, l2_player.y, playerRow, playerCol);
+
+    // Mummy 1 spawn: top-right, at least 10 cells from player
     L2FindFreeSpawnCell(2, GRID_COLS - 3, px, py, playerRow, playerCol, 10);
     l2_mummy.x = px; l2_mummy.y = py;
 
-    // Second mummy spawns from bottom-center, also at least 10 cells from player
+    // Mummy 2 spawn: bottom-center, at least 10 cells from player (different angle of approach)
     L2FindFreeSpawnCell(GRID_ROWS - 4, GRID_COLS / 2, px, py, playerRow, playerCol, 10);
     l2_mummy2.x = px; l2_mummy2.y = py;
 
+    // Coin spawn: grid center
     L2FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
     l2_coin.x = px; l2_coin.y = py;
 
@@ -165,40 +199,55 @@ static void ResetLevel2()
     l2_coinCounter = 0;
     l2_turnCounter = 0;
     l2_playerMoved = false;
-    l2Power = {};
+    l2Power = {}; // clear all powerup state
 }
 
 
-//----------------------------------------------------------------------------
-// Loads Level 2 resources and tile map
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Level2_Load
+// Called once when entering Level 2.
+// 1. Calls L2LoadLevelTxt() to populate level[][] from "Assets/level2.txt".
+// 2. Loads all textures: player, wall, floor, both mummies, coin, exit portal.
+// 3. Creates the shared pMesh.
+// ----------------------------------------------------------------------------
 void Level2_Load()
 {
     std::cout << "Level2:Load\n";
 
+    // Load Level 2's tile map from disk into the shared level[][] grid
     L2LoadLevelTxt();
 
-    l2_player.pTex = AEGfxTextureLoad("Assets/explorer.png");
-    l2_DesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
-    l2_FloorTex = AEGfxTextureLoad("Assets/Floor.png");
-    l2_mummy.pTex = AEGfxTextureLoad("Assets/Enemy.png");
-    l2_mummy2.pTex = AEGfxTextureLoad("Assets/Enemy.png");
-    l2_coin.pTex = AEGfxTextureLoad("Assets/Coin.png");
-    l2_exitPortal.pTex = AEGfxTextureLoad("Assets/Exit.png");
-    pMesh = CreateSquareMesh();
+    // Load entity textures
+    l2_player.pTex = AEGfxTextureLoad("Assets/explorer.png");   // player sprite
+    l2_DesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png"); // wall tile
+    l2_FloorTex = AEGfxTextureLoad("Assets/Floor.png");       // floor tile
+    l2_mummy.pTex = AEGfxTextureLoad("Assets/Enemy.png");       // mummy 1
+    l2_mummy2.pTex = AEGfxTextureLoad("Assets/Enemy.png");       // mummy 2 (same texture)
+    l2_coin.pTex = AEGfxTextureLoad("Assets/Coin.png");        // coin
+    l2_exitPortal.pTex = AEGfxTextureLoad("Assets/Exit.png");        // exit portal
+
+    pMesh = CreateSquareMesh(); // unit square mesh shared by all sprites
 }
 
 
-//----------------------------------------------------------------------------
-// Initialises Level 2 state and entity positions
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Level2_Initialize
+// Called once after Level2_Load and on every state re-entry.
+// Resets overlays and powerups, then positions all entities:
+//   - Player  : center-left free cell
+//   - Mummy 1 : top-right, min 10 cells from player
+//   - Mummy 2 : bottom-center, min 10 cells from player
+//   - Exit    : center-right
+//   - Coin    : grid center
+// ----------------------------------------------------------------------------
 void Level2_Initialize()
 {
     std::cout << "Level2:Initialize\n";
 
+    // Always reset powerup and overlay state on entry
     l2Power = {};
     l2_paused = false; l2_showWin = false; l2_showLose = false;
-    l2_initialised = false;
+    l2_initialised = false; // Force full re-init every time
 
     if (!l2_initialised)
     {
@@ -208,33 +257,35 @@ void Level2_Initialize()
         l2_gridStep = GRID_TILE_SIZE;
         l2_initialised = true;
 
-        // Player - center left free cell
+        // --- Player spawn ---
         L2FindFreeSpawnCell(GRID_ROWS / 2, 4, px, py);
         l2_player.x = px; l2_player.y = py;
         l2_player.size = 50.0f;
         l2_player.r = 0.0f; l2_player.g = 0.0f; l2_player.b = 1.0f;
 
-        // Mummy 1 - top-right corner, at least 10 cells from player
         int playerRow, playerCol;
         WorldToGrid(l2_player.x, l2_player.y, playerRow, playerCol);
+
+        // --- Mummy 1 spawn: top-right, min 10 cells from player ---
         L2FindFreeSpawnCell(2, GRID_COLS - 3, px, py, playerRow, playerCol, 10);
         l2_mummy.x = px; l2_mummy.y = py;
         l2_mummy.size = 50.0f;
         l2_mummy.r = 1.0f; l2_mummy.g = 0.0f; l2_mummy.b = 0.0f;
 
-        // Mummy 2 - bottom-center area, at least 10 cells from player
+        // --- Mummy 2 spawn: bottom-center, min 10 cells from player ---
+        // Starts from a different corner to approach the player from a different angle
         L2FindFreeSpawnCell(GRID_ROWS - 4, GRID_COLS / 2, px, py, playerRow, playerCol, 10);
         l2_mummy2.x = px; l2_mummy2.y = py;
         l2_mummy2.size = 50.0f;
         l2_mummy2.r = 1.0f; l2_mummy2.g = 0.0f; l2_mummy2.b = 0.0f;
 
-        // Exit portal - right side
+        // --- Exit portal spawn: right side ---
         L2FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS - 5, px, py);
         l2_exitPortal.x = px; l2_exitPortal.y = py;
         l2_exitPortal.size = 40.0f;
         l2_exitPortal.r = 1.0f; l2_exitPortal.g = 1.0f; l2_exitPortal.b = 0.0f;
 
-        // Coin - center
+        // --- Coin spawn: grid center ---
         L2FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
         l2_coin.x = px; l2_coin.y = py;
         l2_coin.size = 30.0f;
@@ -249,16 +300,33 @@ void Level2_Initialize()
 }
 
 
-//----------------------------------------------------------------------------
-// Updates Level 2 game logic each frame
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Level2_Update
+// Called every frame during the Level 2 game loop.
+// Logic is identical to Level1_Update with two differences:
+//   - Two mummies (l2_mummy and l2_mummy2) both chase the player.
+//   - Lose condition triggers if EITHER mummy occupies the player's cell.
+//
+// Order of operations each frame:
+//   1. Back/Quit key handling.
+//   2. Win/Lose overlay input (Retry / Exit buttons, R, ENTER, Q).
+//   3. Pause toggle (P); returns early when paused.
+//   4. WASD player movement validated by IsTileWalkable().
+//   5. Per-turn logic (on playerMoved):
+//        a. Tile coin collection (value 4).
+//        b. Both mummies move every 2nd turn using axis-priority greedy chase.
+//        c. L2TickPowers() -- decrement powerup durations.
+//   6. Lose check: player shares cell with either mummy AND not invincible.
+//   7. Win check: player reaches exit portal cell.
+//   8. Legacy coin entity collect.
+// ----------------------------------------------------------------------------
 void Level2_Update()
 {
-    // Back / Quit
+    // --- Navigation keys ---
     if (AEInputCheckReleased(AEVK_B) || AEInputCheckReleased(AEVK_ESCAPE)) { next = LEVELPAGE; return; }
-    if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist()) { next = GS_QUIT;   return; }
+    if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist()) { next = GS_QUIT;  return; }
 
-    // Win / Lose overlay input
+    // --- Win / Lose overlay input ---
     if (l2_showLose || l2_showWin)
     {
         s32 mxS, myS; TransformScreentoWorld(mxS, myS);
@@ -266,12 +334,14 @@ void Level2_Update()
 
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
+            // "Retry" button: restart Level 2
             if (IsAreaClicked(kL2BtnRetryX, kL2BtnRetryY, kL2BtnW, kL2BtnH, mx, my))
             {
                 next = GS_LEVEL2;
                 l2_showLose = l2_showWin = false;
                 return;
             }
+            // "Exit" button: return to main menu
             if (IsAreaClicked(kL2BtnExitX, kL2BtnExitY, kL2BtnW, kL2BtnH, mx, my))
             {
                 next = MAINMENUSTATE;
@@ -279,17 +349,17 @@ void Level2_Update()
                 return;
             }
         }
-        if (AEInputCheckReleased(AEVK_R)) { next = GS_LEVEL2;  l2_showLose = l2_showWin = false; return; }
-        if (AEInputCheckReleased(AEVK_RETURN)) { next = LEVELPAGE;   l2_showLose = l2_showWin = false; return; }
+        if (AEInputCheckReleased(AEVK_R)) { next = GS_LEVEL2;   l2_showLose = l2_showWin = false; return; }
+        if (AEInputCheckReleased(AEVK_RETURN)) { next = LEVELPAGE;    l2_showLose = l2_showWin = false; return; }
         if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist()) { next = GS_QUIT; return; }
-        return;
+        return; // freeze game while overlay is visible
     }
 
-    // Pause toggle
+    // --- Pause toggle ---
     if (AEInputCheckReleased(AEVK_P)) { l2_paused = !l2_paused; }
     if (l2_paused) return;
 
-    // --- Player movement ---
+    // --- Player movement (WASD) ---
     float testX = l2_player.x;
     float testY = l2_player.y;
 
@@ -298,6 +368,7 @@ void Level2_Update()
     else if (AEInputCheckTriggered(AEVK_A)) testX -= l2_gridStep;
     else if (AEInputCheckTriggered(AEVK_D)) testX += l2_gridStep;
 
+    // Validate candidate position against the tile grid
     if (testX != l2_player.x || testY != l2_player.y)
     {
         if (IsTileWalkable(testX, testY))
@@ -308,39 +379,41 @@ void Level2_Update()
         }
     }
 
+    // --- Per-turn logic ---
     if (l2_playerMoved)
     {
         l2_turnCounter++;
 
-        // Tile coin collection (value 4)
+        // Tile coin collection: tile value 4 = COIN
         int r, c;
         WorldToGrid(l2_player.x, l2_player.y, r, c);
         if (level[r][c] == 4)
         {
-            level[r][c] = 0;
+            level[r][c] = 0; // remove tile so it can only be collected once
             l2_coinCounter++;
             std::cout << "L2 Coin collected! Total: " << l2_coinCounter << "\n";
         }
 
-        // Mummy 1 moves every 2 player turns
+        // Both mummies move every 2nd player turn (axis-priority greedy chase)
         if (l2_turnCounter % 2 == 0)
         {
+            // --- Mummy 1 movement ---
             float diffX = l2_player.x - l2_mummy.x;
             float diffY = l2_player.y - l2_mummy.y;
 
-            if (fabsf(diffX) > 1.0f)
+            if (fabsf(diffX) > 1.0f) // try horizontal step first
             {
                 float stepX = (diffX > 0) ? l2_gridStep : -l2_gridStep;
                 if (canMove(l2_mummy.x + stepX, l2_mummy.y)) l2_mummy.x += stepX;
             }
-            diffY = l2_player.y - l2_mummy.y;
-            if (fabsf(diffY) > 1.0f)
+            diffY = l2_player.y - l2_mummy.y; // re-evaluate after possible horizontal move
+            if (fabsf(diffY) > 1.0f)           // then try vertical step
             {
                 float stepY = (diffY > 0) ? l2_gridStep : -l2_gridStep;
                 if (canMove(l2_mummy.x, l2_mummy.y + stepY)) l2_mummy.y += stepY;
             }
 
-            // Mummy 2 moves every 2 player turns (same pace, different position)
+            // --- Mummy 2 movement (same logic, different entity) ---
             float diff2X = l2_player.x - l2_mummy2.x;
             float diff2Y = l2_player.y - l2_mummy2.y;
 
@@ -361,7 +434,8 @@ void Level2_Update()
         l2_playerMoved = false;
     }
 
-    // --- Lose check - only after the player has actually moved at least once ---
+    // --- Lose check: player caught by either mummy ---
+    // Only triggers after the player has moved (prevents false positive at spawn overlap)
     if (l2_turnCounter > 0 && !L2IsInvincibleNow() &&
         ((fabsf(l2_player.x - l2_mummy.x) < 1.0f && fabsf(l2_player.y - l2_mummy.y) < 1.0f) ||
             (fabsf(l2_player.x - l2_mummy2.x) < 1.0f && fabsf(l2_player.y - l2_mummy2.y) < 1.0f)))
@@ -371,82 +445,81 @@ void Level2_Update()
         l2_showLose = true;
     }
 
-    // --- Win check ---
+    // --- Win check: player reached the exit portal ---
     if (fabsf(l2_player.x - l2_exitPortal.x) < 1.0f &&
         fabsf(l2_player.y - l2_exitPortal.y) < 1.0f)
     {
         printf("L2: You Escaped!\n");
-        next = GS_WIN;
+        next = GS_WIN; // Transition to the win page
     }
 
-    // --- Legacy coin entity collect ---
+    // --- Legacy coin entity collect (moves coin off-screen when touched) ---
     if (fabsf(l2_player.x - l2_coin.x) < 1.0f &&
         fabsf(l2_player.y - l2_coin.y) < 1.0f)
     {
         ++l2_coinCounter;
         printf("L2 Coin! Total: %d\n", l2_coinCounter);
-        l2_coin.x = 2000.0f; l2_coin.y = 2000.0f;
+        l2_coin.x = 2000.0f; l2_coin.y = 2000.0f; // "remove" by moving off-screen
     }
 }
 
 
-//----------------------------------------------------------------------------
-// Renders Level 2 each frame
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Level2_Draw
+// Called every frame to render Level 2.
+// Rendering order (back to front):
+//   1. Overlay check: if lose/win/pause overlay active, delegate and return.
+//   2. Floor tiles: all value==0 cells drawn with l2_FloorTex.
+//   3. Wall tiles:  all value==1 cells drawn with l2_DesertBlockTex.
+//   4. Player, Mummy 1, Mummy 2 (all using explorer.png / Enemy.png textures).
+//   5. Coin entity (only drawn when coin.x < 1000).
+//   6. Exit portal texture.
+// All sprites use the shared pMesh scaled by a TRS matrix.
+// ----------------------------------------------------------------------------
 void Level2_Draw()
 {
     AEGfxSetBackgroundColor(1.0f, 1.0f, 1.0f);
 
-    // Overlays - skip game rendering entirely when active
+    // Delegate rendering to overlay draw functions when active
     if (l2_showLose) { LosePage_Draw();  return; }
     if (l2_showWin) { WinPage_Draw();   return; }
     if (l2_paused) { PausePage_Draw(); return; }
 
     AEMtx33 transform, scale, trans;
 
-    // Floor - draw on every walkable (value == 0) cell
+    // --- Floor tiles (value == 0) ---
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     AEGfxTextureSet(l2_FloorTex, 0, 0);
     for (int row = 0; row < GRID_ROWS; row++)
-    {
         for (int col = 0; col < GRID_COLS; col++)
-        {
             if (level[row][col] == 0)
             {
-                float x, y;
-                GridToWorldCenter(row, col, x, y);
+                float x, y; GridToWorldCenter(row, col, x, y);
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
                 AEGfxSetTransform(transform.m);
                 AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
             }
-        }
-    }
 
-    // Walls
+    // --- Wall tiles (value == 1) ---
     AEGfxTextureSet(l2_DesertBlockTex, 0, 0);
     for (int row = 0; row < GRID_ROWS; row++)
-    {
         for (int col = 0; col < GRID_COLS; col++)
-        {
             if (level[row][col] == 1)
             {
-                float x, y;
-                GridToWorldCenter(row, col, x, y);
+                float x, y; GridToWorldCenter(row, col, x, y);
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
                 AEGfxSetTransform(transform.m);
                 AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
             }
-        }
-    }
 
-    // Player
+    // --- Player (explorer.png) ---
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxTextureSet(l2_player.pTex, 0, 0);
     AEMtx33Scale(&scale, l2_player.size, l2_player.size);
@@ -455,7 +528,7 @@ void Level2_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // Mummy 1
+    // --- Mummy 1 (Enemy.png) ---
     AEGfxTextureSet(l2_mummy.pTex, 0, 0);
     AEMtx33Scale(&scale, l2_mummy.size, l2_mummy.size);
     AEMtx33Trans(&trans, l2_mummy.x, l2_mummy.y);
@@ -463,7 +536,7 @@ void Level2_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // Mummy 2
+    // --- Mummy 2 (Enemy.png) ---
     AEGfxTextureSet(l2_mummy2.pTex, 0, 0);
     AEMtx33Scale(&scale, l2_mummy2.size, l2_mummy2.size);
     AEMtx33Trans(&trans, l2_mummy2.x, l2_mummy2.y);
@@ -471,7 +544,7 @@ void Level2_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // Coin
+    // --- Coin (only rendered while not collected, i.e. coin.x < 1000) ---
     if (l2_coin.x < 1000.0f)
     {
         AEGfxTextureSet(l2_coin.pTex, 0, 0);
@@ -482,7 +555,7 @@ void Level2_Draw()
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 
-    // Exit portal
+    // --- Exit portal (Exit.png) ---
     AEGfxTextureSet(l2_exitPortal.pTex, 0, 0);
     AEMtx33Scale(&scale, l2_exitPortal.size, l2_exitPortal.size);
     AEMtx33Trans(&trans, l2_exitPortal.x, l2_exitPortal.y);
@@ -490,21 +563,27 @@ void Level2_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // Reset render state after drawing
+    // Reset render state to clean defaults
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 }
-//----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+// Level2_Free
+// Called after the game loop exits Level 2.  Currently empty.
+// ----------------------------------------------------------------------------
 void Level2_Free()
 {
     std::cout << "Level2:Free\n";
 }
 
 
-//----------------------------------------------------------------------------
-// Unloads all Level 2 resources
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Level2_Unload
+// Unloads all Level 2 GPU textures and frees the shared mesh.
+// Resets l2_initialised so Initialize runs fully on next entry.
+// ----------------------------------------------------------------------------
 void Level2_Unload()
 {
     std::cout << "Level2:Unload\n";
