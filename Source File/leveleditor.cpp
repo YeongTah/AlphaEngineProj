@@ -18,7 +18,8 @@ typedef enum Objects
     NON_WALKABLE = 1,
     PLAYER_SPAWN = 2,
     ENEMY_SPAWN = 3,
-    COIN = 4  // coin value in level1 txt -- YT
+    COIN = 4 // coin value in level1 txt -- YT
+    /* NEW: value 8 = black buff block (5s immunity in Level1) -ths */
 } Objects;
 
 //declared first
@@ -43,7 +44,7 @@ namespace
     enum ButtonID //button ID
     {
         BTN_WALL, BTN_ERASE, BTN_SAVE,
-        BTN_LOAD, BTN_LOCK, 
+        BTN_LOAD, BTN_LOCK,
         BTN_L1, BTN_L2, BTN_L3
     };
 
@@ -63,7 +64,7 @@ namespace
 
     static int const gButtonCount = (int)(sizeof(gButtons) / sizeof(gButtons[0]));
 
- 
+
     void GetMouseWorld(float& worldX, float& worldY)
     {
         int mouseX, mouseY;
@@ -72,33 +73,33 @@ namespace
         worldY = 450.0f - (float)mouseY;
     }
 
-  /*  void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol)
-    {
-        float left = -(COLS * TILE_SIZE) * 0.5f;
-        float top = +(ROWS * TILE_SIZE) * 0.5f;
+    /*  void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol)
+      {
+          float left = -(COLS * TILE_SIZE) * 0.5f;
+          float top = +(ROWS * TILE_SIZE) * 0.5f;
 
-        outCol = (int)std::floor((worldX - left) / TILE_SIZE);
-        outRow = (int)std::floor((top - worldY) / TILE_SIZE);
-    }*/
+          outCol = (int)std::floor((worldX - left) / TILE_SIZE);
+          outRow = (int)std::floor((top - worldY) / TILE_SIZE);
+      }*/
 
-//void GridToWorldCenter(int row, int col, float& outX, float& outY)
-//{
-//    float left = -(COLS * TILE_SIZE) * 0.5f;
-//    float top = +(ROWS * TILE_SIZE) * 0.5f;
-//
-//    outX = left + col * TILE_SIZE + (TILE_SIZE * 0.5f);
-//    outY = top - row * TILE_SIZE - (TILE_SIZE * 0.5f);
-//}
+      //void GridToWorldCenter(int row, int col, float& outX, float& outY)
+      //{
+      //    float left = -(COLS * TILE_SIZE) * 0.5f;
+      //    float top = +(ROWS * TILE_SIZE) * 0.5f;
+      //
+      //    outX = left + col * TILE_SIZE + (TILE_SIZE * 0.5f);
+      //    outY = top - row * TILE_SIZE - (TILE_SIZE * 0.5f);
+      //}
 
-    //retrieve the file txt with binary numbers
+          //retrieve the file txt with binary numbers
     const char* GetLevelFilename()
     {
         switch (gActiveLevel)
         {
-        case 1: return "level1.txt";
-        case 2: return "level2.txt";
-        case 3: return "level3.txt";
-        default: return "level1.txt";
+        case 1: return "Assets/level1.txt";
+        case 2: return "Assets/level2.txt";
+        case 3: return "Assets/level3.txt";
+        default: return "Assets/level1.txt";
         }
     }
 
@@ -113,13 +114,13 @@ namespace
     }
 
     //edit out -- for player movement not needed in level editor
- bool isBlockedAt(float worldX, float worldY)
+    bool isBlockedAt(float worldX, float worldY)
     {
-       int row, col;
+        int row, col;
         WorldToGrid(worldX, worldY, row, col);
 
-       if (row < 0 || row >= GRID_ROWS || col < 0 || col >= GRID_COLS)
-          return true;
+        if (row < 0 || row >= GRID_ROWS || col < 0 || col >= GRID_COLS)
+            return true;
 
         return level[row][col] == NON_WALKABLE;
     }
@@ -164,14 +165,14 @@ namespace
     {
         gActiveLevel = newLevel;
 
-        if (gActiveLevel < 1) { 
-            gActiveLevel = 1; 
+        if (gActiveLevel < 1) {
+            gActiveLevel = 1;
         }
-        if (gActiveLevel > 3) { 
-            gActiveLevel = 3; 
+        if (gActiveLevel > 3) {
+            gActiveLevel = 3;
         }
-        if (loadFromFile) { 
-            readfile(); 
+        if (loadFromFile) {
+            readfile();
         }
         else ClearLevelToZeros();
     }
@@ -184,7 +185,7 @@ namespace
                 continue;
             }
 
-            Selected = gButtons[i].id; 
+            Selected = gButtons[i].id;
 
             switch (gButtons[i].id)
             {
@@ -216,7 +217,7 @@ namespace
         {
             float const HalfW = 1.0f / 800.0f;
             float const HalfH = 1.0f / 450.0f;
-            
+
             //main buttons
             AEGfxPrint(fontId, "WALL", (gButtons[0].pos_x * HalfW) - 0.05f, (gButtons[0].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
             AEGfxPrint(fontId, "ERASE", (gButtons[1].pos_x * HalfW) - 0.06f, (gButtons[1].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
@@ -228,7 +229,7 @@ namespace
             }
             else
             {
-                AEGfxPrint(fontId, "EDIT", (gButtons[4].pos_x * HalfW) - 0.055f, (gButtons[4].pos_y * HalfH) - 0.02f,1.0f, 0, 0, 0, 1);
+                AEGfxPrint(fontId, "EDIT", (gButtons[4].pos_x * HalfW) - 0.055f, (gButtons[4].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
             }
             //levels
             AEGfxPrint(fontId, "L1", (gButtons[5].pos_x * HalfW) - 0.02f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);

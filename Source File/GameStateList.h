@@ -12,9 +12,9 @@ without the prior written consent of DigiPen Institute of
 Technology is prohibited.
 */
 /* End Header **************************************************************************/
-
 #pragma once
 
+// Additional states for Pause / Win / Lose pages -ths
 enum GS_STATES
 {
 	MAINMENUSTATE = 0,
@@ -23,7 +23,7 @@ enum GS_STATES
 	GS_LEVEL2,
 	GS_LEVEL3,
 	CREATOR,
-
+	GS_WIN,
 	GS_QUIT,
 	GS_RESTART
 };

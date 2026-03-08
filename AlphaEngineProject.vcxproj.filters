@@ -57,6 +57,15 @@
     <ClCompile Include="Source File\GridUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source File\LosePage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source File\PausePage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source File\WinPage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Player.png">
@@ -109,6 +118,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source File\GridUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source File\LosePage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source File\PausePage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source File\WinPage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
