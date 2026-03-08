@@ -27,7 +27,7 @@ Technology is prohibited.
 #include "AEEngine.h"
 #include "AEInput.h"
 #include "AEFrameRateController.h"
-#include "leveleditor.hpp"
+//#include "leveleditor.hpp"
 #include "Collision.h"
 #include "MouseCoor.h"
 

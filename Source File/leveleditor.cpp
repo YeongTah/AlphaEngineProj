@@ -3,13 +3,14 @@
 #include <fstream>
 #include <iostream>
 #include <math.h>
+#include "GridUtils.h""
 
 //tile size is 50.0f  YT   5/3
 //global variables for tiles -- can consider to make it extern if needed
-int level[18][32];
-int ROWS = 18;
-int COLS = 32;
-float TILE_SIZE = 32.0f;
+int level[GRID_ROWS][GRID_COLS];
+//int ROWS = 18;
+//int COLS = 32;
+//float TILE_SIZE = 32.0f;
 
 //can be used for map tile
 typedef enum Objects
@@ -71,23 +72,23 @@ namespace
         worldY = 450.0f - (float)mouseY;
     }
 
-    void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol)
+  /*  void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol)
     {
         float left = -(COLS * TILE_SIZE) * 0.5f;
         float top = +(ROWS * TILE_SIZE) * 0.5f;
 
         outCol = (int)std::floor((worldX - left) / TILE_SIZE);
         outRow = (int)std::floor((top - worldY) / TILE_SIZE);
-    }
+    }*/
 
-void GridToWorldCenter(int row, int col, float& outX, float& outY)
-{
-    float left = -(COLS * TILE_SIZE) * 0.5f;
-    float top = +(ROWS * TILE_SIZE) * 0.5f;
-
-    outX = left + col * TILE_SIZE + (TILE_SIZE * 0.5f);
-    outY = top - row * TILE_SIZE - (TILE_SIZE * 0.5f);
-}
+//void GridToWorldCenter(int row, int col, float& outX, float& outY)
+//{
+//    float left = -(COLS * TILE_SIZE) * 0.5f;
+//    float top = +(ROWS * TILE_SIZE) * 0.5f;
+//
+//    outX = left + col * TILE_SIZE + (TILE_SIZE * 0.5f);
+//    outY = top - row * TILE_SIZE - (TILE_SIZE * 0.5f);
+//}
 
     //retrieve the file txt with binary numbers
     const char* GetLevelFilename()
@@ -104,24 +105,25 @@ void GridToWorldCenter(int row, int col, float& outX, float& outY)
     //clear the file contents to zero -- can be changed to another button
     void ClearLevelToZeros()
     {
-        for (int row = 0; row < ROWS; ++row) {
-            for (int col = 0; col < COLS; ++col) {
+        for (int row = 0; row < GRID_ROWS; ++row) {
+            for (int col = 0; col < GRID_COLS; ++col) {
                 level[row][col] = 0;
             }
         }
     }
 
     //edit out -- for player movement not needed in level editor
-    //bool isBlockedAt(float worldX, float worldY)
-    //{
-    //    int row, col;
-    //    WorldToGrid(worldX, worldY, row, col);
+ bool isBlockedAt(float worldX, float worldY)
+    {
+       int row, col;
+        WorldToGrid(worldX, worldY, row, col);
 
-    //    if (row < 0 || row >= ROWS || col < 0 || col >= COLS)
-    //        return true;
+       if (row < 0 || row >= GRID_ROWS || col < 0 || col >= GRID_COLS)
+          return true;
 
-    //    return level[row][col] == NON_WALKABLE;
-    //}
+        return level[row][col] == NON_WALKABLE;
+    }
+
 
     //checks for mouse in the button
     bool PointInRect(float mouse_x, float mouse_y, Button const& button)
@@ -246,9 +248,9 @@ int print_file()
         return 0;
     }
 
-    for (int i = 0; i < ROWS; ++i)
+    for (int i = 0; i < GRID_ROWS; ++i)
     {
-        for (int j = 0; j < COLS; ++j)
+        for (int j = 0; j < GRID_COLS; ++j)
             os << level[i][j] << ",";
         os << "\n";
     }
@@ -263,7 +265,8 @@ void readfile()
     std::ifstream is(GetLevelFilename());
     if (!is.is_open())
     {
-        ClearLevelToZeros();
+        /*ClearLevelToZeros();*/
+        LoadDefaultLevel();
         std::cout << "No file: " << GetLevelFilename() << " starting blank\n";
         return;
     }
@@ -271,8 +274,8 @@ void readfile()
     int  tile;
     char comma;
 
-    for (int row = 0; row < ROWS; row++) {
-        for (int col = 0; col < COLS; col++)
+    for (int row = 0; row < GRID_ROWS; row++) {
+        for (int col = 0; col < GRID_COLS; col++)
         {
             is >> tile >> comma; // reads: number + ','
             level[row][col] = tile;
@@ -300,16 +303,16 @@ void generateLevel(void)
                 int row, col;
                 WorldToGrid(wx, wy, row, col);
 
-                if (row >= 0 && row < ROWS && col >= 0 && col < COLS)
+                if (row >= 0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS)
                     level[row][col] = gBrushValue;
             }
         }
     }
 
     // Draw tiles
-    for (int row = 0; row < ROWS; row++)
+    for (int row = 0; row < GRID_ROWS; row++)
     {
-        for (int col = 0; col < COLS; col++)
+        for (int col = 0; col < GRID_COLS; col++)
         {
             float x, y;
             GridToWorldCenter(row, col, x, y);
@@ -325,7 +328,7 @@ void generateLevel(void)
                 AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
                 AEMtx33 scale, translate, transform;
-                AEMtx33Scale(&scale, TILE_SIZE, TILE_SIZE);
+                AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
                 AEMtx33Trans(&translate, x, y);
                 AEMtx33Concat(&transform, &translate, &scale);
 
@@ -339,19 +342,19 @@ void generateLevel(void)
 }
 
 //edit out -- for player movement not needed in level editor
-//bool canMove(float nextX, float nextY)
-//{
-//    float collisionrad = (TILE_SIZE * 0.5f) - 1.0f;
-//
-//    if (isBlockedAt(nextX + collisionrad, nextY)) return false;
-//    if (isBlockedAt(nextX - collisionrad, nextY)) return false;
-//    if (isBlockedAt(nextX, nextY + collisionrad)) return false;
-//    if (isBlockedAt(nextX, nextY - collisionrad)) return false;
-//
-//    if (isBlockedAt(nextX + collisionrad, nextY + collisionrad)) return false;
-//    if (isBlockedAt(nextX - collisionrad, nextY + collisionrad)) return false;
-//    if (isBlockedAt(nextX + collisionrad, nextY - collisionrad)) return false;
-//    if (isBlockedAt(nextX - collisionrad, nextY - collisionrad)) return false;
-//
-//    return true;
-//}
+bool canMove(float nextX, float nextY)
+{
+    float collisionrad = (GRID_TILE_SIZE * 0.5f) - 1.0f;
+
+    if (isBlockedAt(nextX + collisionrad, nextY)) return false;
+    if (isBlockedAt(nextX - collisionrad, nextY)) return false;
+    if (isBlockedAt(nextX, nextY + collisionrad)) return false;
+    if (isBlockedAt(nextX, nextY - collisionrad)) return false;
+
+    if (isBlockedAt(nextX + collisionrad, nextY + collisionrad)) return false;
+    if (isBlockedAt(nextX - collisionrad, nextY + collisionrad)) return false;
+    if (isBlockedAt(nextX + collisionrad, nextY - collisionrad)) return false;
+    if (isBlockedAt(nextX - collisionrad, nextY - collisionrad)) return false;
+
+    return true;
+}

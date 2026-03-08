@@ -10,7 +10,7 @@ extern int level[18][32];  // aded to make global so that it can be used in Leve
 void generateLevel(void);
 int print_file(void);
 void readfile(void);
-//bool canMove(float nextX, float nextY);
+bool canMove(float nextX, float nextY);
 
 // Add this line so Level1.cpp can find the player's grid tile
-void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol);
+//void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol);

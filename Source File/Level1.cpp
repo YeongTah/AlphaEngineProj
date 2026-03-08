@@ -14,9 +14,9 @@ without the prior written consent of DigiPen Institute of
 Technology is prohibited.
 */
 /* End Header **************************************************************************/
-
+#include "leveleditor.hpp"
 #include "pch.h"
-
+#include  "GridUtils.h"
 #include "Level1.h"
 #include "gamestatemanager.h"
 #include "Main.h"
@@ -51,7 +51,6 @@ float nextY = player.y;
 //																--- Variables declaration end here ---
 
 
-
 //----------------------------------------------------------------------------
 // Loads Level 1 resources and reads the level counter from a text file
 //---------------------------------------------------------------------------
@@ -59,14 +58,16 @@ void Level1_Load()
 {
 	std::cout << "Level1:Load\n"; // Print onto standard output stream
 
-	//readfile();
+	readfile();
 	//print_file();
 	////loadLevelMap(1);
 
 	// Loading of blue player texture
-	player.pTex = AEGfxTextureLoad("Assets/Player.jpg");
+	player.pTex = AEGfxTextureLoad("Assets/explorer.png");
 	gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
-
+	mummy.pTex = AEGfxTextureLoad("Assets/Enemy.png");  // mummy texture
+	coin.pTex = AEGfxTextureLoad("Assets/Coin.png");    // coin texturer
+	exitPortal.pTex = AEGfxTextureLoad("Assets/Exit.png"); // exit portal texture
 	pMesh = CreateSquareMesh();
 
 }
@@ -76,10 +77,19 @@ void Level1_Load()
 // ---------------------------------------------------------------------------
 void Level1_Initialize()
 {
+
 	std::cout << "Level1:Initialize\n"; // Print onto standard output stream
 
 	// Initialise positions only once
 	if (!level1_initialised) {
+		player.size = GRID_TILE_SIZE; // Use the constant from GridUtils
+		mummy.size = GRID_TILE_SIZE;
+		gridStep = GRID_TILE_SIZE;
+
+		//LoadDefaultLevel();
+
+		level1_initialised = true;
+
 		player.x = 225.0f;
 		player.y = -125.0f;
 		/*	player.size = 40.0f;*/
@@ -190,6 +200,7 @@ void Level1_Update()
 	}
 
 	// MOVEMENT UPDATE
+// 1. Calculate potential next position based on input
 	float testNextX = player.x;
 	float testNextY = player.y;
 
@@ -197,6 +208,15 @@ void Level1_Update()
 	else if (AEInputCheckTriggered(AEVK_S)) testNextY -= gridStep;
 	else if (AEInputCheckTriggered(AEVK_A)) testNextX -= gridStep;
 	else if (AEInputCheckTriggered(AEVK_D)) testNextX += gridStep;
+
+	// 2. Use the new Utility function to check the grid
+	if ((testNextX != player.x || testNextY != player.y)) {
+		if (IsTileWalkable(testNextX, testNextY)) {
+			player.x = testNextX;
+			player.y = testNextY;
+			playerMoved = true; // This triggers the Mummy's turn
+		}
+	}
 
 	// Bounding Box Collision Check for Player vs Wall
 	bool playerWallCollision = (fabsf(testNextX - wall.x) < (player.size / 2.0f + wall.size / 2.0f)) &&
@@ -209,11 +229,11 @@ void Level1_Update()
 	//	playerMoved = true;
 	//																			-- the above commented out collision function is to replaced the grey wall with the gridbased wall.... -- YT
 	// Replaced the old AABB wall check with the Grid check to fit the new grid-based movement and level design in level editor -- YT
-	if ((testNextX != player.x || testNextY != player.y) && canMove(testNextX, testNextY)) {
-		player.x = testNextX;
-		player.y = testNextY;
-		playerMoved = true;
-	}
+	//if ((testNextX != player.x || testNextY != player.y) && canMove(testNextX, testNextY)) {
+	//	player.x = testNextX;
+	//	player.y = testNextY;
+	//	playerMoved = true;
+	//}
 
 
 	//// Player Movement logic 
@@ -334,93 +354,95 @@ void Level1_Update()
 }
 
 //----------------------------------------------------------------------------
-// Renders or draws the visual representation each frame 
+// Renders the visual representation each frame, including the grid tiles
 // ---------------------------------------------------------------------------
 void Level1_Draw()
 {
-
-	//std::cout << "Level1:Draw\n"; // Print onto standard output stream  yt 25-2 comment up first, my computer cannot stand D:
-
-	// Sharon 2/3: Creation of mesh AND player, wall, enemy positions is done in Load, not draw
+	AEGfxSetBackgroundColor(1.0f, 1.0f, 1.0f);
 
 
-	//																			--- rendering logic goes here ---
-
-
-		// Set the background to white.
-	AEGfxSetBackgroundColor(255.0f, 255.0f, 255.0f);
-
-	//AEGfxSetRenderMode(AE_GFX_RM_COLOR); // Using colors, not textures
-	AEMtx33 transform, scale, trans;
-
-	//																			 Render Player with Texture
-	// Use Texture mode for the player
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-
-	// Set up blending for transparency (this is the key fix!)
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 	AEGfxSetTransparency(1.0f);
+	AEGfxTextureSet(gDesertBlockTex, 0, 0);
+	AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
-	AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Use white so the texture colors show correctly
-	AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f); // Don't add any color
-	AEGfxTextureSet(player.pTex, 0, 0); // Bind the player texture
+	AEMtx33 transform, scale, trans;
 
+	for (int row = 0; row < GRID_ROWS; row++)
+	{
+		for (int col = 0; col < GRID_COLS; col++)
+		{
+			// Use your enum/constants (1 = NON_WALKABLE)
+			if (level[row][col] == 1)
+			{
+				float x, y;
+				GridToWorldCenter(row, col, x, y);
+
+				AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
+				AEMtx33Trans(&trans, x, y);
+				AEMtx33Concat(&transform, &trans, &scale);
+
+				AEGfxSetTransform(transform.m);
+				AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+
+			}
+			// You can add additional 'else if' blocks here to draw 
+			// other objects based on the values (e.g., case 4 for coins)
+		}
+	}
+
+	// 3. Render Player (Texture Mode)
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	AEGfxTextureSet(player.pTex, 0, 0);
 	AEMtx33Scale(&scale, player.size, player.size);
 	AEMtx33Trans(&trans, player.x, player.y);
 	AEMtx33Concat(&transform, &trans, &scale);
 	AEGfxSetTransform(transform.m);
 	AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
+	// 4. Render Mummy and Exit Portal (Color Mode)
+	//AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	//AEGfxSetBlendMode(AE_GFX_BM_NONE);
 
-	AEGfxSetRenderMode(AE_GFX_RM_COLOR); // Switch back to color mode for other entities
-	AEGfxSetBlendMode(AE_GFX_BM_NONE); // Disable blending for solid colors
-
-
-	// Render Mummy (Red Square)
-	AEGfxSetColorToMultiply(mummy.r, mummy.g, mummy.b, 1.0f);
+	// Render Mummy
+	//AEGfxSetColorToMultiply(mummy.r, mummy.g, mummy.b, 1.0f);
+	AEGfxTextureSet(mummy.pTex, 0, 0); // Set the mummy texture
 	AEMtx33Scale(&scale, mummy.size, mummy.size);
 	AEMtx33Trans(&trans, mummy.x, mummy.y);
 	AEMtx33Concat(&transform, &trans, &scale);
 	AEGfxSetTransform(transform.m);
 	AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-	//																					Render exit portal (Yellow Square) 
-	AEGfxSetColorToMultiply(exitPortal.r, exitPortal.g, exitPortal.b, 1.0f);
+	// coin render
+	if (coin.x < 1000.0f)
+	{
+		AEGfxTextureSet(coin.pTex, 0, 0);
+		AEMtx33Scale(&scale, coin.size, coin.size);
+		AEMtx33Trans(&trans, coin.x, coin.y);
+		AEMtx33Concat(&transform, &trans, &scale);
+		AEGfxSetTransform(transform.m);
+		AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+	}
+
+	// Render Exit Portal
+	//AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+	//AEGfxSetColorToMultiply(exitPortal.r, exitPortal.g, exitPortal.b, 1.0f);
+	AEGfxTextureSet(exitPortal.pTex, 0, 0);
 	AEMtx33Scale(&scale, exitPortal.size, exitPortal.size);
 	AEMtx33Trans(&trans, exitPortal.x, exitPortal.y);
 	AEMtx33Concat(&transform, &trans, &scale);
 	AEGfxSetTransform(transform.m);
 	AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-	AEGfxPrint(fontId, "EXIT", 0.48f, 0.1f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
-	//																					Render Coin (Orange Square)
+	DrawGridLines(pMesh);	// Render Grid Tiles
 
-	//if (coin.x < 1000.0f) // Only render if the coin hasn't been "eaten"
-	//{
-	//	AEGfxSetColorToMultiply(coin.r, coin.g, coin.b, 1.0f);
-	//	AEMtx33Scale(&scale, coin.size, coin.size);
-	//	AEMtx33Trans(&trans, coin.x, coin.y);
-	//	AEMtx33Concat(&transform, &trans, &scale);
-	//	AEGfxSetTransform(transform.m);
-	//	AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-
-	//	// The text is now tied to the coin's active state
-	//	AEGfxPrint(fontId, "COIN", -0.05f, 0.2f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	//}
-
-
-	////																		Render Wall (Dark Grey Square)			   -- comment this out cause there is already walll in leveleditor -- YT
-	//AEGfxSetColorToMultiply(wall.r, wall.g, wall.b, 1.0f);
-	//AEMtx33Scale(&scale, wall.size, wall.size);
-	//AEMtx33Trans(&trans, wall.x, wall.y);
-	//AEMtx33Concat(&transform, &trans, &scale);
-	//AEGfxSetTransform(transform.m);
-	//AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-
-	// This generates the level for each level. need an additional source file for it   -- uncommmented this file to collaborate with level editor.
-	generateLevel();
-
+	//generateLevel();
 }
+// level1 draw ebd here 
+
+
 
 //----------------------------------------------------------------------------
 // Cleans up dynamic resources while keeping static data 
@@ -437,9 +459,12 @@ void Level1_Unload()
 {
 	std::cout << "Level1:Unload\n"; // Print onto standard output stream
 
+	// Unload Texture here
 	AEGfxTextureUnload(player.pTex);
 	AEGfxTextureUnload(gDesertBlockTex);
-
+	AEGfxTextureUnload(mummy.pTex);
+	AEGfxTextureUnload(coin.pTex);
+	AEGfxTextureUnload(exitPortal.pTex);
 	if (pMesh) {
 		AEGfxMeshFree(pMesh);
 		pMesh = nullptr;
@@ -469,3 +494,4 @@ void ResetLevel1()
 	turnCounter = 0;
 	playerMoved = false;
 }
+
