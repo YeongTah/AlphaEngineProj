@@ -40,6 +40,9 @@ extern bool IsAreaClicked(float area_center_x, float area_center_y, float area_w
 static Entity l2_player; // Player entity (explorer.png)
 static Entity l2_mummy;  // First mummy enemy
 static Entity l2_mummy2; // Second mummy (Level 2 exclusive -- adds difficulty)
+// ===== ADDED: one more different enemy -- Scorpion ===== -ths
+static Entity l2_scorpion; // Scorpion enemy entity (scorpion.png) -ths
+// ------------------------------------------------------- -ths
 static Entity l2_exitPortal; // Exit goal; reaching it triggers GS_WIN
 static Entity l2_coin;   // Legacy single coin entity
 static AEGfxTexture* l2_DesertBlockTex = nullptr; // Wall tile texture
@@ -164,6 +167,96 @@ static void L2LoadLevelTxt()
     std::cout << "Level2: Loaded grid from " << path << "\n";
 }
 
+// ===== ADDED: Reachability helpers to keep scorpion out of sealed pockets ===== -ths
+static bool L2IsCellInBounds(int r, int c) {                      // -ths
+    return r >= 0 && r < GRID_ROWS && c >= 0 && c < GRID_COLS;      // -ths
+}                                                                  // -ths
+
+// Return true if 'target (tr,tc)' is reachable from 'start (sr,sc)' via 4-neighbour floor (value==0). -ths
+static bool L2IsReachable(int sr, int sc, int tr, int tc) {        // -ths
+    if (!L2IsCellInBounds(sr, sc) || !L2IsCellInBounds(tr, tc))      // -ths
+        return false;                                                  // -ths
+    if (level[sr][sc] != 0 || level[tr][tc] != 0)                    // -ths
+        return false;                                                  // -ths
+
+    static int vis[GRID_ROWS][GRID_COLS];                            // -ths
+    for (int i = 0; i < GRID_ROWS; ++i) for (int j = 0; j < GRID_COLS; ++j)      // -ths
+        vis[i][j] = 0;                                                 // -ths
+
+    struct Node { int r, c; };                                        // -ths
+    Node q[GRID_ROWS * GRID_COLS];                                     // -ths
+    int qb = 0, qe = 0;                                                  // -ths
+    q[qe++] = { sr, sc };                                              // -ths
+    vis[sr][sc] = 1;                                                 // -ths
+    static int dr[4] = { -1, 1, 0, 0 };                                // -ths
+    static int dc[4] = { 0, 0,-1, 1 };                                // -ths
+
+    while (qb < qe) {                                                // -ths
+        Node cur = q[qb++];                                            // -ths
+        if (cur.r == tr && cur.c == tc) return true;                   // -ths
+        for (int k = 0; k < 4; ++k) {                                        // -ths
+            int nr = cur.r + dr[k], nc = cur.c + dc[k];                  // -ths
+            if (!L2IsCellInBounds(nr, nc)) continue;                      // -ths
+            if (vis[nr][nc]) continue;                                   // -ths
+            if (level[nr][nc] != 0) continue;                            // -ths
+            vis[nr][nc] = 1;                                             // -ths
+            q[qe++] = { nr,nc };                                           // -ths
+        }                                                               // -ths
+    }                                                                 // -ths
+    return false;                                                     // -ths
+}                                                                   // -ths
+
+// Prefer the given startRow/startCol; ensure the chosen free tile is reachable from the player. -ths
+static void L2FindReachableSpawnNear(int startRow, int startCol,   // -ths
+    int avoidRow, int avoidCol,   // -ths
+    int minDist,                  // -ths
+    float& outX, float& outY,     // -ths
+    int playerRow, int playerCol) // -ths
+{                                                                   // -ths
+  // 1) Try the regular near-start search first.                     // -ths
+    float tx, ty;                                                     // -ths
+    L2FindFreeSpawnCell(startRow, startCol, tx, ty, avoidRow, avoidCol, minDist); // -ths
+    int tr, tc; WorldToGrid(tx, ty, tr, tc);                          // -ths
+    if (L2IsCellInBounds(tr, tc) && level[tr][tc] == 0 &&                // -ths
+        L2IsReachable(playerRow, playerCol, tr, tc)) {                // -ths
+        outX = tx; outY = ty;                                           // -ths
+        return;                                                         // -ths
+    }                                                                 // -ths
+
+    // 2) Scan a neighbourhood around (startRow,startCol) for a reachable free tile. // -ths
+    int maxRadius = 10;                                               // -ths
+    for (int radius = 0; radius <= maxRadius; ++radius) {                 // -ths
+        for (int dr = -radius; dr <= radius; ++dr) {                    // -ths
+            for (int dc = -radius; dc <= radius; ++dc) {                  // -ths
+                if (abs(dr) != radius && abs(dc) != radius) continue;           // -ths
+                int r = startRow + dr, c = startCol + dc;                   // -ths
+                if (!L2IsCellInBounds(r, c)) continue;                       // -ths
+                if (level[r][c] != 0) continue;                             // -ths
+                // respect minDist from avoid cell (usually the player)      // -ths
+                if (avoidRow >= 0 && avoidCol >= 0) {                       // -ths
+                    if (abs(r - avoidRow) + abs(c - avoidCol) < minDist)      // -ths
+                        continue;                                               // -ths
+                }                                                           // -ths
+                if (L2IsReachable(playerRow, playerCol, r, c)) {            // -ths
+                    GridToWorldCenter(r, c, outX, outY);                      // -ths
+                    return;                                                   // -ths
+                }                                                           // -ths
+            }                                                             // -ths
+        }                                                               // -ths
+    }                                                                 // -ths
+
+    // 3) Fallback: pick the first reachable free tile anywhere.       // -ths
+    for (int r = 0; r < GRID_ROWS; ++r)                                   // -ths
+        for (int c = 0; c < GRID_COLS; ++c)                                 // -ths
+            if (level[r][c] == 0 && L2IsReachable(playerRow, playerCol, r, c)) // -ths
+            {
+                GridToWorldCenter(r, c, outX, outY); return;
+            }                 // -ths
+
+// 4) Last resort: just return the player's tile (almost never triggered). // -ths
+    GridToWorldCenter(playerRow, playerCol, outX, outY);              // -ths
+}                                                                   // -ths
+
 // ----------------------------------------------------------------------------
 // ResetLevel2
 // Repositions all Level 2 entities to safe spawn cells without reloading
@@ -173,6 +266,7 @@ static void L2LoadLevelTxt()
 // - Player : center-left (col 4)
 // - Mummy 1 : top-right corner, min 10 cells from player
 // - Mummy 2 : bottom-center, min 10 cells from player
+// - Scorpion : bottom-left, min 8 cells from player (new extra enemy)
 // - Coin : grid center
 // Also resets all counters and powerup state.
 // ----------------------------------------------------------------------------
@@ -190,6 +284,15 @@ static void ResetLevel2()
     // Mummy 2 spawn: bottom-center, at least 10 cells from player (different angle of approach)
     L2FindFreeSpawnCell(GRID_ROWS - 4, GRID_COLS / 2, px, py, playerRow, playerCol, 10);
     l2_mummy2.x = px; l2_mummy2.y = py;
+
+    // ===== REPLACED: Scorpion spawn with reachability-aware helper ===== -ths
+    L2FindReachableSpawnNear(GRID_ROWS - 4, 2,      // preferred bottom-left area -ths
+        playerRow, playerCol,  // avoid near player           -ths
+        8,                     // min Manhattan distance      -ths
+        px, py,                // out world coordinates       -ths
+        playerRow, playerCol); // for reachability check      -ths
+    l2_scorpion.x = px; l2_scorpion.y = py; l2_scorpion.size = 50.0f;              // -ths
+
     // Coin spawn: grid center
     L2FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
     l2_coin.x = px; l2_coin.y = py;
@@ -238,6 +341,9 @@ static void SpawnRandomPowerup()                                    // -ths
     l2_powerupActive = false; // fallback -ths
 }
 
+// ===== ADDED: Scorpion texture handle (loaded in Level2_Load) ===== -ths
+static AEGfxTexture* l2_ScorpionTex = nullptr; // Assets/scorpion.png -ths
+
 // ----------------------------------------------------------------------------
 // Level2_Load
 // Called once when entering Level 2.
@@ -264,6 +370,9 @@ void Level2_Load()
     l2_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png"); // -ths
     l2_FreezeTex = AEGfxTextureLoad("Assets/Freeze.png"); // -ths
 
+    // ===== ADDED: load scorpion texture ===== -ths
+    l2_ScorpionTex = AEGfxTextureLoad("Assets/scorpion.png"); // -ths
+
     pMesh = CreateSquareMesh(); // unit square mesh shared by all sprites
 }
 
@@ -274,6 +383,7 @@ void Level2_Load()
 // - Player : center-left free cell
 // - Mummy 1 : top-right, min 10 cells from player
 // - Mummy 2 : bottom-center, min 10 cells from player
+// - Scorpion : bottom-left, min 8 cells from player (new enemy)
 // - Exit : center-right
 // - Coin : grid center
 // ----------------------------------------------------------------------------
@@ -316,6 +426,16 @@ void Level2_Initialize()
         l2_mummy2.x = px; l2_mummy2.y = py;
         l2_mummy2.size = 50.0f;
         l2_mummy2.r = 1.0f; l2_mummy2.g = 0.0f; l2_mummy2.b = 0.0f;
+
+        // ===== REPLACED: Scorpion spawn with reachability-aware helper ===== -ths
+        L2FindReachableSpawnNear(GRID_ROWS - 4, 2,      // preferred bottom-left area -ths
+            playerRow, playerCol,  // avoid near player           -ths
+            8,                     // min Manhattan distance      -ths
+            px, py,                // out world coordinates       -ths
+            playerRow, playerCol); // for reachability check      -ths
+        l2_scorpion.x = px; l2_scorpion.y = py;         // -ths
+        l2_scorpion.size = 50.0f;                       // -ths
+        l2_scorpion.pTex = l2_ScorpionTex;              // -ths
 
         // --- Exit portal spawn: right side ---
         L2FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS - 5, px, py);
@@ -489,20 +609,36 @@ void Level2_Update()
                 float stepY = (diff2Y > 0) ? l2_gridStep : -l2_gridStep;
                 if (canMove(l2_mummy2.x, l2_mummy2.y + stepY)) l2_mummy2.y += stepY;
             }
+
+            // ===== ADDED: Scorpion movement (same axis-priority greedy chase) ===== -ths
+            float sdX = l2_player.x - l2_scorpion.x;
+            float sdY = l2_player.y - l2_scorpion.y;
+            if (fabsf(sdX) > 1.0f)
+            {
+                float sx = (sdX > 0) ? l2_gridStep : -l2_gridStep;
+                if (canMove(l2_scorpion.x + sx, l2_scorpion.y)) l2_scorpion.x += sx;
+            }
+            sdY = l2_player.y - l2_scorpion.y;
+            if (fabsf(sdY) > 1.0f)
+            {
+                float sy = (sdY > 0) ? l2_gridStep : -l2_gridStep;
+                if (canMove(l2_scorpion.x, l2_scorpion.y + sy)) l2_scorpion.y += sy;
+            }
         }
 
         L2TickPowers();
         l2_playerMoved = false;
     }
 
-    // --- Lose check: player caught by either mummy ---
+    // --- Lose check: player caught by either mummy OR scorpion (new) ---
     // Only triggers after the player has moved (prevents false positive at spawn overlap)
     if (l2_turnCounter > 0 && !L2IsInvincibleNow() &&
         ((fabsf(l2_player.x - l2_mummy.x) < 1.0f && fabsf(l2_player.y - l2_mummy.y) < 1.0f) ||
-            (fabsf(l2_player.x - l2_mummy2.x) < 1.0f && fabsf(l2_player.y - l2_mummy2.y) < 1.0f)))
+            (fabsf(l2_player.x - l2_mummy2.x) < 1.0f && fabsf(l2_player.y - l2_mummy2.y) < 1.0f) ||
+            (fabsf(l2_player.x - l2_scorpion.x) < 1.0f && fabsf(l2_player.y - l2_scorpion.y) < 1.0f))) // -ths
     {
         ResetLevel2();
-        printf("L2: Caught by a Mummy!\n");
+        printf("L2: Caught by an Enemy!\n"); // generic line; scorpion included -ths
         l2_showLose = true;
     }
 
@@ -531,9 +667,10 @@ void Level2_Update()
 // 1. Overlay check: if lose/win/pause overlay active, delegate and return.
 // 2. Floor tiles: all value==0 cells drawn with l2_FloorTex.
 // 3. Wall tiles: all value==1 cells drawn with l2_DesertBlockTex.
-// 4. Player, Mummy 1, Mummy 2 (all using explorer.png / Enemy.png textures).
+// 4. Player, Mummy 1, Mummy 2, Scorpion (all using textures).
 // 5. Coin entity (only drawn when coin.x < 1000).
-// 6. Exit portal texture.
+// 6. Power-up icon (if active).
+// 7. Exit portal texture.
 // All sprites use the shared pMesh scaled by a TRS matrix.
 // ----------------------------------------------------------------------------
 void Level2_Draw()
@@ -602,6 +739,14 @@ void Level2_Draw()
     AEMtx33Concat(&transform, &trans, &scale);
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+
+    // ===== ADDED: Scorpion (scorpion.png) ===== -ths
+    AEGfxTextureSet(l2_ScorpionTex, 0, 0);             // -ths
+    AEMtx33Scale(&scale, l2_scorpion.size, l2_scorpion.size); // -ths
+    AEMtx33Trans(&trans, l2_scorpion.x, l2_scorpion.y);       // -ths
+    AEMtx33Concat(&transform, &trans, &scale);                // -ths
+    AEGfxSetTransform(transform.m);                           // -ths
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);               // -ths
 
     // --- Coin (only rendered while not collected) ---
     if (l2_coin.x < 1000.0f)
@@ -679,9 +824,10 @@ void Level2_Unload()
     AEGfxTextureUnload(l2_coin.pTex);
     AEGfxTextureUnload(l2_exitPortal.pTex);
 
-    // ===== ADDED: unload power‑up textures ===== -ths
-    AEGfxTextureUnload(l2_ImmuneTex); // -ths
-    AEGfxTextureUnload(l2_FreezeTex); // -ths
+    // ===== ADDED: unload power‑up & scorpion textures ===== -ths
+    AEGfxTextureUnload(l2_ImmuneTex);   // -ths
+    AEGfxTextureUnload(l2_FreezeTex);   // -ths
+    AEGfxTextureUnload(l2_ScorpionTex); // -ths
 
     if (pMesh) { AEGfxMeshFree(pMesh); pMesh = nullptr; }
     l2_initialised = false;
