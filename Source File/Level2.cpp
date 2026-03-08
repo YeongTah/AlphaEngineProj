@@ -478,7 +478,7 @@ void Level2_Update()
 // ----------------------------------------------------------------------------
 void Level2_Draw()
 {
-    AEGfxSetBackgroundColor(1.0f, 1.0f, 1.0f);
+    AEGfxSetBackgroundColor(0.22f, 0.14f, 0.09f);
 
     // Delegate rendering to overlay draw functions when active
     if (l2_showLose) { LosePage_Draw();  return; }

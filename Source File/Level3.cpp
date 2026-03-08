@@ -477,7 +477,7 @@ void Level3_Update()
 // ----------------------------------------------------------------------------
 void Level3_Draw()
 {
-    AEGfxSetBackgroundColor(1.0f, 1.0f, 1.0f);
+    AEGfxSetBackgroundColor(0.22f, 0.14f, 0.09f);
 
     if (l3_showLose) { LosePage_Draw();  return; }
     if (l3_showWin) { WinPage_Draw();   return; }

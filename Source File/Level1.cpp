@@ -743,7 +743,7 @@ void Level1_Update()
 // ----------------------------------------------------------------------------
 void Level1_Draw()
 {
-    AEGfxSetBackgroundColor(1.0f, 1.0f, 1.0f);
+    AEGfxSetBackgroundColor(0.22f, 0.14f, 0.09f);
 
     // Redirect rendering to overlay draw functions when overlays are active
     if (gShowLose) { LosePage_Draw(); return; }

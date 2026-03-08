@@ -156,7 +156,7 @@ void LevelPage_Draw()
     AEMtx33Concat(&Selection[3], &button_tran, &button_scale);
 
     // Set background color (purple -- clamped to 0-1 range by engine)
-    AEGfxSetBackgroundColor(100.0f, 0.0f, 100.0f);
+    AEGfxSetBackgroundColor(0.84f, 0.76f, 0.58f);
 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 0.0f);
@@ -165,9 +165,9 @@ void LevelPage_Draw()
 
     for (int i = 0; i < array_count(Selection); ++i)
     {
-        if (i == 0) AEGfxSetColorToAdd(0.0f, 0.7f, 0.0f, 1.0f); // Green = Easy
-        if (i == 1) AEGfxSetColorToAdd(0.0f, 0.0f, 0.7f, 1.0f); // Blue  = Normal
-        if (i == 2) AEGfxSetColorToAdd(0.7f, 0.0f, 0.0f, 1.0f); // Red   = Hard
+        if (i == 0) AEGfxSetColorToAdd(0.38f, 0.24f, 0.10f, 1.0f); // Green = Easy
+        if (i == 1) AEGfxSetColorToAdd(0.38f, 0.24f, 0.10f, 1.0f); // Blue = Normal
+        if (i == 2) AEGfxSetColorToAdd(0.38f, 0.24f, 0.10f, 1.0f); // Red   = Hard
 
         if (i == 3) // Back button: switch to texture mode for Backbutton.png
         {
@@ -193,7 +193,7 @@ void LevelPage_Draw()
         AEGfxPrint(fontId, "NORMAL", -0.08f, -0.05f, 1.0f, 1, 1, 1, 1);
 
         AEGfxPrint(fontId, "LEVEL 3", 0.43f, 0.05f, 1.0f, 1, 1, 1, 1);
-        AEGfxPrint(fontId, "HARD", 0.46f, -0.05f, 1.0f, 1, 1, 1, 1);
+        AEGfxPrint(fontId, "HARD", 0.44f, -0.05f, 1.0f, 1, 1, 1, 1);
     }
 }
 

@@ -45,7 +45,7 @@ void LosePage_Update()
 // ----------------------------------------------------------------------------
 void LosePage_Draw()
 {
-    AEGfxSetBackgroundColor(0.15f, 0, 0); // Very dark red background
+    AEGfxSetBackgroundColor(0.18f, 0.05f, 0.05f);
 
     // Draw full-screen red tint rectangle over the game world
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -62,8 +62,12 @@ void LosePage_Draw()
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
     // Print title and instructions in white
-    AEGfxPrint(fontId, "CAUGHT BY THE MUMMY!", -0.33f, 0.10f, 2.0f, 1, 1, 1, 1);
-    AEGfxPrint(fontId, "ENTER: Level Select  |  R: Restart  |  Q: Quit", -0.48f, -0.05f, 1.0f, 1, 1, 1, 1);
+    AEGfxPrint(fontId, "CAUGHT BY THE MUMMY!", -0.40f, 0.12f, 1.8f, 0.65f, 0.12f, 0.12f, 1.0f);
+
+    // options
+    AEGfxPrint(fontId, "[ENTER] Level Select", -0.18f, -0.02f, 0.75f, 1.0f, 0.95f, 0.82f, 1.0f);
+    AEGfxPrint(fontId, "[R] Restart", -0.08f, -0.11f, 0.75f, 1.0f, 0.95f, 0.82f, 1.0f);
+    AEGfxPrint(fontId, "[Q] Quit", -0.06f, -0.20f, 0.75f, 1.0f, 0.95f, 0.82f, 1.0f);
 }
 
 // LosePage_Free -- nothing to clean up.

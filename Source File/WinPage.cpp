@@ -46,14 +46,14 @@ void WinPage_Update()
 // ----------------------------------------------------------------------------
 void WinPage_Draw()
 {
-    AEGfxSetBackgroundColor(0, 0.2f, 0); // Very dark green background
+    AEGfxSetBackgroundColor(0.22f, 0.14f, 0.09f);
 
     // Draw full-screen green tint rectangle over the game world
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(0.0f, 0.25f, 0.0f, 1.0f); // dark green fill
-    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+    AEGfxSetColorToAdd(0.08f, 0.05f, 0.02f, 1.0f);
 
     AEMtx33 scale, trans, mat;
     AEMtx33Scale(&scale, 1600.0f, 900.0f); // full screen
@@ -63,8 +63,10 @@ void WinPage_Draw()
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
     // Print title and instructions in white
-    AEGfxPrint(fontId, "YOU ESCAPED!", -0.18f, 0.10f, 2.0f, 1, 1, 1, 1);
-    AEGfxPrint(fontId, "ENTER: Level Select  |  R: Restart  |  Q: Quit", -0.48f, -0.05f, 1.0f, 1, 1, 1, 1);
+    AEGfxPrint(fontId, "YOU ESCAPED!", -0.30f, 0.12f, 2.0f, 0.85f, 0.68f, 0.15f, 1.0f);
+    AEGfxPrint(fontId, "[ENTER] Level Select", -0.18f, -0.02f, 0.75f, 1.0f, 0.95f, 0.82f, 1.0f);
+    AEGfxPrint(fontId, "[R] Restart", -0.08f, -0.11f, 0.75f, 1.0f, 0.95f, 0.82f, 1.0f);
+    AEGfxPrint(fontId, "[Q] Quit", -0.06f, -0.20f, 0.75f, 1.0f, 0.95f, 0.82f, 1.0f);
 }
 
 // WinPage_Free -- nothing to clean up.

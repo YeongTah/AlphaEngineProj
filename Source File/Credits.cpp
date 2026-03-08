@@ -106,7 +106,7 @@ namespace
         //copy text into the buffer
         sprintf_s(strBuffer, "%s", text);
 
-        AEGfxPrint(fontId, strBuffer, x, y, scale, 1.0f, 1.0f, 1.0f, 1.0f); //white
+        AEGfxPrint(fontId, strBuffer, x, y, scale, 0.30f, 0.18f, 0.08f, 1.0f); //white
     }
 }
 
@@ -185,7 +185,7 @@ void Credit_Draw()
     std::cout << "Credit:Draw\n";
 
     //background colour
-    AEGfxSetBackgroundColor(0.30f, 0.22f, 0.12f);
+    AEGfxSetBackgroundColor(0.84f, 0.76f, 0.58f);
 
     //rendering mode to colour mode
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
