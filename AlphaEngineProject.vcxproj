@@ -17,6 +17,7 @@
     <ClCompile Include="Source File\GridUtils.cpp" />
     <ClCompile Include="Source File\Level1.cpp" />
     <ClCompile Include="Source File\Level2.cpp" />
+    <ClCompile Include="Source File\Level3.cpp" />
     <ClCompile Include="Source File\leveleditor.cpp" />
     <ClCompile Include="Source File\LevelPage.cpp" />
     <ClCompile Include="Source File\LosePage.cpp" />
@@ -54,6 +55,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source File\leveleditor.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Source File\Level3.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

@@ -66,6 +66,9 @@
     <ClCompile Include="Source File\WinPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source File\Level3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Player.png">
@@ -129,5 +132,10 @@
     <ClInclude Include="Source File\WinPage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Source File\Level3.h">
+      <Filter>Header Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

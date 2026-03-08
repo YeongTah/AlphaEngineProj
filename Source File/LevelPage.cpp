@@ -1,4 +1,3 @@
-
 #include "pch.h"
 
 #include "LevelPage.h"
@@ -87,14 +86,13 @@ void LevelPage_Update()
         std::cout << "lvl 2 Left click released\n"; // Debug purposes
     }
 
-    //// Uncomment this only after creating level 3
-    //// If "hard" difficulty is selected, move to level 3
-    //    if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(hard_x, select_y,
-    //200.0f, 400.0f, mouseX, mouseY))
-    //{
-    //    next = GS_LEVEL3;
-    //    std::cout << "lvl 3 Left click released\n"; // Debug purposes
-    //}
+    // If "hard" difficulty is selected, move to level 3
+    if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(hard_x, select_y,
+        200.0f, 400.0f, mouseX, mouseY))
+    {
+        next = GS_LEVEL3;
+        std::cout << "lvl 3 Left click released\n"; // Debug purposes
+    }
 
     // Move back to main menu upon triggering "B", "ESCAPE" or clicking on the back button
     if (AEInputCheckReleased(AEVK_B) || (AEInputCheckReleased(AEVK_ESCAPE)) || 
@@ -200,6 +198,19 @@ void LevelPage_Draw()
         // Tell Alpha Engine to draw the mesh with the above settings.
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
+    }
+
+    // Draw text labels on buttons
+    if (fontId >= 0)
+    {
+        AEGfxPrint(fontId, "LEVEL 1", -0.57f,  0.05f, 1.0f, 1, 1, 1, 1);
+        AEGfxPrint(fontId, "EASY",    -0.55f, -0.05f, 1.0f, 1, 1, 1, 1);
+
+        AEGfxPrint(fontId, "LEVEL 2", -0.07f,  0.05f, 1.0f, 1, 1, 1, 1);
+        AEGfxPrint(fontId, "NORMAL",  -0.08f, -0.05f, 1.0f, 1, 1, 1, 1);
+
+        AEGfxPrint(fontId, "LEVEL 3",  0.43f,  0.05f, 1.0f, 1, 1, 1, 1);
+        AEGfxPrint(fontId, "HARD",     0.46f, -0.05f, 1.0f, 1, 1, 1, 1);
     }
 }
 

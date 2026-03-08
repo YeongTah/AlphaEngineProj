@@ -19,6 +19,7 @@ Technology is prohibited.
 #include "Creator.h"
 #include "Level1.h"
 #include "Level2.h"
+#include "Level3.h"
 #include "System.h"
 #include <iostream>
 
@@ -86,12 +87,21 @@ void GSM_Update()
         break;
 
     case GS_LEVEL2: // For level 2
-        fpLoad = Level2_Load;        // Point to Level 2 Load
-        fpInitialize = Level2_Initialize; // Point to Level 2 Initialize
-        fpUpdate = Level2_Update;    // Point to Level 2 Update
-        fpDraw = Level2_Draw;        // Point to Level 2 Draw
-        fpFree = Level2_Free;        // Point to Level 2 Free
-        fpUnload = Level2_Unload;    // Point to Level 2 Unload
+        fpLoad = Level2_Load;
+        fpInitialize = Level2_Initialize;
+        fpUpdate = Level2_Update;
+        fpDraw = Level2_Draw;
+        fpFree = Level2_Free;
+        fpUnload = Level2_Unload;
+        break;
+
+    case GS_LEVEL3: // For level 3
+        fpLoad = Level3_Load;
+        fpInitialize = Level3_Initialize;
+        fpUpdate = Level3_Update;
+        fpDraw = Level3_Draw;
+        fpFree = Level3_Free;
+        fpUnload = Level3_Unload;
         break;
 
     case GS_WIN: // Add  to trigger the win state

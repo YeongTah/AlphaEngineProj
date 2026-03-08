@@ -54,6 +54,7 @@ int coinCounter = 0; // To track how many coins the player has collected
 // Logic for balancing
 int turnCounter = 0; // To make the mummy move every 2nd turn
 AEGfxTexture* gDesertBlockTex = nullptr;
+static AEGfxTexture* gFloorTex = nullptr;
 int level1_counter = 0;
 int live1_counter = 3; // If want to include lives, adjust number of lives here
 bool playerMoved = false;
@@ -285,6 +286,7 @@ void Level1_Load()
     // Loading of blue player texture
     player.pTex = AEGfxTextureLoad("Assets/explorer.png");
     gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
+    gFloorTex = AEGfxTextureLoad("Assets/Floor.png");
     mummy.pTex = AEGfxTextureLoad("Assets/Enemy.png");  // mummy texture
     coin.pTex = AEGfxTextureLoad("Assets/Coin.png");    // coin texturer
     exitPortal.pTex = AEGfxTextureLoad("Assets/Exit.png"); // exit portal texture
@@ -567,14 +569,14 @@ void Level1_Update()
     // effective inv
     const bool effectiveInv = IsInvincibleNow();
 
-    // lose checks
-    if (!effectiveInv && fabsf(player.x - mummy.x) < 1.0f && fabsf(player.y - mummy.y) < 1.0f)
+    // lose checks - only after player has moved at least once (avoids false trigger on spawn)
+    if (turnCounter > 0 && !effectiveInv && fabsf(player.x - mummy.x) < 1.0f && fabsf(player.y - mummy.y) < 1.0f)
     {
         ResetLevel1();
         printf("Caught by the Mummy! Level Reset!\n");
         gShowLose = true;
     }
-    if (!effectiveInv) {
+    if (turnCounter > 0 && !effectiveInv) {
         for (int i = 0; i < gExtraEnemyCount; ++i) {
             if (fabsf(player.x - gExtraEnemies[i].x) < 1.0f &&
                 fabsf(player.y - gExtraEnemies[i].y) < 1.0f) {
@@ -617,11 +619,31 @@ void Level1_Draw()
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
-    AEGfxTextureSet(gDesertBlockTex, 0, 0);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
     AEMtx33 transform, scale, trans;
 
+    // Draw floor texture on every walkable (value == 0) cell
+    AEGfxTextureSet(gFloorTex, 0, 0);
+    for (int row = 0; row < GRID_ROWS; row++)
+    {
+        for (int col = 0; col < GRID_COLS; col++)
+        {
+            if (level[row][col] == 0)
+            {
+                float x, y;
+                GridToWorldCenter(row, col, x, y);
+                AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
+                AEMtx33Trans(&trans, x, y);
+                AEMtx33Concat(&transform, &trans, &scale);
+                AEGfxSetTransform(transform.m);
+                AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+            }
+        }
+    }
+
+    // Draw wall texture on every non-walkable (value == 1) cell
+    AEGfxTextureSet(gDesertBlockTex, 0, 0);
     for (int row = 0; row < GRID_ROWS; row++)
     {
         for (int col = 0; col < GRID_COLS; col++)
@@ -638,10 +660,7 @@ void Level1_Draw()
 
                 AEGfxSetTransform(transform.m);
                 AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-
             }
-            // You can add additional 'else if' blocks here to draw 
-            // other objects based on the values (e.g., case 4 for coins)
         }
     }
 
@@ -689,9 +708,11 @@ void Level1_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    DrawGridLines(pMesh);	// Render Grid Tiles
+    // Reset render state after drawing
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 }
-// level1 draw end here 
 
 
 
@@ -714,6 +735,7 @@ void Level1_Unload()
     // Unload Texture here
     AEGfxTextureUnload(player.pTex);
     AEGfxTextureUnload(gDesertBlockTex);
+    AEGfxTextureUnload(gFloorTex);
     AEGfxTextureUnload(mummy.pTex);
     AEGfxTextureUnload(coin.pTex);
     AEGfxTextureUnload(exitPortal.pTex);
