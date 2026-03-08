@@ -14,6 +14,7 @@ Technology is prohibited.
 
 #include "pch.h"
 #include "GameStateManager.h"
+#include "IntroLogo.h"
 #include "MainMenu.h"
 #include "LevelPage.h"
 #include "Creator.h"
@@ -50,6 +51,15 @@ void GSM_Update()
     // Set up 6 function pointers to currently selected stage
     switch (current) // Based on current state
     {
+    case INTROSTATE: // For Intro screen
+        fpLoad = Intro_Load;      // Point to Intro Load
+        fpInitialize = Intro_Initialize; // Point to Intro Initialise
+        fpUpdate = Intro_Update;  // Point to Intro Update
+        fpDraw = Intro_Draw;      // Point to Intro Draw
+        fpFree = Intro_Free;      // Point to Intro Free
+        fpUnload = Intro_Unload;  // Point to Intro Unload
+        break;
+
     case MAINMENUSTATE: // For Main Menu
         fpLoad = MainMenu_Load;      // Point to Main Menu Load
         fpInitialize = MainMenu_Initialize; // Point to Main Menu Initialise

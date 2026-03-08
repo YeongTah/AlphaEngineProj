@@ -17,6 +17,7 @@ Technology is prohibited.
 // Additional states for Pause / Win / Lose pages -ths
 enum GS_STATES
 {
+	INTROSTATE = -1,
 	MAINMENUSTATE = 0,
 	LEVELPAGE,
 	GS_LEVEL1,

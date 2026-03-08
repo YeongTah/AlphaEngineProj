@@ -65,7 +65,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	System_Initialize();
 
 	// Initialize game state manager
-	GSM_Initialize(MAINMENUSTATE);
+	GSM_Initialize(INTROSTATE);
 
 	// Using custom window procedure
 	AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, NULL);
