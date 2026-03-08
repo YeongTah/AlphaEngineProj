@@ -17,6 +17,7 @@ Technology is prohibited.
 #include "MainMenu.h"
 #include "LevelPage.h"
 #include "Creator.h"
+#include "Credits.h"
 #include "Level1.h"
 #include "Level2.h"
 #include "System.h"
@@ -67,13 +68,21 @@ void GSM_Update()
         fpFree = LevelPage_Free; // Point to Main Menu Free
         fpUnload = LevelPage_Unload; // Point to Main Menu Unload
         break;
+    case CREDIT: // For Credit Page
+        fpLoad = Credit_Load; // Point to Credit Load
+        fpInitialize = Credit_Initialize; // Point to Credit Initialise
+        fpUpdate = Credit_Update; // Point to Credit Update
+        fpDraw = Credit_Draw; // Point to Credit Draw
+        fpFree = Credit_Free; // Point to Credit Free
+        fpUnload = Credit_Unload; // Point to Credit Unload
+        break;
     case CREATOR: // For Creator Page
-        fpLoad = Credit_Load; // Point to Creator Load
-        fpInitialize = Credit_Initialize; // Point to Creator Initialise
-        fpUpdate = Credit_Update; // Point to Creator Update
-        fpDraw = Credit_Draw; // Point to Creator Draw
-        fpFree = Credit_Free; // Point to Creator Free
-        fpUnload = Credit_Unload; // Point to Creator Unload
+        fpLoad = Creator_Load; // Point to Creator Load
+        fpInitialize = Creator_Initialize; // Point to Creator Initialise
+        fpUpdate = Creator_Update; // Point to Creator Update
+        fpDraw = Creator_Draw; // Point to Creator Draw
+        fpFree = Creator_Free; // Point to Creator Free
+        fpUnload = Creator_Unload; // Point to Creator Unload
         break;
 
     case GS_LEVEL1: // For level 1

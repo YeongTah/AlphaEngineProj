@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="Source File\Collision.cpp" />
     <ClCompile Include="Source File\Creator.cpp" />
+    <ClCompile Include="Source File\Credits.cpp" />
     <ClCompile Include="Source File\GameStateManager.cpp" />
     <ClCompile Include="Source File\GridUtils.cpp" />
     <ClCompile Include="Source File\Level1.cpp" />
@@ -31,6 +32,7 @@
   <ItemGroup>
     <ClInclude Include="Source File\Collision.h" />
     <ClInclude Include="Source File\Creator.h" />
+    <ClInclude Include="Source File\Credits.h" />
     <ClInclude Include="Source File\GameStateList.h" />
     <ClInclude Include="Source File\GameStateManager.h" />
     <ClInclude Include="Source File\GridUtils.h" />

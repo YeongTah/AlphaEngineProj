@@ -82,12 +82,12 @@ void MainMenu_Update()
     //    next = ? ? ? ;
     //}
 
-    //// Move to credits page when click on credits button
-    //if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, creditbutton_y,
-    //    300.0f, 90.0f, mouseX, mouseY))
-    //{
-    //    next = ? ? ? ;
-    //}
+    // Move to credits page when click on credits button
+    if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, creditbutton_y,
+        300.0f, 90.0f, mouseX, mouseY))
+    {
+        next = CREDIT;
+    }
 
     // Quit game when Q is hit or when the window is closed
     if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist() ||
