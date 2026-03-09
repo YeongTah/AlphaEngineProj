@@ -34,7 +34,7 @@ Technology is prohibited.
 extern void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol);           // -ths
 extern void GridToWorldCenter(int row, int col, float& outX, float& outY);              // -ths
 extern bool canMove(float nextX, float nextY);                                           // -ths
-extern int  level[18][32];                                                               // -ths
+extern int  level[18][32];                                                           // everylevel 18 rol 32 col tiles value
 /*extern int  ROWS, COLS;   */                                                               // -ths
 
 /* NEW: forward decls to reuse mouse + click helpers (already in your project) -ths */
@@ -62,27 +62,7 @@ float nextY = player.y;    // Stores the player's proposed next Y position befor
 
 //                        --- Variables declaration end here ---
 
-// ========================== NEW: enemy variants & powerups (local-only) ===========================
-// Enemy types for minimal variety without touching GSM -ths
-enum EnemyType { ENEMY_SCOUT = 1, ENEMY_BRUTE = 2 }; // your mummy remains as-is; these are extra -ths
-
-struct ExtraEnemy { float x, y, size; float r, g, b; EnemyType type; }; // kept simple -ths
-static ExtraEnemy gExtraEnemies[8]; // Fixed-size array of extra enemies (max 8) -ths
-static int gExtraEnemyCount = 0;    // Current number of active extra enemies -ths
-
-// ----------------------------------------------------------------------------
-// SpawnExtraEnemy
-// Adds a new extra enemy to gExtraEnemies[] at world position (x, y).
-// Scout = orange, Brute = purple. Does nothing if the array is already full.
-// ----------------------------------------------------------------------------
-static void SpawnExtraEnemy(float x, float y, EnemyType t)
-{
-    if (gExtraEnemyCount >= (int)(sizeof(gExtraEnemies) / sizeof(gExtraEnemies[0]))) return;
-    ExtraEnemy& e = gExtraEnemies[gExtraEnemyCount++];
-    e.x = x; e.y = y; e.size = gridStep; e.type = t;
-    if (t == ENEMY_SCOUT) { e.r = 0.9f; e.g = 0.5f; e.b = 0.0f; }  // orange scout -ths
-    if (t == ENEMY_BRUTE) { e.r = 0.6f; e.g = 0.2f; e.b = 0.8f; }  // purple brute -ths
-}
+// ========================== NEW: powerups (local-only) ===========================
 
 // Powerup tile values encoded in the level[][] grid (set via level editor).
 // These values are read in Level1_Update when the player steps on their tile.
@@ -101,11 +81,11 @@ static struct PowerState {
     int    invFrames = 0;      // Frame-countdown invincibility (~300 frames = ~5 seconds) -ths
 } gPower;
 
-// Powerup grant helpers -- call these to activate the matching powerup -ths
-static void   GiveSpeed(int turns) { gPower.speed = true;      gPower.speedTurns = turns; }
-static void   GiveFreeze(int turns) { gPower.freeze = true;     gPower.freezeTurns = turns; }
-static void   GiveInvincibleTurns(int turns) { gPower.invincible = true; gPower.invTurns = turns; }
-static void   GiveInvincibleFrames(int frames) { if (frames > gPower.invFrames) gPower.invFrames = frames; }
+// Powerup grant helpers -- currently unused in Level 1; kept for future use
+//static void   GiveSpeed(int turns) { gPower.speed = true;      gPower.speedTurns = turns; }
+//static void   GiveFreeze(int turns) { gPower.freeze = true;     gPower.freezeTurns = turns; }
+//static void   GiveInvincibleTurns(int turns) { gPower.invincible = true; gPower.invTurns = turns; }
+//static void   GiveInvincibleFrames(int frames) { if (frames > gPower.invFrames) gPower.invFrames = frames; }
 
 // Returns true if the player is currently protected from any enemy (either turn- or frame-based). -ths
 static bool   IsInvincibleNow() { return gPower.invincible || (gPower.invFrames > 0); }
@@ -153,8 +133,8 @@ static float kBtnH = 90.0f;
 
 // Converts a world X coordinate to Normalized Device Coordinates [-1, 1]. -ths
 static inline float ToNDCX(float worldX) { return worldX / ((float)AEGfxGetWindowWidth() * 0.5f); }
-// Converts a world Y coordinate to Normalized Device Coordinates [-1, 1]. -ths
-static inline float ToNDCY(float worldY) { return worldY / ((float)AEGfxGetWindowHeight() * 0.5f); }
+// Converts a world Y coordinate to Normalized Device Coordinates [-1, 1]. -ths (currently unused)
+//static inline float ToNDCY(float worldY) { return worldY / ((float)AEGfxGetWindowHeight() * 0.5f); }
 
 // ----------------------------------------------------------------------------
 // CenteredTextX
@@ -190,16 +170,16 @@ static void DrawButtonRect(float cx, float cy, float w, float h, float r, float 
 }
 
 // ----------------------------------------------------------------------------
-// SnapToGridCenter
+// SnapToGridCenter -- currently unused in Level 1; kept for future use
 // Converts an arbitrary world position (inX, inY) to the exact center of the
 // grid cell it occupies.  Prevents entities from sitting on grid-line borders.
 // ----------------------------------------------------------------------------
-static void SnapToGridCenter(float inX, float inY, float& outX, float& outY)
-{
-    int rr, cc;
-    WorldToGrid(inX, inY, rr, cc);
-    GridToWorldCenter(rr, cc, outX, outY);
-}
+//static void SnapToGridCenter(float inX, float inY, float& outX, float& outY)
+//{
+//    int rr, cc;
+//    WorldToGrid(inX, inY, rr, cc);
+//    GridToWorldCenter(rr, cc, outX, outY);
+//}
 
 
 // ========================== NEW: Save / Load (local) ==============================================
@@ -221,9 +201,6 @@ static bool SaveLevel1State(const char* path)
         << (int)gPower.freeze << ' ' << gPower.freezeTurns << ' '
         << (int)gPower.invincible << ' ' << gPower.invTurns << ' '
         << gPower.invFrames << '\n';
-    f << gExtraEnemyCount << '\n';
-    for (int i = 0; i < gExtraEnemyCount; ++i)
-        f << (int)gExtraEnemies[i].type << ' ' << gExtraEnemies[i].x << ' ' << gExtraEnemies[i].y << '\n';
     return true;
 }
 
@@ -245,16 +222,6 @@ static bool LoadLevel1State(const char* path)
     gPower.speed = (sp != 0);
     gPower.freeze = (fr != 0);
     gPower.invincible = (iv != 0);
-    f >> gExtraEnemyCount; if (gExtraEnemyCount < 0) gExtraEnemyCount = 0;
-    if (gExtraEnemyCount > (int)(sizeof(gExtraEnemies) / sizeof(gExtraEnemies[0])))
-        gExtraEnemyCount = (int)(sizeof(gExtraEnemies) / sizeof(gExtraEnemies[0]));
-    for (int i = 0; i < gExtraEnemyCount; ++i)
-    {
-        int t; f >> t >> gExtraEnemies[i].x >> gExtraEnemies[i].y;
-        gExtraEnemies[i].type = (EnemyType)t; gExtraEnemies[i].size = gridStep;
-        if (gExtraEnemies[i].type == ENEMY_SCOUT) { gExtraEnemies[i].r = 0.9f; gExtraEnemies[i].g = 0.5f; gExtraEnemies[i].b = 0.0f; }
-        if (gExtraEnemies[i].type == ENEMY_BRUTE) { gExtraEnemies[i].r = 0.6f; gExtraEnemies[i].g = 0.2f; gExtraEnemies[i].b = 0.8f; }
-    }
     return true;
 }
 
@@ -262,47 +229,47 @@ static bool LoadLevel1State(const char* path)
 // ========================== NEW: ensure at least one buff tile (8) exists =========================
 
 // ----------------------------------------------------------------------------
-// HasBuffTile8
+// HasBuffTile8 -- currently unused in Level 1; kept for future use
 // Scans the entire level[][] grid and returns true if any cell has value 8
 // (the black immunity buff block).
 // ----------------------------------------------------------------------------
-static bool HasBuffTile8()
-{
-    for (int r = 0; r < GRID_ROWS; ++r)
-        for (int c = 0; c < GRID_COLS; ++c)
-            if (level[r][c] == 8) return true;
-    return false;
-}
+//static bool HasBuffTile8()
+//{
+//    for (int r = 0; r < GRID_ROWS; ++r)
+//        for (int c = 0; c < GRID_COLS; ++c)
+//            if (level[r][c] == 8) return true;
+//    return false;
+//}
 
 // ----------------------------------------------------------------------------
-// EnsureBuffTilePresent
+// EnsureBuffTilePresent -- currently unused in Level 1; kept for future use
 // Guarantees that at least one tile-value-8 (immunity buff) exists in the grid.
 // If none is found, it searches outward from the grid center for an empty cell
 // (value 0) and places a buff tile there, then saves it to the level file.
 // Falls back to forcing the center cell if no empty cell is found nearby.
 // Called during Level1_Load to enforce the design requirement.
 // ----------------------------------------------------------------------------
-static void EnsureBuffTilePresent()
-{
-    if (HasBuffTile8()) return; // buff already in level, nothing to do -ths
-    int midR = GRID_ROWS / 2, midC = GRID_COLS / 2;
-    for (int dr = -2; dr <= 2; ++dr)
-    {
-        for (int dc = -2; dc <= 2; ++dc)
-        {
-            int rr = midR + dr, cc = midC + dc;
-            if (rr >= 0 && rr < GRID_ROWS && cc >= 0 && cc < GRID_COLS && level[rr][cc] == 0)
-            {
-                level[rr][cc] = 8;   // place black buff tile -ths
-                print_file();        // persist the change to the .txt file -ths
-                return;
-            }
-        }
-    }
-    // Fallback: force center cell if no empty cell was found -ths
-    level[midR][midC] = 8;
-    print_file();
-}
+//static void EnsureBuffTilePresent()
+//{
+//    if (HasBuffTile8()) return; // buff already in level, nothing to do -ths
+//    int midR = GRID_ROWS / 2, midC = GRID_COLS / 2;
+//    for (int dr = -2; dr <= 2; ++dr)
+//    {
+//        for (int dc = -2; dc <= 2; ++dc)
+//        {
+//            int rr = midR + dr, cc = midC + dc;
+//            if (rr >= 0 && rr < GRID_ROWS && cc >= 0 && cc < GRID_COLS && level[rr][cc] == 0)
+//            {
+//                level[rr][cc] = 8;   // place black buff tile -ths
+//                print_file();        // persist the change to the .txt file -ths
+//                return;
+//            }
+//        }
+//    }
+//    // Fallback: force center cell if no empty cell was found -ths
+//    level[midR][midC] = 8;
+//    print_file();
+//}
 
 
 // ----------------------------------------------------------------------------
@@ -361,8 +328,6 @@ static void LoadLevelTxt()
 //   2. Loads all textures needed for this level (player, wall, floor, mummy,
 //      coin, exit portal).
 //   3. Creates the shared pMesh (unit square) used for all rendering.
-//   4. Spawns two extra enemies (Scout near top-left, Brute near bottom-right)
-//      snapped to grid cell centers.
 // ----------------------------------------------------------------------------
 void Level1_Load()
 {
@@ -381,14 +346,6 @@ void Level1_Load()
 
     // Step 3: Create the unit square mesh used to draw all sprites and tiles
     pMesh = CreateSquareMesh();
-
-    // Step 4: Spawn extra enemy entities at far grid cells
-    gExtraEnemyCount = 0;
-    float ex, ey;
-    GridToWorldCenter(2, 2, ex, ey);                           // near top-left -ths
-    SpawnExtraEnemy(ex, ey, ENEMY_SCOUT);                      // orange scout -ths
-    GridToWorldCenter(GRID_ROWS - 3, GRID_COLS - 3, ex, ey);   // near bottom-right -ths
-    SpawnExtraEnemy(ex, ey, ENEMY_BRUTE);                      // purple brute -ths
 }
 
 
@@ -558,7 +515,6 @@ void Level1_Initialize()
 //        c. TickPowers() -- decrement turn-based powerup durations.
 //   8. Lose check: if player and mummy share the same cell (and player has moved
 //      at least once and is not invincible), call ResetLevel1() and show lose overlay.
-//      Also checks gExtraEnemies.
 //   9. Win check: if player reaches exitPortal cell, set next = GS_WIN.
 //  10. Legacy coin entity collect (moves coin off-screen on contact).
 // ----------------------------------------------------------------------------
@@ -696,17 +652,6 @@ void Level1_Update()
         ResetLevel1();
         printf("Caught by the Mummy! Level Reset!\n");
         gShowLose = true;
-    }
-
-    // --- Lose check: player caught by any extra enemy ---
-    if (turnCounter > 0 && !effectiveInv) {
-        for (int i = 0; i < gExtraEnemyCount; ++i) {
-            if (fabsf(player.x - gExtraEnemies[i].x) < 1.0f &&
-                fabsf(player.y - gExtraEnemies[i].y) < 1.0f) {
-                ResetLevel1();
-                printf("Caught by an Enemy! Level Reset!\n"); gShowLose = true; break;
-            }
-        }
     }
 
     // --- Win check: player reached the exit portal cell ---

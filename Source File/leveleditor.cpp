@@ -8,7 +8,8 @@
 // Tile size is 50.0f -- matches GRID_TILE_SIZE in GridUtils.h
 // level[][] is the SHARED global tile map used by ALL levels and the editor.
 // Each level's Load function overwrites this array from its own .txt file.
-int level[GRID_ROWS][GRID_COLS];
+int level[GRID_ROWS][GRID_COLS]; // extern int  level[18][32];                                                           // everylevel 18 rol 32 col tiles value
+
 
 // Tile value meanings (used throughout leveleditor, GridUtils, and all Level files):
 //   0  = empty / walkable floor
