@@ -87,21 +87,14 @@ void Intro_Update()
 // ---------------------------------------------------------------------------
 void Intro_Draw()
 {
-    std::cout << "Intro:Draw\n"; // Debug purposes  yt 25-2 comment up first, my computer cannot stand D:
-
-    //                                      SET SIZES AND POSITIONS OF LOGOS
-    AEMtx33 scale, trans, transform;
-    AEMtx33Scale(&scale, 1600.0f, 900.0f);
-    AEMtx33Trans(&trans, 0.0f, 0.0f);
-    AEMtx33Concat(&transform, &trans, &scale);
-    AEGfxSetTransform(transform.m);
+    //std::cout << "Intro:Draw\n"; // Debug purposes  yt 25-2 comment up first, my computer cannot stand D:
 
     //                                      START OF RENDERING HERE
-
+        // Render images (Texture Mode)
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     // Set the background to black.
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
-    // Render images (Texture Mode)
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+
     // Set the the color to multiply to white so it doesnt interfere with texture
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     // Set blend mode to AE_GFX_BM_BLEND
@@ -109,6 +102,14 @@ void Intro_Draw()
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
     
+    //                                      SET SIZES AND POSITIONS OF LOGOS
+    AEMtx33 scale, trans, transform;
+    AEMtx33Scale(&scale, 1600.0f, 900.0f);
+    AEMtx33Trans(&trans, 0.0f, 0.0f);
+    AEMtx33Concat(&transform, &trans, &scale);
+    AEGfxSetTransform(transform.m);
+
+
     // Draw logo based on the page index and if image exist
     if (page_index == 0) {
         if (DPLogo) {
@@ -129,7 +130,7 @@ void Intro_Draw()
     AEGfxSetTransform(transform.m);
 
     // Draw text for controls
-    AEGfxPrint(fontId, "Press spacebar or click anywhere on the screen to skip", 0.5f, 0.8f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxPrint(fontId, "Press spacebar or click anywhere on the screen to skip", -0.5f, -0.8f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 //----------------------------------------------------------------------------

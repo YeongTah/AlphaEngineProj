@@ -13,8 +13,10 @@ without the prior written consent of DigiPen Institute of
 Technology is prohibited.
 */
 /* End Header **************************************************************************/
-#include "leveleditor.hpp"
+
 #include "pch.h"
+#include "leveleditor.hpp"
+
 #include  "GridUtils.h"
 #include "Level1.h"
 #include "gamestatemanager.h"
