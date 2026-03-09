@@ -47,35 +47,35 @@ AEGfxVertexList* CreateSquareMesh() {
 
 AEGfxVertexList* pMesh = nullptr;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-    _In_opt_ HINSTANCE hPrevInstance,
-    _In_ LPWSTR    lpCmdLine,
-    _In_ int       nCmdShow)
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPWSTR    lpCmdLine,
+	_In_ int       nCmdShow)
 {
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-    UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // Initialization of your own variables go here
-	
+	// Initialization of your own variables go here
+
 
 	// 															--- Initialization of variables end here ---
 	// IF THERE IS NO OTHER MANAGERS BUILT, CAN REMOVE THIS AS IT DOES THE SAME AS AESysInit
 	// Initialize system components
-    System_Initialize();
+	System_Initialize();
 
-    // Initialize game state manager
-    GSM_Initialize(MAINMENUSTATE);
+	// Initialize game state manager
+	GSM_Initialize(MAINMENUSTATE);
 
-    // Using custom window procedure
-    AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, NULL);
-	
-		// Load the font from the Assets folder with a size of 32
+	// Using custom window procedure
+	AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, NULL);
+
+	// Load the font from the Assets folder with a size of 32
 	fontId = AEGfxCreateFont("Assets/Roboto-Regular.ttf", 32);
-//	gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
+	//	gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
 
 
-	//  Check if the font loaded successfully
+		//  Check if the font loaded successfully
 	if (fontId < 0) {
 		printf("Failed to load font!\n");
 	}
@@ -83,7 +83,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		printf("Font Roboto-Regular in Assets folder loaded successfully with ID: %d\n", fontId);
 	}
 
-    // Changing the window title
+	// Changing the window title
 	AESysSetWindowTitle("Mummy Maze Balanced Prototype");
 
 	//																	--- GAME STATE MANAGER LOOP ---
@@ -92,26 +92,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	{
 		AESysReset();
 
-		// Your own update logic goes here
-
-		// If current game state is not equal to restart (game loop)
-		if (current != GS_RESTART)
+		// SYNC: Resolve GS_RESTART to the actual level BEFORE GSM_Update()
+		// so it wires the correct function pointers for that level.
+		if (current == GS_RESTART)
 		{
-			// Call "Update" for current level
-
-
-			GSM_Update();  // This handles state switching and function pointer setup
-			fpLoad(); // Load current level
-		}
-		else
-		{
-			// Set next game state to be equal to previous game state
-			next = previous;
-			// set current game state to be equal to previous game state
 			current = previous;
+			next = previous;
 		}
 
-		// Call "init" for current game state
+		// Update the GSM to set the function pointers based on the current state
+		GSM_Update();
+
+		// Load and Initialize the current state
+		fpLoad();
 		fpInitialize();
 
 		//																	--- START OF GAME LOOP ---
@@ -140,12 +133,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		// Call "free" for current level
 		fpFree();
 
-		// If next game state is not equal to restart
-		if (next != GS_RESTART)
-		{
-			// Call "unload" for current level
-			fpUnload();
-		}
+		// Call "unload" for current level
+		fpUnload();
 
 		// Set previous game state to be equal to current game state
 		previous = current;
@@ -153,7 +142,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		current = next;
 
 		// Your own rendering logic goes here
-
 	}
 
 	// IF THERE IS NO OTHER MANAGERS BUILT, CAN REMOVE THIS AS IT DOES THE SAME AS AESysExit
@@ -167,6 +155,4 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// free the system
 	AESysExit();
-
-
 }

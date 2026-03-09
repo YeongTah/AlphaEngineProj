@@ -12,29 +12,40 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source File\Collision.cpp" />
+    <ClCompile Include="Source File\Creator.cpp" />
     <ClCompile Include="Source File\GameStateManager.cpp" />
+    <ClCompile Include="Source File\GridUtils.cpp" />
     <ClCompile Include="Source File\Level1.cpp" />
     <ClCompile Include="Source File\Level2.cpp" />
+    <ClCompile Include="Source File\Level3.cpp" />
     <ClCompile Include="Source File\leveleditor.cpp" />
     <ClCompile Include="Source File\LevelPage.cpp" />
+    <ClCompile Include="Source File\LosePage.cpp" />
     <ClCompile Include="Source File\Main.cpp" />
     <ClCompile Include="Source File\MainMenu.cpp" />
     <ClCompile Include="Source File\MouseCoor.cpp" />
+    <ClCompile Include="Source File\PausePage.cpp" />
     <ClCompile Include="Source File\pch.cpp" />
     <ClCompile Include="Source File\System.cpp" />
+    <ClCompile Include="Source File\WinPage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source File\Collision.h" />
+    <ClInclude Include="Source File\Creator.h" />
     <ClInclude Include="Source File\GameStateList.h" />
     <ClInclude Include="Source File\GameStateManager.h" />
+    <ClInclude Include="Source File\GridUtils.h" />
     <ClInclude Include="Source File\Level1.h" />
     <ClInclude Include="Source File\Level2.h" />
     <ClInclude Include="Source File\LevelPage.h" />
+    <ClInclude Include="Source File\LosePage.h" />
     <ClInclude Include="Source File\Main.h" />
     <ClInclude Include="Source File\MainMenu.h" />
     <ClInclude Include="Source File\MouseCoor.h" />
+    <ClInclude Include="Source File\PausePage.h" />
     <ClInclude Include="Source File\pch.h" />
     <ClInclude Include="Source File\System.h" />
+    <ClInclude Include="Source File\WinPage.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Player.png" />
@@ -44,6 +55,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source File\leveleditor.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Source File\Level3.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

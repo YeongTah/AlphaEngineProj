@@ -21,14 +21,16 @@ Technology is prohibited.
 
 #ifndef PCH_H
 #define PCH_H
-
-//======= ADD ANY HEADER FILES THAT IS USED IN MOST SOURCE FILES AND UNLIKELY TO BE CHANGED ======//
 #include "GameStateList.h"
 #include "AEEngine.h"
 #include "AEInput.h"
 #include "AEFrameRateController.h"
-#include "leveleditor.hpp"
+//#include "leveleditor.hpp"
 #include "Collision.h"
 #include "MouseCoor.h"
 
+// NEW: tiny pages headers -ths
+#include "PausePage.h"  // -ths
+#include "WinPage.h"    // -ths
+#include "LosePage.h"   // -ths
 #endif //PCH_H
