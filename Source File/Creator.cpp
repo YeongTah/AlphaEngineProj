@@ -10,9 +10,9 @@
 //----------------------------------------------------------------------------
 // Loads Main Menu
 //---------------------------------------------------------------------------
-void Credit_Load()
+void Creator_Load()
 {
-    std::cout << "Credit:Load\n"; // Debug purposes
+    std::cout << "Creator:Load\n"; // Debug purposes
     gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
     pMesh = CreateSquareMesh();
 
@@ -26,19 +26,19 @@ void Credit_Load()
 //----------------------------------------------------------------------------
 // Sets up the initial state
 // ---------------------------------------------------------------------------
-void Credit_Initialize()
+void Creator_Initialize()
 {
-    std::cout << "Credit:Initialize\n"; // Debug purposes
+    std::cout << "Creator:Initialize\n"; // Debug purposes
 
 }
 
 //----------------------------------------------------------------------------
 // Updates Level Selection Page navigation
 // ---------------------------------------------------------------------------
-void Credit_Update()
+void Creator_Update()
 {
 
-    std::cout << "Credit:Update\n"; // Debug purposes
+    std::cout << "Creator:Update\n"; // Debug purposes
 
     // Move back to main menu upon triggering "B"
     if (AEInputCheckReleased(AEVK_B) || (AEInputCheckReleased(AEVK_ESCAPE)))
@@ -60,9 +60,9 @@ void Credit_Update()
 //----------------------------------------------------------------------------
 // Renders or draws the visual representation each frame 
 // ---------------------------------------------------------------------------
-void Credit_Draw()
+void Creator_Draw()
 {
-    std::cout << "Credit:Draw\n"; // Debug purposes
+    std::cout << "Creator:Draw\n"; // Debug purposes
     AEGfxSetBackgroundColor(0.30f, 0.22f, 0.12f);
     generateLevel();
     
@@ -71,17 +71,17 @@ void Credit_Draw()
 //----------------------------------------------------------------------------
 // Cleans up dynamic resources while keeping static data 
 // ---------------------------------------------------------------------------
-void Credit_Free()
+void Creator_Free()
 {
-    std::cout << "Credit:Free\n"; // Debug purposes
+    std::cout << "Creator:Free\n"; // Debug purposes
 
 }
 
 //----------------------------------------------------------------------------
 // Unloads all resources completely when exiting the level 
 // ---------------------------------------------------------------------------
-void Credit_Unload()
+void Creator_Unload()
 {
-    std::cout << "Credit:Unload\n"; // Debug purposes
+    std::cout << "Creator:Unload\n"; // Debug purposes
 
 }

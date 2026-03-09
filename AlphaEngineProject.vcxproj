@@ -13,11 +13,13 @@
   <ItemGroup>
     <ClCompile Include="Source File\Collision.cpp" />
     <ClCompile Include="Source File\Creator.cpp" />
+    <ClCompile Include="Source File\Credits.cpp" />
     <ClCompile Include="Source File\GameStateManager.cpp" />
     <ClCompile Include="Source File\GridUtils.cpp" />
     <ClCompile Include="Source File\IntroLogo.cpp" />
     <ClCompile Include="Source File\Level1.cpp" />
     <ClCompile Include="Source File\Level2.cpp" />
+    <ClCompile Include="Source File\Level3.cpp" />
     <ClCompile Include="Source File\leveleditor.cpp" />
     <ClCompile Include="Source File\LevelPage.cpp" />
     <ClCompile Include="Source File\LosePage.cpp" />
@@ -35,6 +37,7 @@
   <ItemGroup>
     <ClInclude Include="Source File\Collision.h" />
     <ClInclude Include="Source File\Creator.h" />
+    <ClInclude Include="Source File\Credits.h" />
     <ClInclude Include="Source File\GameStateList.h" />
     <ClInclude Include="Source File\GameStateManager.h" />
     <ClInclude Include="Source File\GridUtils.h" />
@@ -59,6 +62,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source File\leveleditor.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Source File\Level3.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

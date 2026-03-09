@@ -82,12 +82,12 @@ void MainMenu_Update()
     //    next = ? ? ? ;
     //}
 
-    //// Move to credits page when click on credits button
-    //if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, creditbutton_y,
-    //    300.0f, 90.0f, mouseX, mouseY))
-    //{
-    //    next = ? ? ? ;
-    //}
+    // Move to credits page when click on credits button
+    if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, creditbutton_y,
+        300.0f, 90.0f, mouseX, mouseY))
+    {
+        next = CREDIT;
+    }
 
     // Quit game when Q is hit or when the window is closed
     if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist() ||
@@ -149,13 +149,13 @@ void MainMenu_Draw()
     
     //                                      START OF RENDERING HERE
     
-    // Set the background to black.
-    AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+    // Set the background to Sand.
+    AEGfxSetBackgroundColor(0.84f, 0.76f, 0.58f);
 
     // Tell the engine to get ready to draw something with texture.
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 
-    // Set the the color to multiply to black (default so can render any colour in)
+    //// Set the the color to multiply to black (default so can render any colour in)
     AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Set blend mode to AE_GFX_BM_BLEND
@@ -167,23 +167,23 @@ void MainMenu_Draw()
     for (int i = 0; i < array_count(buttons); ++i) {
 
         if (0 == i) { // "Play" 
-            AEGfxSetColorToAdd(0.5f, 0.0f, 0.0f, 1.0f); // Red
+            AEGfxSetColorToAdd(0.30f, 0.18f, 0.08f, 1.0f); // Red
         }
 
         if (1 == i) { // "Instruction" 
-            AEGfxSetColorToAdd(1.0f, 0.0f, 0.0f, 1.0f); // Orange
+            AEGfxSetColorToAdd(0.30f, 0.18f, 0.08f, 1.0f); // Orange
         }
 
         if (2 == i) { // "Credits" 
-            AEGfxSetColorToAdd(0.0f, 0.5f, 0.0f, 1.0f); // Green
+            AEGfxSetColorToAdd(0.30f, 0.18f, 0.08f, 1.0f); // Green
         }
 
         if (3 == i) { // "Exit" 
-            AEGfxSetColorToAdd(0.0f, 0.0f, 0.5f, 1.0f); // Blue
+            AEGfxSetColorToAdd(0.30f, 0.18f, 0.08f, 1.0f); // Blue
         }
 
         if (4 == i) { // "Creator" 
-            AEGfxSetColorToAdd(0.5f, 0.5f, 0.5f, 1.0f); // Grey
+            AEGfxSetColorToAdd(0.50f, 0.38f, 0.10f, 1.0f); // Grey
         }
 
         // Tell Alpha Engine to use the matrix in 'transform' to apply onto all
@@ -199,6 +199,7 @@ void MainMenu_Draw()
         AEGfxPrint(fontId, "CREDITS", -0.081f, -0.36f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxPrint(fontId, "EXIT", -0.045f, -0.63f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxPrint(fontId, "Creator", 0.8f, -0.84f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxPrint(fontId, "Mummy Game", -0.33f, 0.58f, 2.8f, 0.30f, 0.18f, 0.08f, 1.0f);
 
     }
 }

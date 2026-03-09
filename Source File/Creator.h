@@ -1,14 +1,14 @@
 #pragma once
 
-void Credit_Load();
+void Creator_Load();
 
-void Credit_Initialize();
+void Creator_Initialize();
 
-void Credit_Update();
+void Creator_Update();
 
-void Credit_Draw();
+void Creator_Draw();
 
-void Credit_Free();
+void Creator_Free();
 
-void Credit_Unload();
+void Creator_Unload();
 

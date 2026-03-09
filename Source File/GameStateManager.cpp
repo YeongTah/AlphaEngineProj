@@ -1,14 +1,10 @@
 /* Start Header ***************************************************************
-/*!
 \file GameStateManager.cpp
-\author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
-\par sharonjooai.lim@digipen.edu
-\date January, 26, 2026
-\brief This file implements the game state transitions through initializing and updating.
+\brief Manages game state transitions: initializes the starting state and
+       updates the 6 function pointers (Load, Initialize, Update, Draw, Free,
+       Unload) to match whichever game state is currently active.
+       The main game loop in Main.cpp calls these pointers each frame.
 Copyright (C) 2026 DigiPen Institute of Technology.
-Reproduction or disclosure of this file or its contents
-without the prior written consent of DigiPen Institute of
-Technology is prohibited.
 */
 /* End Header *************************************************************** */
 
@@ -18,38 +14,61 @@ Technology is prohibited.
 #include "MainMenu.h"
 #include "LevelPage.h"
 #include "Creator.h"
+#include "Credits.h"
 #include "Level1.h"
 #include "Level2.h"
+#include "Level3.h"
 #include "System.h"
 #include <iostream>
 
-// 3 variables for the states
+// The three state variables used by the main loop in Main.cpp:
+//   current  = state whose functions are currently executing
+//   previous = state that was active before the current one
+//              (used by LosePage/WinPage to know which level to restart)
+//   next     = state to transition to after this frame's loop ends
 int current = 0, previous = 0, next = 0;
-FP fpLoad = nullptr, fpInitialize = nullptr, fpUpdate = nullptr, fpDraw = nullptr, fpFree = nullptr, fpUnload = nullptr;
 
-//----------------------------------------------------------------------------
-// Initializes the game state manager with the starting state and prints to
-// standard output stream
-// ---------------------------------------------------------------------------
+// Six function pointers set by GSM_Update() each time 'current' changes.
+// Main.cpp calls these in order: Load -> Initialize -> [Update/Draw loop] -> Free -> Unload
+FP fpLoad = nullptr,
+fpInitialize = nullptr,
+fpUpdate = nullptr,
+fpDraw = nullptr,
+fpFree = nullptr,
+fpUnload = nullptr;
+
+// ----------------------------------------------------------------------------
+// GSM_Initialize
+// Sets current, previous, and next all to 'startingState' so the main loop
+// begins in that state.  Call once before the main while loop in Main.cpp.
+// ----------------------------------------------------------------------------
 void GSM_Initialize(int startingState)
 {
-    // Set all states to initial value
     current = previous = next = startingState;
-    // Print onto standard output stream
     std::cout << "GSM:Initialize\n";
 }
 
-//----------------------------------------------------------------------------
-// Updates game state manager by handling state transitions, calls appropriate
-// level functions, and manages the game loop for the current state
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// GSM_Update
+// Called once per state entry (BEFORE the inner game loop) to wire the 6
+// function pointers to the correct functions for 'current'.
+//
+// State routing:
+//   MAINMENUSTATE -> MainMenu_*  functions
+//   LEVELPAGE     -> LevelPage_* functions
+//   CREATOR       -> Credit_*    functions  (credits/creator page)
+//   GS_LEVEL1     -> Level1_*    functions
+//   GS_LEVEL2     -> Level2_*    functions
+//   GS_LEVEL3     -> Level3_*    functions
+//   GS_WIN        -> WinPage_*   functions  (win overlay page)
+//   GS_RESTART    -> No-op; Main.cpp already resolved current = previous before calling here
+//   GS_QUIT       -> Calls System_Exit() to clean up and terminate
+// ----------------------------------------------------------------------------
 void GSM_Update()
 {
-    // Print onto standard output stream
     std::cout << "GSM:Update\n";
 
-    // Set up 6 function pointers to currently selected stage
-    switch (current) // Based on current state
+    switch (current)
     {
     case INTROSTATE: // For Intro screen
         fpLoad = Intro_Load;      // Point to Intro Load
@@ -77,34 +96,51 @@ void GSM_Update()
         fpFree = LevelPage_Free; // Point to Main Menu Free
         fpUnload = LevelPage_Unload; // Point to Main Menu Unload
         break;
+    case CREDIT: // For Credit Page
+        fpLoad = Credit_Load; // Point to Credit Load
+        fpInitialize = Credit_Initialize; // Point to Credit Initialise
+        fpUpdate = Credit_Update; // Point to Credit Update
+        fpDraw = Credit_Draw; // Point to Credit Draw
+        fpFree = Credit_Free; // Point to Credit Free
+        fpUnload = Credit_Unload; // Point to Credit Unload
+        break;
     case CREATOR: // For Creator Page
-        fpLoad = Credit_Load; // Point to Creator Load
-        fpInitialize = Credit_Initialize; // Point to Creator Initialise
-        fpUpdate = Credit_Update; // Point to Creator Update
-        fpDraw = Credit_Draw; // Point to Creator Draw
-        fpFree = Credit_Free; // Point to Creator Free
-        fpUnload = Credit_Unload; // Point to Creator Unload
+        fpLoad = Creator_Load; // Point to Creator Load
+        fpInitialize = Creator_Initialize; // Point to Creator Initialise
+        fpUpdate = Creator_Update; // Point to Creator Update
+        fpDraw = Creator_Draw; // Point to Creator Draw
+        fpFree = Creator_Free; // Point to Creator Free
+        fpUnload = Creator_Unload; // Point to Creator Unload
+        break;
+    case GS_LEVEL1:
+        fpLoad = Level1_Load;
+        fpInitialize = Level1_Initialize;
+        fpUpdate = Level1_Update;
+        fpDraw = Level1_Draw;
+        fpFree = Level1_Free;
+        fpUnload = Level1_Unload;
         break;
 
-    case GS_LEVEL1: // For level 1
-        fpLoad = Level1_Load;        // Point to Level 1 Load
-        fpInitialize = Level1_Initialize; // Point to Level 1 Initialize
-        fpUpdate = Level1_Update;    // Point to Level 1 Update
-        fpDraw = Level1_Draw;        // Point to Level 1 Draw
-        fpFree = Level1_Free;        // Point to Level 1 Free
-        fpUnload = Level1_Unload;    // Point to Level 1 Unload
+    case GS_LEVEL2:
+        fpLoad = Level2_Load;
+        fpInitialize = Level2_Initialize;
+        fpUpdate = Level2_Update;
+        fpDraw = Level2_Draw;
+        fpFree = Level2_Free;
+        fpUnload = Level2_Unload;
         break;
 
-    case GS_LEVEL2: // For level 2
-        fpLoad = Level2_Load;        // Point to Level 2 Load
-        fpInitialize = Level2_Initialize; // Point to Level 2 Initialize
-        fpUpdate = Level2_Update;    // Point to Level 2 Update
-        fpDraw = Level2_Draw;        // Point to Level 2 Draw
-        fpFree = Level2_Free;        // Point to Level 2 Free
-        fpUnload = Level2_Unload;    // Point to Level 2 Unload
+    case GS_LEVEL3:
+        fpLoad = Level3_Load;
+        fpInitialize = Level3_Initialize;
+        fpUpdate = Level3_Update;
+        fpDraw = Level3_Draw;
+        fpFree = Level3_Free;
+        fpUnload = Level3_Unload;
         break;
 
-    case GS_WIN: // Add  to trigger the win state
+    case GS_WIN:
+        // Win page -- shown after the player reaches the exit portal in any level
         fpLoad = WinPage_Load;
         fpInitialize = WinPage_Initialize;
         fpUpdate = WinPage_Update;
@@ -113,28 +149,17 @@ void GSM_Update()
         fpUnload = WinPage_Unload;
         break;
 
-    case GS_RESTART: // For restart
-        /* Main.cpp syncs current = next (= previous) BEFORE calling GSM_Update again.
-           By the time we get here, current already equals the level to restart.
-           Nothing to do - the level's own case above will set the function pointers. */
+    case GS_RESTART:
+        // Main.cpp resolves GS_RESTART to the actual level (current = previous) BEFORE
+        // calling GSM_Update, so by the time we reach this case 'current' is already the
+        // level that should restart.  The level's own case above will set the pointers.
         break;
 
-    case GS_QUIT: // For exiting
-        System_Exit();
+    case GS_QUIT:
+        System_Exit(); // Perform engine/system cleanup then let the loop exit
         break;
 
     default:
         break;
     }
-
-    /* ADDITIONAL NOTES (no code changes needed) -ths
-       ------------------------------------------------
-       � Pause/Win/Lose overlays are rendered and controlled from
-         Level1_Update()/Level1_Draw() (see comments tagged -ths there),
-         so GSM does not need extra states for them. -ths
-       � If in the future you want dedicated Pause/Win/Lose pages,
-         we can add GS_PAUSE / GS_WIN / GS_LOSE to GameStateList.h
-         and mirror the Level1 wiring above with new pages. -ths
-       ------------------------------------------------ -ths
-    */
 }
