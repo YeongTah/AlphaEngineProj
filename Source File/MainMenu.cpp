@@ -29,7 +29,7 @@ AEGfxTexture* mainpage = nullptr; //jas added
 void MainMenu_Load()
 {
     std::cout << "MainMenu:Load\n"; // Debug purposes
-    mainpage = AEGfxTextureLoad("Assets/Front.png"); // floor tile texture
+    mainpage = AEGfxTextureLoad("Assets/MainPage.png"); // floor tile texture
     // Load menu assets
 
     pMesh = CreateSquareMesh();
