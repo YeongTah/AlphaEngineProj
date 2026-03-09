@@ -426,8 +426,6 @@ void Level1_Load()
     float ex, ey;
     GridToWorldCenter(2, 2, ex, ey); // near top-left -ths
     SpawnExtraEnemy(ex, ey, ENEMY_SCOUT); // orange scout -ths
-    GridToWorldCenter(GRID_ROWS - 3, GRID_COLS - 3, ex, ey); // near bottom-right -ths
-    SpawnExtraEnemy(ex, ey, ENEMY_BRUTE); // purple brute -ths
 }
 
 // ----------------------------------------------------------------------------
