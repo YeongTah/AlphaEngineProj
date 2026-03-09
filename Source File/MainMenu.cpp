@@ -19,6 +19,7 @@ float instructbutton_y; // y coordinate for instructions button
 float creditbutton_y;   // y coordinate for credits button
 float exitbutton_y;     // y coordinate for exit button
 float createbutton_x, createbutton_y; // x and y coordinate for creator button
+AEGfxTexture* mainpage = nullptr; //jas added
 
 //																--- Variables declaration end here ---
 
@@ -28,6 +29,7 @@ float createbutton_x, createbutton_y; // x and y coordinate for creator button
 void MainMenu_Load()
 {
     std::cout << "MainMenu:Load\n"; // Debug purposes
+    mainpage = AEGfxTextureLoad("Assets/Front.png"); // floor tile texture
     // Load menu assets
 
     pMesh = CreateSquareMesh();
@@ -112,6 +114,30 @@ void MainMenu_Update()
 // ---------------------------------------------------------------------------
 void MainMenu_Draw()
 {
+
+    //adding of the main page image--
+    AEMtx33 scale, trans, transform;
+
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxTextureSet(mainpage, 0, 0);
+
+    // size
+    AEMtx33Scale(&scale, 1600.0f, 900.0f);
+
+    //center of screen
+    AEMtx33Trans(&trans, 0.0f, 0.0f);
+
+    AEMtx33Concat(&transform, &trans, &scale);
+    AEGfxSetTransform(transform.m);
+
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES); // main menu image
+
+
     //std::cout << "MainMenu:Draw\n"; // Debug purposes  yt 25-2 comment up first, my computer cannot stand D:
 
     //                                      CREATING SHAPES FOR EACH BUTTONS
@@ -167,23 +193,23 @@ void MainMenu_Draw()
     for (int i = 0; i < array_count(buttons); ++i) {
 
         if (0 == i) { // "Play" 
-            AEGfxSetColorToAdd(0.30f, 0.18f, 0.08f, 1.0f); // Red
+            AEGfxSetColorToAdd(0.21f, 0.11f, 0.12f, 1.0f); // Red
         }
 
         if (1 == i) { // "Instruction" 
-            AEGfxSetColorToAdd(0.30f, 0.18f, 0.08f, 1.0f); // Orange
+            AEGfxSetColorToAdd(0.21f, 0.11f, 0.12f, 1.0f);  // Orange
         }
 
         if (2 == i) { // "Credits" 
-            AEGfxSetColorToAdd(0.30f, 0.18f, 0.08f, 1.0f); // Green
+            AEGfxSetColorToAdd(0.21f, 0.11f, 0.12f, 1.0f);  // Green
         }
 
         if (3 == i) { // "Exit" 
-            AEGfxSetColorToAdd(0.30f, 0.18f, 0.08f, 1.0f); // Blue
+            AEGfxSetColorToAdd(0.21f, 0.11f, 0.12f, 1.0f);  // Blue
         }
 
         if (4 == i) { // "Creator" 
-            AEGfxSetColorToAdd(0.50f, 0.38f, 0.10f, 1.0f); // Grey
+            AEGfxSetColorToAdd(0.37f, 0.14f, 0.14f, 1.0f); // Grey
         }
 
         // Tell Alpha Engine to use the matrix in 'transform' to apply onto all
@@ -199,7 +225,7 @@ void MainMenu_Draw()
         AEGfxPrint(fontId, "CREDITS", -0.081f, -0.36f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxPrint(fontId, "EXIT", -0.045f, -0.63f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxPrint(fontId, "Creator", 0.8f, -0.84f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
-        AEGfxPrint(fontId, "Mummy Game", -0.33f, 0.58f, 2.8f, 0.30f, 0.18f, 0.08f, 1.0f);
+        //AEGfxPrint(fontId, "Mummy Game", -0.33f, 0.58f, 2.8f, 0.30f, 0.18f, 0.08f, 1.0f);
 
     }
 }
