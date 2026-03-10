@@ -15,6 +15,7 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 #include "LevelPage.h"
 #include "Creator.h"
 #include "Credits.h"
+#include "Instructions.h"
 #include "Level1.h"
 #include "Level2.h"
 #include "Level3.h"
@@ -103,6 +104,14 @@ void GSM_Update()
         fpDraw = Credit_Draw; // Point to Credit Draw
         fpFree = Credit_Free; // Point to Credit Free
         fpUnload = Credit_Unload; // Point to Credit Unload
+        break;
+    case INSTRUCTIONS: // For Credit Page
+        fpLoad = Instructions_Load; // Point to Credit Load
+        fpInitialize = Instructions_Initialize; // Point to Credit Initialise
+        fpUpdate = Instructions_Update; // Point to Credit Update
+        fpDraw = Instructions_Draw; // Point to Credit Draw
+        fpFree = Instructions_Free; // Point to Credit Free
+        fpUnload = Instructions_Unload; // Point to Credit Unload
         break;
     case CREATOR: // For Creator Page
         fpLoad = Creator_Load; // Point to Creator Load

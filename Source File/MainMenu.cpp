@@ -76,13 +76,13 @@ void MainMenu_Update()
         std::cout << "next state: " << next << "\n"; // Debug purposes
     }
 
-    //                                           --- ONLY UNCOMMENT THE BELOW IF DONE WITH INSTRUCTIONS AND CREDITS PAGE ---
-    //// Move to instructions page when click on instructions button
-    //if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, instructbutton_y,
-    //    300.0f, 90.0f, mouseX, mouseY))
-    //{
-    //    next = ? ? ? ;
-    //}
+                                              // --- ONLY UNCOMMENT THE BELOW IF DONE WITH INSTRUCTIONS AND CREDITS PAGE ---
+    // Move to instructions page when click on instructions button
+    if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, instructbutton_y,
+        300.0f, 90.0f, mouseX, mouseY))
+    {
+        next = INSTRUCTIONS;
+    }
 
     // Move to credits page when click on credits button
     if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(button_x, creditbutton_y,

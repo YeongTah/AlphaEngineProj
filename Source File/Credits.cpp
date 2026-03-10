@@ -118,7 +118,7 @@ namespace
 void Credit_Load()
 {
     std::cout << "Credit:Load\n";
-    wallimage = AEGfxTextureLoad("Assets/wall.png"); // floor tile texture
+    wallimage = AEGfxTextureLoad("Assets/Bigwall.png"); // floor tile texture
     pMesh = CreateSquareMesh();
 }
 
@@ -209,6 +209,9 @@ void Credit_Draw()
 
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES); // main menu image
 
+    // Draw text copyright
+    AEGfxPrint(fontId, "All content © 2026 DigiPen Institute of Technology Singapore. All Rights Reserved.", -0.52f, -0.90f, 0.70f, 0.21f, 0.11f, 0.12f, 1.0f);
+
     //rendering mode to colour mode
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 
@@ -221,6 +224,8 @@ void Credit_Draw()
 
         DrawCreditText(Credits[i].text, -0.35f, y, Credits[i].scale);
     }
+
+ 
 }
 
 //----------------------------------------------------------------------------
