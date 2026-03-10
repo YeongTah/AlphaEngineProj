@@ -71,7 +71,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, NULL);
 
 	// Load the font from the Assets folder with a size of 32
-	fontId = AEGfxCreateFont("Assets/Roboto-Regular.ttf", 32);
+	fontId = AEGfxCreateFont("Assets/Fonts/Kenney Mini.ttf", 32);
 	//	gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
 
 
