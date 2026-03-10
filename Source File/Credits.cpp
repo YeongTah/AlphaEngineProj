@@ -91,6 +91,8 @@ namespace
     float AutoScrollSpeed = 0.0025f;
     float ManualScrollSpeed = 0.01f;
 
+    AEGfxTexture* wallimage = nullptr; //jas added
+
     // text = the string to display
     // x = horizontal print position
     // y = vertical print position
@@ -106,7 +108,7 @@ namespace
         //copy text into the buffer
         sprintf_s(strBuffer, "%s", text);
 
-        AEGfxPrint(fontId, strBuffer, x, y, scale, 0.30f, 0.18f, 0.08f, 1.0f); //white
+        AEGfxPrint(fontId, strBuffer, x, y, scale, 1.0f, 1.0f, 1.0f, 1.0f); //white
     }
 }
 
@@ -116,6 +118,7 @@ namespace
 void Credit_Load()
 {
     std::cout << "Credit:Load\n";
+    wallimage = AEGfxTextureLoad("Assets/wall.png"); // floor tile texture
     pMesh = CreateSquareMesh();
 }
 
@@ -184,8 +187,27 @@ void Credit_Draw()
 {
     std::cout << "Credit:Draw\n";
 
-    //background colour
-    AEGfxSetBackgroundColor(0.84f, 0.76f, 0.58f);
+    //adding of the main page image--
+    AEMtx33 scale, trans, transform;
+
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxTextureSet(wallimage, 0, 0);
+
+    // size
+    AEMtx33Scale(&scale, 1600.0f, 900.0f);
+
+    //center of screen
+    AEMtx33Trans(&trans, 0.0f, 0.0f);
+
+    AEMtx33Concat(&transform, &trans, &scale);
+    AEGfxSetTransform(transform.m);
+
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES); // main menu image
 
     //rendering mode to colour mode
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -215,4 +237,5 @@ void Credit_Free()
 void Credit_Unload()
 {
     std::cout << "Credit:Unload\n";
+    AEGfxTextureUnload(wallimage);
 }

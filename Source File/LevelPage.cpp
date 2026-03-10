@@ -17,6 +17,7 @@ float hard_x;               // X center of the "Level 3 / Hard" button
 float backbutton_x, backbutton_y; // X, Y center of the Back button (top-left area)
 
 AEGfxTexture* backButton = nullptr; // Texture loaded from Assets/Backbutton.png
+AEGfxTexture* wallimage = nullptr; //jas added
 
 
 // ----------------------------------------------------------------------------
@@ -29,6 +30,7 @@ void LevelPage_Load()
     std::cout << "LevelPage:Load\n";
 
     backButton = AEGfxTextureLoad("Assets/Backbutton.png"); // back arrow texture
+    wallimage = AEGfxTextureLoad("Assets/wall.png"); // floor tile texture
     pMesh = CreateSquareMesh();                        // unit square mesh
 }
 
@@ -130,6 +132,29 @@ void LevelPage_Update()
 // ----------------------------------------------------------------------------
 void LevelPage_Draw()
 {
+    //adding of the main page image--
+    AEMtx33 scale, trans, transform;
+
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxTextureSet(wallimage, 0, 0);
+
+    // size
+    AEMtx33Scale(&scale, 1600.0f, 900.0f);
+
+    //center of screen
+    AEMtx33Trans(&trans, 0.0f, 0.0f);
+
+    AEMtx33Concat(&transform, &trans, &scale);
+    AEGfxSetTransform(transform.m);
+
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES); // main menu image
+
+
     // Array of 4 transform matrices: indices 0-2 = difficulty buttons, 3 = back button
     AEMtx33 Selection[4] = { 0 };
 
@@ -215,6 +240,7 @@ void LevelPage_Unload()
     std::cout << "LevelPage:Unload\n";
 
     AEGfxTextureUnload(backButton);
+    AEGfxTextureUnload(wallimage);
 
     if (pMesh) {
         AEGfxMeshFree(pMesh);
