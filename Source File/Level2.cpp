@@ -366,7 +366,7 @@ void Level2_Load()
     l2_mummy.pTex = AEGfxTextureLoad("Assets/Enemy.png"); // mummy 1
     l2_mummy2.pTex = AEGfxTextureLoad("Assets/Enemy.png"); // mummy 2 (same texture)
     l2_coin.pTex = AEGfxTextureLoad("Assets/Coin.png"); // coin
-    l2_exitPortal.pTex = AEGfxTextureLoad("Assets/Exit.png"); // exit portal
+    l2_exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png"); // exit portal
 
     // ===== ADDED: load power‑up textures ===== -ths
     l2_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png"); // -ths
@@ -442,7 +442,7 @@ void Level2_Initialize()
         // --- Exit portal spawn: right side ---
         L2FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS - 5, px, py);
         l2_exitPortal.x = px; l2_exitPortal.y = py;
-        l2_exitPortal.size = 40.0f;
+        l2_exitPortal.size = 50.0f;
         l2_exitPortal.r = 1.0f; l2_exitPortal.g = 1.0f; l2_exitPortal.b = 0.0f;
 
         // --- Coin spawn: grid center ---

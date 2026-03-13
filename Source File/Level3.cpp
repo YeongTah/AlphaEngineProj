@@ -295,7 +295,7 @@ void Level3_Load()
     l3_mummy2.pTex = AEGfxTextureLoad("Assets/Enemy.png");
     l3_mummy3.pTex = AEGfxTextureLoad("Assets/Enemy.png");
     l3_coin.pTex = AEGfxTextureLoad("Assets/Coin.png");
-    l3_exitPortal.pTex = AEGfxTextureLoad("Assets/Exit.png");
+    l3_exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png");
 
     // ===== ADDED: load power‑up textures ===== -ths
     l3_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png"); // -ths
@@ -365,7 +365,7 @@ void Level3_Initialize()
         // --- Exit portal ---
         L3FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS - 5, px, py);
         l3_exitPortal.x = px; l3_exitPortal.y = py;
-        l3_exitPortal.size = 40.0f;
+        l3_exitPortal.size = 50.0f;
         l3_exitPortal.r = 1.0f; l3_exitPortal.g = 1.0f; l3_exitPortal.b = 0.0f;
 
         // --- Coin ---

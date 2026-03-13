@@ -412,7 +412,7 @@ void Level1_Load()
     gFloorTex = AEGfxTextureLoad("Assets/Floor.png"); // floor tile texture
     mummy.pTex = AEGfxTextureLoad("Assets/Enemy.png"); // main mummy texture
     coin.pTex = AEGfxTextureLoad("Assets/Coin.png"); // legacy coin texture
-    exitPortal.pTex = AEGfxTextureLoad("Assets/Exit.png"); // exit portal texture
+    exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png"); // exit portal texture
 
     // ====== ADDED: load power-up textures (immune / freeze) ====== -ths
     gImmuneTex = AEGfxTextureLoad("Assets/Immune.png"); // -ths
@@ -540,7 +540,7 @@ void Level1_Initialize()
         FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS - 5, px, py);
         exitPortal.x = px;
         exitPortal.y = py;
-        exitPortal.size = 40.0f;
+        exitPortal.size = 50.0f;
         exitPortal.r = 1.0f; exitPortal.g = 1.0f; exitPortal.b = 0.0f; // yellow tint
 
         // --- Coin spawn: grid center ---
@@ -799,7 +799,7 @@ void Level1_Update()
 // ----------------------------------------------------------------------------
 void Level1_Draw()
 {
-    AEGfxSetBackgroundColor(0.22f, 0.14f, 0.09f);
+    //AEGfxSetBackgroundColor(0.22f, 0.14f, 0.09f);
     // Redirect rendering to overlay draw functions when overlays are active
     if (gShowLose) { LosePage_Draw(); return; }
     if (gShowWin) { WinPage_Draw(); return; }
