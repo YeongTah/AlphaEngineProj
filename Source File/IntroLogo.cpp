@@ -26,7 +26,6 @@ void Intro_Load()
     std::cout << "Intro:Load\n"; // Debug purposes
 
     DPLogo = AEGfxTextureLoad("Assets/DigipenLogo.png");
-    GameLogo = AEGfxTextureLoad("Assets/GameLogo.png");
 
     pMesh = CreateSquareMesh();
 
@@ -119,10 +118,8 @@ void Intro_Draw()
         }
     }
     else if (page_index == 1) {
-        if (GameLogo) {
-            AEGfxTextureSet(GameLogo, 0, 0);
-            AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-        }
+        // Print game logo
+        AEGfxPrint(fontId, "MUMMMY GAME", -0.5f, 0.3f, 4.0f, 1, 1, 1, 1);
     }
 
     // Reset transform for text
@@ -130,7 +127,7 @@ void Intro_Draw()
     AEGfxSetTransform(transform.m);
 
     // Draw text for controls
-    AEGfxPrint(fontId, "Press spacebar or click anywhere on the screen to skip", -0.5f, -0.8f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxPrint(fontId, "Press spacebar or click anywhere on the screen to skip ->", 0.37f, 0.95f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 //----------------------------------------------------------------------------
@@ -149,7 +146,6 @@ void Intro_Unload()
     std::cout << "Intro:Unload\n"; // Debug purposes
 
     AEGfxTextureUnload(DPLogo);
-    AEGfxTextureUnload(GameLogo);
 
     if (pMesh) {
         AEGfxMeshFree(pMesh);
