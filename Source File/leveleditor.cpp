@@ -6,6 +6,7 @@
 #include <iostream>
 #include <math.h>
 #include "GridUtils.h"
+#include "Level1.h"
 
 // Tile size is 50.0f -- matches GRID_TILE_SIZE in GridUtils.h
 // level[][] is the SHARED global tile map used by ALL levels and the editor.
@@ -22,8 +23,8 @@ int level[GRID_ROWS][GRID_COLS];
 typedef enum Objects
 {
     NON_WALKABLE = 1, // Wall tile -- impassable
-    PLAYER_SPAWN = 2, // Player start marker (not used directly at runtime)
-    ENEMY_SPAWN = 3, // Enemy start marker  (not used directly at runtime)
+    //PLAYER_SPAWN = 2, // Player start marker (not used directly at runtime)
+    //ENEMY_SPAWN = 3, // Enemy start marker  (not used directly at runtime)
     COIN = 4  // Coin tile -- collected on player overlap
     /* NEW: value 8 = black buff block (5s immunity in Level1) -ths */
 } Objects;
@@ -38,6 +39,8 @@ namespace
     bool gLocked = false;             // When true, mouse clicks do NOT paint tiles
     int  gBrushValue = NON_WALKABLE;      // Tile value placed when clicking the grid
     int  Selected = 1;                 // Currently highlighted button ID
+    AEGfxTexture* CoinTex = nullptr;
+    bool EditorOpen = false;   // false = collapsed, true = full editor shown
 
     // Represents one UI button in the level editor panel
     struct Button
@@ -58,21 +61,29 @@ namespace
         BTN_LOCK,   // Toggle tile painting on/off (lock mode)
         BTN_L1,     // Switch editor to level1.txt
         BTN_L2,     // Switch editor to level2.txt
-        BTN_L3      // Switch editor to level3.txt
+        BTN_L3,      // Switch editor to level3.txt
+        BTN_COIN,    // Add coins
+        BTN_EDITOR // Editor Button to close / open the table
+    };
+
+    Button const ToggleButton =
+    {
+        730.0f, 400.0f, 120.0f, 40.0f, 0.85f, 0.25f, 0.25f, BTN_EDITOR
     };
 
     // All editor panel buttons -- positions are in world space (right side of screen)
     static Button const gButtons[] =
     {
         //pos_x  | pos_y  | width  | height|  r    |  g    |  b    | id
-        {650.0f,  240.0f, 220.0f, 50.0f, 0.85f, 0.25f, 0.25f, BTN_WALL},   // Wall button (red)
-        {650.0f,  180.0f, 220.0f, 50.0f, 0.75f, 0.75f, 0.75f, BTN_ERASE},  // Erase button (grey)
-        {650.0f,  120.0f, 220.0f, 50.0f, 0.95f, 0.95f, 0.25f, BTN_SAVE},   // Save button (yellow)
-        {650.0f,   60.0f, 220.0f, 50.0f, 0.25f, 0.95f, 0.95f, BTN_LOAD},   // Load button (cyan)
-        {650.0f,    0.0f, 220.0f, 50.0f, 0.85f, 0.45f, 0.90f, BTN_LOCK},   // Lock button (purple)
-        {575.0f, -120.0f,  70.0f, 50.0f, 0.60f, 0.60f, 0.60f, BTN_L1},    // Level 1 selector
-        {650.0f, -120.0f,  70.0f, 50.0f, 0.60f, 0.60f, 0.60f, BTN_L2},    // Level 2 selector
-        {725.0f, -120.0f,  70.0f, 50.0f, 0.60f, 0.60f, 0.60f, BTN_L3},    // Level 3 selector
+        {650.0f,  240.0f, 220.0f, 50.0f, 0.95f, 0.65f, 0.35f, BTN_WALL},  // Wall button - bright red
+        {650.0f,  180.0f, 220.0f, 50.0f, 0.95f, 0.85f, 0.45f, BTN_COIN},   // Coin button - bright gold
+        {650.0f,  120.0f, 220.0f, 50.0f, 0.75f, 0.75f, 0.75f, BTN_ERASE},  // Erase button - light grey
+        {650.0f,   60.0f, 220.0f, 50.0f, 0.55f, 0.85f, 0.55f, BTN_SAVE},   // Save button - bright yellow
+        {650.0f,    0.0f, 220.0f, 50.0f, 0.55f, 0.70f, 0.95f, BTN_LOAD},   // Load button - bright cyan
+        {650.0f,  -60.0f, 220.0f, 50.0f, 0.80f, 0.65f, 0.95f, BTN_LOCK},   // Lock button - bright purple
+        {575.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L1},     // Level 1 selector - green
+        {650.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L2},      // Level 2 selector - blue
+        {725.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L3},     // Level 3 selector - orange
     };
 
     static int const gButtonCount = (int)(sizeof(gButtons) / sizeof(gButtons[0]));
@@ -211,6 +222,19 @@ namespace
     // -------------------------------------------------------------------------
     bool HandleButtonClick(float mouseWorldX, float mouseWorldY)
     {
+        // Always allow the small top-right toggle button
+        if (PointInRect(mouseWorldX, mouseWorldY, ToggleButton))
+        {
+            EditorOpen = !EditorOpen;
+            return true;
+        }
+
+        // If editor is closed, do not check the big panel buttons
+        if (!EditorOpen)
+            return false;
+ 
+        
+        
         for (int i = 0; i < gButtonCount; ++i)
         {
             if (!PointInRect(mouseWorldX, mouseWorldY, gButtons[i])) continue;
@@ -220,8 +244,9 @@ namespace
             switch (gButtons[i].id)
             {
             case BTN_WALL:  gBrushValue = NON_WALKABLE; return true;
+            case BTN_COIN:  gBrushValue = COIN;         return true;
             case BTN_ERASE: gBrushValue = 0;            return true;
-            case BTN_SAVE:  print_file(); gBrushValue = NON_WALKABLE; return true;
+            case BTN_SAVE:  print_file();               return true;
             case BTN_LOAD:  readfile();                 return true;
             case BTN_LOCK:  gLocked = !gLocked;         return true;
             case BTN_L1:    SetActiveLevel(1, true);    return true;
@@ -243,7 +268,25 @@ namespace
     // -------------------------------------------------------------------------
     void DrawEditorUI()
     {
-        DrawRect(650.0f, 60.0f, 240.0f, 450.0f, 0.16f, 0.11f, 0.06f); // Brown UI background
+        // Always draw the small top-right toggle button
+        DrawButton(ToggleButton);
+
+        if (fontId >= 0)
+        {
+            float const HalfW = 1.0f / 800.0f;
+            float const HalfH = 1.0f / 450.0f;
+
+            if (EditorOpen)
+                AEGfxPrint(fontId, "CLOSE", (ToggleButton.pos_x * HalfW) - 0.06f, (ToggleButton.pos_y * HalfH) - 0.02f, 0.8f, 0, 0, 0, 1);
+            else
+                AEGfxPrint(fontId, "EDITOR", (ToggleButton.pos_x * HalfW) - 0.07f, (ToggleButton.pos_y * HalfH) - 0.02f, 0.8f, 0, 0, 0, 1);
+        }
+
+        // If closed, stop here
+        if (!EditorOpen)
+            return;
+
+        DrawRect(650.0f, 30.0f, 240.0f, 560.0f, 0.16f, 0.11f, 0.06f); // Brown UI background
 
         for (int i = 0; i < gButtonCount; ++i)
             DrawButton(gButtons[i]);
@@ -255,19 +298,19 @@ namespace
             float const HalfH = 1.0f / 450.0f;
 
             AEGfxPrint(fontId, "WALL", (gButtons[0].pos_x * HalfW) - 0.05f, (gButtons[0].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
-            AEGfxPrint(fontId, "ERASE", (gButtons[1].pos_x * HalfW) - 0.06f, (gButtons[1].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
-            AEGfxPrint(fontId, "SAVE", (gButtons[2].pos_x * HalfW) - 0.05f, (gButtons[2].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
-            AEGfxPrint(fontId, "LOAD", (gButtons[3].pos_x * HalfW) - 0.05f, (gButtons[3].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "COIN", (gButtons[1].pos_x * HalfW) - 0.05f, (gButtons[1].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "ERASE", (gButtons[2].pos_x * HalfW) - 0.06f, (gButtons[2].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "SAVE", (gButtons[3].pos_x * HalfW) - 0.05f, (gButtons[3].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "LOAD", (gButtons[4].pos_x * HalfW) - 0.05f, (gButtons[4].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
 
-            // Lock button text changes depending on current lock state
             if (gLocked)
-                AEGfxPrint(fontId, "LOCKED", (gButtons[4].pos_x * HalfW) - 0.085f, (gButtons[4].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+                AEGfxPrint(fontId, "LOCKED", (gButtons[5].pos_x * HalfW) - 0.085f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
             else
-                AEGfxPrint(fontId, "EDIT", (gButtons[4].pos_x * HalfW) - 0.055f, (gButtons[4].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+                AEGfxPrint(fontId, "EDIT", (gButtons[5].pos_x * HalfW) - 0.055f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
 
-            AEGfxPrint(fontId, "L1", (gButtons[5].pos_x * HalfW) - 0.02f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
-            AEGfxPrint(fontId, "L2", (gButtons[6].pos_x * HalfW) - 0.02f, (gButtons[6].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
-            AEGfxPrint(fontId, "L3", (gButtons[7].pos_x * HalfW) - 0.02f, (gButtons[7].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L1", (gButtons[6].pos_x * HalfW) - 0.02f, (gButtons[6].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L2", (gButtons[7].pos_x * HalfW) - 0.02f, (gButtons[7].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L3", (gButtons[8].pos_x * HalfW) - 0.02f, (gButtons[8].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
         }
     }
 } // end anonymous namespace
@@ -363,6 +406,8 @@ void readfile()
 // ----------------------------------------------------------------------------
 void generateLevel(void)
 {
+    CoinTex = AEGfxTextureLoad("Assets/Coin.png");
+
     if (AEInputCheckTriggered(AEVK_LBUTTON))
     {
         float wx, wy;
@@ -378,6 +423,8 @@ void generateLevel(void)
 
                 if (row >= 0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS)
                     level[row][col] = gBrushValue; // paint with active brush value
+                std::cout << "Painted row=" << row << " col=" << col
+                    << " value=" << gBrushValue << "\n";
             }
         }
     }
@@ -401,6 +448,26 @@ void generateLevel(void)
 
                 AEMtx33 scale, translate, transform;
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
+                AEMtx33Trans(&translate, x, y);
+                AEMtx33Concat(&transform, &translate, &scale);
+
+                AEGfxSetTransform(transform.m);
+                AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+            }
+            else if (level[row][col] == COIN)
+            {
+                AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(1.0f);
+
+                // use your coin texture here
+                AEGfxTextureSet(CoinTex, 0, 0);
+
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+                AEMtx33 scale, translate, transform;
+                AEMtx33Scale(&scale, GRID_TILE_SIZE * 0.8f, GRID_TILE_SIZE * 0.8f);
                 AEMtx33Trans(&translate, x, y);
                 AEMtx33Concat(&transform, &translate, &scale);
 
