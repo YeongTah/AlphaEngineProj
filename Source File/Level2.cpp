@@ -29,6 +29,18 @@ Technology is prohibited.
 #include <cmath>
 #include <cstdio>  // snprintf for HUD text -ths
 
+// ======================= LEVEL 2 AUDIO HANDLES ======================= // -ths
+static AEAudio l2_sfxPlayerMove;   // -ths
+static AEAudio l2_sfxChest;        // -ths
+static AEAudio l2_sfxPowerup;      // -ths
+static AEAudio l2_sfxJumpscare;    // -ths
+static AEAudio l2_sfxExitDoor;     // -ths
+static AEAudio l2_sfxGameOver;     // -ths
+static AEAudio l2_sfxButton;       // -ths
+
+static AEAudioGroup l2AudioGroup;  // -ths
+// ===================================================================== // -ths
+
 // ===== ADDED: forward declaration so SpawnRandomPowerup() can be called
 //              inside ResetLevel2() / Level2_Initialize() before its definition ===== -ths
 static void SpawnRandomPowerup(); // -ths
@@ -356,26 +368,44 @@ static AEGfxTexture* l2_ScorpionTex = nullptr; // Assets/scorpion.png -ths
 void Level2_Load()
 {
     std::cout << "Level2:Load\n";
+
+    // ================================================================
+    // AUDIO LOAD FOR LEVEL 2                                          -ths
+    // ================================================================
+    l2AudioGroup = AEAudioCreateGroup();                        // -ths
+
+    l2_sfxPlayerMove = AEAudioLoadSound("Assets/audio/player.wav");   // -ths
+    l2_sfxChest = AEAudioLoadSound("Assets/audio/chest.wav");    // -ths
+    l2_sfxPowerup = AEAudioLoadSound("Assets/audio/powerup.wav");  // -ths
+    l2_sfxJumpscare = AEAudioLoadSound("Assets/audio/jumpscare.wav");// -ths
+    l2_sfxExitDoor = AEAudioLoadSound("Assets/audio/exit.wav");     // -ths
+    l2_sfxGameOver = AEAudioLoadSound("Assets/audio/gameover.wav"); // -ths
+    l2_sfxButton = AEAudioLoadSound("Assets/audio/button.wav");   // -ths
+
+    // (NO main menu music here)                                       // -ths
+    // ================================================================ // -ths
+
+
     // Load Level 2's tile map from disk into the shared level[][] grid
     L2LoadLevelTxt();
 
     // Load entity textures
-    l2_player.pTex = AEGfxTextureLoad("Assets/explorer.png"); // player sprite
-    l2_DesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png"); // wall tile
-    l2_FloorTex = AEGfxTextureLoad("Assets/Floor.png"); // floor tile
-    l2_mummy.pTex = AEGfxTextureLoad("Assets/Enemy.png"); // mummy 1
-    l2_mummy2.pTex = AEGfxTextureLoad("Assets/Enemy.png"); // mummy 2 (same texture)
-    l2_coin.pTex = AEGfxTextureLoad("Assets/Coin.png"); // coin
-    l2_exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png"); // exit portal
+    l2_player.pTex = AEGfxTextureLoad("Assets/explorer.png");          // player sprite
+    l2_DesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");    // wall tile
+    l2_FloorTex = AEGfxTextureLoad("Assets/Floor.png");                // floor tile
+    l2_mummy.pTex = AEGfxTextureLoad("Assets/Enemy.png");              // mummy 1
+    l2_mummy2.pTex = AEGfxTextureLoad("Assets/Enemy.png");             // mummy 2 (same texture)
+    l2_coin.pTex = AEGfxTextureLoad("Assets/Coin.png");                // coin
+    l2_exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png");    // exit portal
 
     // ===== ADDED: load power‑up textures ===== -ths
-    l2_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png"); // -ths
-    l2_FreezeTex = AEGfxTextureLoad("Assets/Freeze.png"); // -ths
+    l2_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png");              // -ths
+    l2_FreezeTex = AEGfxTextureLoad("Assets/Freeze.png");              // -ths
 
     // ===== ADDED: load scorpion texture ===== -ths
-    l2_ScorpionTex = AEGfxTextureLoad("Assets/scorpion.png"); // -ths
+    l2_ScorpionTex = AEGfxTextureLoad("Assets/scorpion.png");          // -ths
 
-    pMesh = CreateSquareMesh(); // unit square mesh shared by all sprites
+    pMesh = CreateSquareMesh();                                        // unit square mesh shared by sprites
 }
 
 // ----------------------------------------------------------------------------
@@ -392,9 +422,17 @@ void Level2_Load()
 void Level2_Initialize()
 {
     std::cout << "Level2:Initialize\n";
+
+    // ================================================================
+    // STOP ALL PREVIOUS AUDIO (safe, no FMOD crash)                 -ths
+    // ================================================================
+    AEAudioStopGroup(l2AudioGroup);
+    // ================================================================ // -ths
+
     // Always reset powerup and overlay state on entry
     l2Power = {};
-    l2_paused = false; l2_showWin = l2_showLose = false;
+    l2_paused = false;
+    l2_showWin = l2_showLose = false;
     l2_initialised = false; // Force full re-init every time
 
     // ===== ADDED: clear frame-based freeze ===== -ths
@@ -410,48 +448,64 @@ void Level2_Initialize()
 
         // --- Player spawn ---
         L2FindFreeSpawnCell(GRID_ROWS / 2, 4, px, py);
-        l2_player.x = px; l2_player.y = py;
+        l2_player.x = px;
+        l2_player.y = py;
         l2_player.size = 50.0f;
-        l2_player.r = 0.0f; l2_player.g = 0.0f; l2_player.b = 1.0f;
+        l2_player.r = 0.0f;
+        l2_player.g = 0.0f;
+        l2_player.b = 1.0f;
+
         int playerRow, playerCol;
         WorldToGrid(l2_player.x, l2_player.y, playerRow, playerCol);
 
-        // --- Mummy 1 spawn: top-right, min 10 cells from player ---
+        // --- Mummy 1 spawn ---
         L2FindFreeSpawnCell(2, GRID_COLS - 3, px, py, playerRow, playerCol, 10);
-        l2_mummy.x = px; l2_mummy.y = py;
+        l2_mummy.x = px;
+        l2_mummy.y = py;
         l2_mummy.size = 50.0f;
-        l2_mummy.r = 1.0f; l2_mummy.g = 0.0f; l2_mummy.b = 0.0f;
+        l2_mummy.r = 1.0f;
+        l2_mummy.g = 0.0f;
+        l2_mummy.b = 0.0f;
 
-        // --- Mummy 2 spawn: bottom-center, min 10 cells from player ---
-        // Starts from a different corner to approach the player from a different angle
+        // --- Mummy 2 spawn ---
         L2FindFreeSpawnCell(GRID_ROWS - 4, GRID_COLS / 2, px, py, playerRow, playerCol, 10);
-        l2_mummy2.x = px; l2_mummy2.y = py;
+        l2_mummy2.x = px;
+        l2_mummy2.y = py;
         l2_mummy2.size = 50.0f;
-        l2_mummy2.r = 1.0f; l2_mummy2.g = 0.0f; l2_mummy2.b = 0.0f;
+        l2_mummy2.r = 1.0f;
+        l2_mummy2.g = 0.0f;
+        l2_mummy2.b = 0.0f;
 
-        // ===== REPLACED: Scorpion spawn with reachability-aware helper ===== -ths
-        L2FindReachableSpawnNear(GRID_ROWS - 4, 2,      // preferred bottom-left area -ths
-            playerRow, playerCol,  // avoid near player           -ths
-            8,                     // min Manhattan distance      -ths
-            px, py,                // out world coordinates       -ths
-            playerRow, playerCol); // for reachability check      -ths
-        l2_scorpion.x = px; l2_scorpion.y = py;         // -ths
-        l2_scorpion.size = 50.0f;                       // -ths
-        l2_scorpion.pTex = l2_ScorpionTex;              // -ths
+        // ===== Scorpion spawn (reachability-aware) ===== -ths
+        L2FindReachableSpawnNear(
+            GRID_ROWS - 4, 2,
+            playerRow, playerCol,
+            8,
+            px, py,
+            playerRow, playerCol
+        ); // -ths
 
-        // --- Exit portal spawn: right side ---
+        l2_scorpion.x = px;
+        l2_scorpion.y = py;  // -ths
+        l2_scorpion.size = 50.0f;     // -ths
+        l2_scorpion.pTex = l2_ScorpionTex;  // -ths
+
+        // --- Exit portal spawn ---
         L2FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS - 5, px, py);
-        l2_exitPortal.x = px; l2_exitPortal.y = py;
+        l2_exitPortal.x = px;
+        l2_exitPortal.y = py;
         l2_exitPortal.size = 50.0f;
-        l2_exitPortal.r = 1.0f; l2_exitPortal.g = 1.0f; l2_exitPortal.b = 0.0f;
 
-        // --- Coin spawn: grid center ---
+        // --- Coin spawn ---
         L2FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
-        l2_coin.x = px; l2_coin.y = py;
+        l2_coin.x = px;
+        l2_coin.y = py;
         l2_coin.size = 30.0f;
-        l2_coin.r = 1.0f; l2_coin.g = 0.5f; l2_coin.b = 0.0f;
+        l2_coin.r = 1.0f;
+        l2_coin.g = 0.5f;
+        l2_coin.b = 0.0f;
 
-        // ===== ADDED: spawn a random power‑up ===== -ths
+        // ===== Spawn random power‑up ===== -ths
         SpawnRandomPowerup(); // -ths
 
         l2_nextX = l2_player.x;
@@ -494,74 +548,107 @@ void Level2_Update()
         next = GS_QUIT; return;
     }
 
-    // ===== ADDED: per-frame power timers (immunity & freeze) ===== -ths
+    // ===== PER-FRAME POWER TIMERS ===== -ths
     L2TickInvFrames();     // -ths
     L2TickFreezeFrames();  // -ths
 
     // --- Win / Lose overlay input ---
-    if (l2_showLose ||
-        l2_showWin)
+    if (l2_showLose || l2_showWin)
     {
-        s32 mxS, myS; TransformScreentoWorld(mxS, myS);
+        s32 mxS, myS;
+        TransformScreentoWorld(mxS, myS);
         float mx = (float)mxS, my = (float)myS;
+
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            // "Retry" button: restart Level 2
+            // Retry
             if (IsAreaClicked(kL2BtnRetryX, kL2BtnRetryY, kL2BtnW, kL2BtnH, mx, my))
             {
+                // play button click -ths
+                if (AEAudioIsValidAudio(l2_sfxButton))
+                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0); // -ths
+
                 next = GS_LEVEL2;
                 l2_showLose = l2_showWin = false;
                 return;
             }
-            // "Exit" button: return to main menu
+            // Exit
             if (IsAreaClicked(kL2BtnExitX, kL2BtnExitY, kL2BtnW, kL2BtnH, mx, my))
             {
+                // play button click -ths
+                if (AEAudioIsValidAudio(l2_sfxButton))
+                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0); // -ths
+
                 next = MAINMENUSTATE;
                 l2_showLose = l2_showWin = false;
                 return;
             }
         }
-        if (AEInputCheckReleased(AEVK_R)) { next = GS_LEVEL2; l2_showLose = l2_showWin = false; return; }
-        if (AEInputCheckReleased(AEVK_RETURN)) { next = LEVELPAGE; l2_showLose = l2_showWin = false; return; }
-        if (AEInputCheckReleased(AEVK_Q) ||
-            0 == AESysDoesWindowExist()) {
-            next = GS_QUIT; return;
+
+        if (AEInputCheckReleased(AEVK_R))
+        {
+            next = GS_LEVEL2;
+            l2_showLose = l2_showWin = false;
+            return;
         }
-        return; // freeze game while overlay is visible
+        if (AEInputCheckReleased(AEVK_RETURN))
+        {
+            next = LEVELPAGE;
+            l2_showLose = l2_showWin = false;
+            return;
+        }
+        if (AEInputCheckReleased(AEVK_Q) ||
+            0 == AESysDoesWindowExist())
+        {
+            next = GS_QUIT;
+            return;
+        }
+
+        return;
     }
 
     // --- Pause toggle ---
     if (AEInputCheckReleased(AEVK_P)) { l2_paused = !l2_paused; }
     if (l2_paused) return;
 
-    // --- Player movement (WASD) ---
+    // --- Player movement ---
     float testX = l2_player.x;
     float testY = l2_player.y;
-    if (AEInputCheckTriggered(AEVK_W)) testY += l2_gridStep;
-    else if (AEInputCheckTriggered(AEVK_S)) testY -= l2_gridStep;
-    else if (AEInputCheckTriggered(AEVK_A)) testX -= l2_gridStep;
-    else if (AEInputCheckTriggered(AEVK_D)) testX += l2_gridStep;
 
-    // Validate candidate position against the tile grid
-    if (testX != l2_player.x ||
-        testY != l2_player.y)
+    bool attemptedMove = false; // -ths
+
+    if (AEInputCheckTriggered(AEVK_W)) { testY += l2_gridStep; attemptedMove = true; }
+    else if (AEInputCheckTriggered(AEVK_S)) { testY -= l2_gridStep; attemptedMove = true; }
+    else if (AEInputCheckTriggered(AEVK_A)) { testX -= l2_gridStep; attemptedMove = true; }
+    else if (AEInputCheckTriggered(AEVK_D)) { testX += l2_gridStep; attemptedMove = true; }
+
+    if (attemptedMove && IsTileWalkable(testX, testY))
     {
-        if (IsTileWalkable(testX, testY))
-        {
-            l2_player.x = testX;
-            l2_player.y = testY;
-            l2_playerMoved = true;
-        }
+        l2_player.x = testX;
+        l2_player.y = testY;
+        l2_playerMoved = true;
+
+        // ===== PLAY MOVEMENT AUDIO ===== -ths
+        if (AEAudioIsValidAudio(l2_sfxPlayerMove))
+            AEAudioPlay(l2_sfxPlayerMove, l2AudioGroup, 1.0f, 1.0f, 0); // -ths
     }
 
-    // ===== ADDED: power‑up pickup (pre‑turn) ===== -ths
+    // ===== POWER-UP PICKUP ===== -ths
     if (l2_powerupActive &&
         fabsf(l2_player.x - l2_powerup.x) < 1.0f &&
         fabsf(l2_player.y - l2_powerup.y) < 1.0f)
     {
-        if (l2_powerupType == L2_PWR_IMMUNE)  l2Power.invFrames = 300; // ~5s -ths
-        else                                   l2Power.freezeFrames = 180; // ~3s -ths
-        l2_powerupActive = false; l2_powerup.x = l2_powerup.y = 2000.0f;   // off-screen -ths
+        // play powerup audio -ths
+        if (AEAudioIsValidAudio(l2_sfxPowerup))
+            AEAudioPlay(l2_sfxPowerup, l2AudioGroup, 1.0f, 1.0f, 0); // -ths
+
+        if (l2_powerupType == L2_PWR_IMMUNE)
+            l2Power.invFrames = 300; // 5s
+        else
+            l2Power.freezeFrames = 180; // 3s
+
+        l2_powerupActive = false;
+        l2_powerup.x = l2_powerup.y = 2000.0f;
     }
 
     // --- Per-turn logic ---
@@ -569,62 +656,77 @@ void Level2_Update()
     {
         l2_turnCounter++;
 
-        // Tile coin collection: tile value 4 = COIN
+        // Tile coin collection
         int r, c;
         WorldToGrid(l2_player.x, l2_player.y, r, c);
         if (level[r][c] == 4)
         {
-            level[r][c] = 0; // remove tile so it can only be collected once
+            level[r][c] = 0;
             l2_coinCounter++;
             std::cout << "L2 Coin collected! Total: " << l2_coinCounter << "\n";
         }
 
-        // Both mummies move every 2nd player turn (axis-priority greedy chase)
-        // ===== ADDED: skip movement while freezeFrames > 0 ===== -ths
+        // Mummy & Scorpion movement (frozen if freezeFrames > 0)
         if (l2_turnCounter % 2 == 0 && l2Power.freezeFrames <= 0)
         {
-            // --- Mummy 1 movement ---
+            // ========== MUMMY 1 MOVEMENT ========== -ths
             float diffX = l2_player.x - l2_mummy.x;
             float diffY = l2_player.y - l2_mummy.y;
-            if (fabsf(diffX) > 1.0f) // try horizontal step first
+
+            // horizontal first
+            if (fabsf(diffX) > 1.0f)
             {
                 float stepX = (diffX > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_mummy.x + stepX, l2_mummy.y)) l2_mummy.x += stepX;
+                if (canMove(l2_mummy.x + stepX, l2_mummy.y))
+                    l2_mummy.x += stepX;
             }
-            diffY = l2_player.y - l2_mummy.y; // re-evaluate after possible horizontal move
-            if (fabsf(diffY) > 1.0f) // then try vertical step
+            // vertical second
+            diffY = l2_player.y - l2_mummy.y;
+            if (fabsf(diffY) > 1.0f)
             {
                 float stepY = (diffY > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_mummy.x, l2_mummy.y + stepY)) l2_mummy.y += stepY;
+                if (canMove(l2_mummy.x, l2_mummy.y + stepY))
+                    l2_mummy.y += stepY;
             }
-            // --- Mummy 2 movement (same logic, different entity) ---
+
+
+            // ========== MUMMY 2 MOVEMENT ========== -ths
             float diff2X = l2_player.x - l2_mummy2.x;
             float diff2Y = l2_player.y - l2_mummy2.y;
+
             if (fabsf(diff2X) > 1.0f)
             {
                 float stepX = (diff2X > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_mummy2.x + stepX, l2_mummy2.y)) l2_mummy2.x += stepX;
+                if (canMove(l2_mummy2.x + stepX, l2_mummy2.y))
+                    l2_mummy2.x += stepX;
             }
             diff2Y = l2_player.y - l2_mummy2.y;
             if (fabsf(diff2Y) > 1.0f)
             {
                 float stepY = (diff2Y > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_mummy2.x, l2_mummy2.y + stepY)) l2_mummy2.y += stepY;
+                if (canMove(l2_mummy2.x, l2_mummy2.y + stepY))
+                    l2_mummy2.y += stepY;
             }
 
-            // ===== ADDED: Scorpion movement (same axis-priority greedy chase) ===== -ths
-            float sdX = l2_player.x - l2_scorpion.x;
-            float sdY = l2_player.y - l2_scorpion.y;
-            if (fabsf(sdX) > 1.0f)
+
+            // ========== SCORPION MOVEMENT ========== -ths
+            float diffSX = l2_player.x - l2_scorpion.x;
+            float diffSY = l2_player.y - l2_scorpion.y;
+
+            // horizontal first
+            if (fabsf(diffSX) > 1.0f)
             {
-                float sx = (sdX > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_scorpion.x + sx, l2_scorpion.y)) l2_scorpion.x += sx;
+                float stepX = (diffSX > 0) ? l2_gridStep : -l2_gridStep;
+                if (canMove(l2_scorpion.x + stepX, l2_scorpion.y))
+                    l2_scorpion.x += stepX;
             }
-            sdY = l2_player.y - l2_scorpion.y;
-            if (fabsf(sdY) > 1.0f)
+            // vertical second
+            diffSY = l2_player.y - l2_scorpion.y;
+            if (fabsf(diffSY) > 1.0f)
             {
-                float sy = (sdY > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_scorpion.x, l2_scorpion.y + sy)) l2_scorpion.y += sy;
+                float stepY = (diffSY > 0) ? l2_gridStep : -l2_gridStep;
+                if (canMove(l2_scorpion.x, l2_scorpion.y + stepY))
+                    l2_scorpion.y += stepY;
             }
         }
 
@@ -632,36 +734,45 @@ void Level2_Update()
         l2_playerMoved = false;
     }
 
-    // --- Lose check: player caught by either mummy OR scorpion (new) ---
-    // Only triggers after the player has moved (prevents false positive at spawn overlap)
+    // ===== LOSE CHECK ===== -ths
     if (l2_turnCounter > 0 && !L2IsInvincibleNow() &&
         ((fabsf(l2_player.x - l2_mummy.x) < 1.0f && fabsf(l2_player.y - l2_mummy.y) < 1.0f) ||
             (fabsf(l2_player.x - l2_mummy2.x) < 1.0f && fabsf(l2_player.y - l2_mummy2.y) < 1.0f) ||
-            (fabsf(l2_player.x - l2_scorpion.x) < 1.0f && fabsf(l2_player.y - l2_scorpion.y) < 1.0f))) // -ths
+            (fabsf(l2_player.x - l2_scorpion.x) < 1.0f && fabsf(l2_player.y - l2_scorpion.y) < 1.0f)))
     {
+        // play jumpscare -ths
+        if (AEAudioIsValidAudio(l2_sfxJumpscare))
+            AEAudioPlay(l2_sfxJumpscare, l2AudioGroup, 1.0f, 1.0f, 0); // -ths
+
+        // play gameover -ths
+        if (AEAudioIsValidAudio(l2_sfxGameOver))
+            AEAudioPlay(l2_sfxGameOver, l2AudioGroup, 1.0f, 1.0f, 0); // -ths
+
         ResetLevel2();
-        printf("L2: Caught by an Enemy!\n"); // generic line; scorpion included -ths
+        printf("L2: Caught by an Enemy!\n");
         l2_showLose = true;
     }
 
-    // --- Win check: player reached the exit portal ---
+    // ===== WIN (EXIT DOOR) ===== -ths
     if (fabsf(l2_player.x - l2_exitPortal.x) < 1.0f &&
         fabsf(l2_player.y - l2_exitPortal.y) < 1.0f)
     {
         printf("L2: You Escaped!\n");
-        next = GS_WIN; // Transition to the win page
+
+        gLastLevelPlayed = 2;  // -ths (tell WinPage we came from Level 2)
+
+        next = GS_WIN;
     }
 
-    // --- Legacy coin entity collect (moves coin off-screen when touched) ---
+    // Legacy coin entity collect
     if (fabsf(l2_player.x - l2_coin.x) < 1.0f &&
         fabsf(l2_player.y - l2_coin.y) < 1.0f)
     {
         ++l2_coinCounter;
         printf("L2 Coin! Total: %d\n", l2_coinCounter);
-        l2_coin.x = 2000.0f; l2_coin.y = 2000.0f; // "remove" by moving off-screen
+        l2_coin.x = l2_coin.y = 2000.0f;
     }
 }
-
 // ----------------------------------------------------------------------------
 // Level2_Draw
 // Called every frame to render Level 2.
@@ -818,6 +929,31 @@ void Level2_Free()
 void Level2_Unload()
 {
     std::cout << "Level2:Unload\n";
+
+    // ==================== AUDIO UNLOAD (LEVEL 2) ===================== // -ths
+    if (AEAudioIsValidAudio(l2_sfxPlayerMove))
+        AEAudioUnloadAudio(l2_sfxPlayerMove);     // -ths
+
+    if (AEAudioIsValidAudio(l2_sfxChest))
+        AEAudioUnloadAudio(l2_sfxChest);          // -ths
+
+    if (AEAudioIsValidAudio(l2_sfxPowerup))
+        AEAudioUnloadAudio(l2_sfxPowerup);        // -ths
+
+    if (AEAudioIsValidAudio(l2_sfxJumpscare))
+        AEAudioUnloadAudio(l2_sfxJumpscare);      // -ths
+
+    if (AEAudioIsValidAudio(l2_sfxExitDoor))
+        AEAudioUnloadAudio(l2_sfxExitDoor);       // -ths
+
+    if (AEAudioIsValidAudio(l2_sfxGameOver))
+        AEAudioUnloadAudio(l2_sfxGameOver);       // -ths
+
+    AEAudioUnloadAudioGroup(l2AudioGroup);      // -ths
+    // ================================================================= // -ths
+
+
+    // ========== ORIGINAL TEXTURE & MESH CLEANUP ==========
     AEGfxTextureUnload(l2_player.pTex);
     AEGfxTextureUnload(l2_DesertBlockTex);
     AEGfxTextureUnload(l2_FloorTex);
@@ -826,11 +962,16 @@ void Level2_Unload()
     AEGfxTextureUnload(l2_coin.pTex);
     AEGfxTextureUnload(l2_exitPortal.pTex);
 
-    // ===== ADDED: unload power‑up & scorpion textures ===== -ths
+    // ===== ADDED: unload power-up & scorpion textures ===== -ths
     AEGfxTextureUnload(l2_ImmuneTex);   // -ths
     AEGfxTextureUnload(l2_FreezeTex);   // -ths
     AEGfxTextureUnload(l2_ScorpionTex); // -ths
 
-    if (pMesh) { AEGfxMeshFree(pMesh); pMesh = nullptr; }
+    if (pMesh)
+    {
+        AEGfxMeshFree(pMesh);
+        pMesh = nullptr;
+    }
+
     l2_initialised = false;
 }

@@ -8,7 +8,7 @@
  Same structure as Level 2 but with THREE mummies chasing the player.
  Loads its tile map from "Assets/level3.txt".
  All L3-specific state is prefixed with "l3_" to avoid collisions.
-Copyright (C) 2026 DigiPen Institute of Technology.
+ Copyright (C) 2026 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents
 without the prior written consent of DigiPen Institute of
 Technology is prohibited.
@@ -27,6 +27,18 @@ Technology is prohibited.
 #include <fstream>
 #include <cmath>
 #include <cstdio>  // snprintf for HUD text -ths
+
+// ======================= LEVEL 3 AUDIO HANDLES ======================= // -ths
+static AEAudio l3_sfxPlayerMove;   // -ths
+static AEAudio l3_sfxChest;        // -ths
+static AEAudio l3_sfxPowerup;      // -ths
+static AEAudio l3_sfxJumpscare;    // -ths
+static AEAudio l3_sfxExitDoor;     // -ths
+static AEAudio l3_sfxGameOver;     // -ths
+static AEAudio l3_sfxButton;       // -ths
+
+static AEAudioGroup l3AudioGroup;  // -ths
+// ===================================================================== // -ths
 
 // ===== ADDED: forward declaration so SpawnRandomPowerup() can be called
 //              inside ResetLevel3() / Level3_Initialize() before its definition ===== -ths
@@ -284,6 +296,23 @@ static void SpawnRandomPowerup()                                    // -ths
 void Level3_Load()
 {
     std::cout << "Level3:Load\n";
+
+    // ================================================================
+    // AUDIO LOAD FOR LEVEL 3                                         -ths
+    // ================================================================
+    l3AudioGroup = AEAudioCreateGroup();                                   // -ths
+
+    l3_sfxPlayerMove = AEAudioLoadSound("Assets/audio/player.wav");        // -ths
+    l3_sfxChest = AEAudioLoadSound("Assets/audio/chest.wav");         // -ths
+    l3_sfxPowerup = AEAudioLoadSound("Assets/audio/powerup.wav");       // -ths
+    l3_sfxJumpscare = AEAudioLoadSound("Assets/audio/jumpscare.wav");     // -ths
+    l3_sfxExitDoor = AEAudioLoadSound("Assets/audio/exit.wav");          // -ths
+    l3_sfxGameOver = AEAudioLoadSound("Assets/audio/gameover.wav");      // -ths
+    l3_sfxButton = AEAudioLoadSound("Assets/audio/button.wav");        // -ths
+    // (No BGM here, Level3 does not auto-play music)                     // -ths
+    // ================================================================ // -ths
+
+
     // Load Level 3's tile map from disk into the shared level[][] grid
     L3LoadLevelTxt();
 
@@ -291,16 +320,17 @@ void Level3_Load()
     l3_player.pTex = AEGfxTextureLoad("Assets/explorer.png");
     l3_DesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
     l3_FloorTex = AEGfxTextureLoad("Assets/Floor.png");
-    l3_mummy1.pTex = AEGfxTextureLoad("Assets/Enemy.png"); // all 3 share the same texture
+    l3_mummy1.pTex = AEGfxTextureLoad("Assets/Enemy.png"); // all use same texture
     l3_mummy2.pTex = AEGfxTextureLoad("Assets/Enemy.png");
     l3_mummy3.pTex = AEGfxTextureLoad("Assets/Enemy.png");
     l3_coin.pTex = AEGfxTextureLoad("Assets/Coin.png");
     l3_exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png");
 
     // ===== ADDED: load power‑up textures ===== -ths
-    l3_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png"); // -ths
-    l3_FreezeTex = AEGfxTextureLoad("Assets/Freeze.png"); // -ths
+    l3_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png");   // -ths
+    l3_FreezeTex = AEGfxTextureLoad("Assets/Freeze.png");   // -ths
 
+    // Shared mesh for all sprites
     pMesh = CreateSquareMesh();
 }
 
@@ -318,8 +348,18 @@ void Level3_Load()
 void Level3_Initialize()
 {
     std::cout << "Level3:Initialize\n";
+
+    // ================================================================
+    // STOP ANY PREVIOUS AUDIO (safe + FMOD-friendly)                 -ths
+    // ================================================================
+    AEAudioStopGroup(l3AudioGroup);    // stop leftover sounds      -ths
+    // ================================================================ // -ths
+
+    // Reset powerup & overlay flags
     l3Power = {};
-    l3_paused = false; l3_showWin = false; l3_showLose = false;
+    l3_paused = false;
+    l3_showWin = false;
+    l3_showLose = false;
     l3_initialised = false; // Force full re-init every entry
 
     // ===== ADDED: clear frame-based freeze ===== -ths
@@ -337,44 +377,59 @@ void Level3_Initialize()
 
         // --- Player spawn ---
         L3FindFreeSpawnCell(GRID_ROWS / 2, 4, px, py);
-        l3_player.x = px; l3_player.y = py;
+        l3_player.x = px;
+        l3_player.y = py;
         l3_player.size = 50.0f;
-        l3_player.r = 0.0f; l3_player.g = 0.0f; l3_player.b = 1.0f;
+        l3_player.r = 0.0f;
+        l3_player.g = 0.0f;
+        l3_player.b = 1.0f;
+
         int playerRow, playerCol;
         WorldToGrid(l3_player.x, l3_player.y, playerRow, playerCol);
 
-        // --- Mummy 1: top-right corner, min 10 cells from player ---
+        // --- Mummy 1 ---
         L3FindFreeSpawnCell(2, GRID_COLS - 3, px, py, playerRow, playerCol, 10);
-        l3_mummy1.x = px; l3_mummy1.y = py;
+        l3_mummy1.x = px;
+        l3_mummy1.y = py;
         l3_mummy1.size = 50.0f;
-        l3_mummy1.r = 1.0f; l3_mummy1.g = 0.0f; l3_mummy1.b = 0.0f;
+        l3_mummy1.r = 1.0f;
+        l3_mummy1.g = 0.0f;
+        l3_mummy1.b = 0.0f;
 
-        // --- Mummy 2: bottom-center, min 10 cells from player ---
+        // --- Mummy 2 ---
         L3FindFreeSpawnCell(GRID_ROWS - 4, GRID_COLS / 2, px, py, playerRow, playerCol, 10);
-        l3_mummy2.x = px; l3_mummy2.y = py;
+        l3_mummy2.x = px;
+        l3_mummy2.y = py;
         l3_mummy2.size = 50.0f;
-        l3_mummy2.r = 1.0f; l3_mummy2.g = 0.0f; l3_mummy2.b = 0.0f;
+        l3_mummy2.r = 1.0f;
+        l3_mummy2.g = 0.0f;
+        l3_mummy2.b = 0.0f;
 
-        // --- Mummy 3: top-left corner, min 10 cells from player ---
-        // Creates a triangular encirclement: top-right, bottom-center, top-left
+        // --- Mummy 3 ---
         L3FindFreeSpawnCell(2, 2, px, py, playerRow, playerCol, 10);
-        l3_mummy3.x = px; l3_mummy3.y = py;
+        l3_mummy3.x = px;
+        l3_mummy3.y = py;
         l3_mummy3.size = 50.0f;
-        l3_mummy3.r = 1.0f; l3_mummy3.g = 0.0f; l3_mummy3.b = 0.0f;
+        l3_mummy3.r = 1.0f;
+        l3_mummy3.g = 0.0f;
+        l3_mummy3.b = 0.0f;
 
         // --- Exit portal ---
         L3FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS - 5, px, py);
-        l3_exitPortal.x = px; l3_exitPortal.y = py;
+        l3_exitPortal.x = px;
+        l3_exitPortal.y = py;
         l3_exitPortal.size = 50.0f;
-        l3_exitPortal.r = 1.0f; l3_exitPortal.g = 1.0f; l3_exitPortal.b = 0.0f;
 
         // --- Coin ---
         L3FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
-        l3_coin.x = px; l3_coin.y = py;
+        l3_coin.x = px;
+        l3_coin.y = py;
         l3_coin.size = 30.0f;
-        l3_coin.r = 1.0f; l3_coin.g = 0.5f; l3_coin.b = 0.0f;
+        l3_coin.r = 1.0f;
+        l3_coin.g = 0.5f;
+        l3_coin.b = 0.0f;
 
-        // ===== ADDED: spawn a random power‑up ===== -ths
+        // ===== Spawn random power‑up ===== -ths
         SpawnRandomPowerup(); // -ths
 
         l3_nextX = l3_player.x;
@@ -384,7 +439,6 @@ void Level3_Initialize()
         l3_playerMoved = false;
     }
 }
-
 // ----------------------------------------------------------------------------
 // Level3_Update
 // Called every frame during the Level 3 game loop.
@@ -397,81 +451,140 @@ void Level3_Update()
     // --- Navigation keys ---
     if (AEInputCheckReleased(AEVK_B) ||
         AEInputCheckReleased(AEVK_ESCAPE)) {
-        next = LEVELPAGE; return;
+        next = LEVELPAGE;
+        return;
     }
     if (AEInputCheckReleased(AEVK_Q) ||
         0 == AESysDoesWindowExist()) {
-        next = GS_QUIT; return;
-    }
-
-    // ===== ADDED: per-frame immunity/freeze counters ===== -ths
-    L3TickInvFrames();     // -ths
-    L3TickFreezeFrames();  // -ths
-
-    // --- Win / Lose overlay input ---
-    if (l3_showLose ||
-        l3_showWin)
-    {
-        s32 mxS, myS; TransformScreentoWorld(mxS, myS);
-        float mx = (float)mxS, my = (float)myS;
-        if (AEInputCheckReleased(AEVK_LBUTTON))
-        {
-            if (IsAreaClicked(kL3BtnRetryX, kL3BtnRetryY, kL3BtnW, kL3BtnH, mx, my))
-            {
-                next = GS_LEVEL3; l3_showLose = l3_showWin = false; return;
-            }
-            if (IsAreaClicked(kL3BtnExitX, kL3BtnExitY, kL3BtnW, kL3BtnH, mx, my))
-            {
-                next = MAINMENUSTATE; l3_showLose = l3_showWin = false; return;
-            }
-        }
-        if (AEInputCheckReleased(AEVK_R)) { next = GS_LEVEL3; l3_showLose = l3_showWin = false; return; }
-        if (AEInputCheckReleased(AEVK_RETURN)) { next = LEVELPAGE; l3_showLose = l3_showWin = false; return; }
-        if (AEInputCheckReleased(AEVK_Q) ||
-            0 == AESysDoesWindowExist()) {
-            next = GS_QUIT; return;
-        }
+        next = GS_QUIT;
         return;
     }
 
-    // --- Pause toggle ---
-    if (AEInputCheckReleased(AEVK_P)) { l3_paused = !l3_paused; }
-    if (l3_paused) return;
+    // ===== PER-FRAME IMMUNITY/FREEZE TICKERS ===== -ths
+    L3TickInvFrames();     // -ths
+    L3TickFreezeFrames();  // -ths
 
-    // --- Player movement (WASD) ---
-    float testX = l3_player.x;
-    float testY = l3_player.y;
-    if (AEInputCheckTriggered(AEVK_W)) testY += l3_gridStep;
-    else if (AEInputCheckTriggered(AEVK_S)) testY -= l3_gridStep;
-    else if (AEInputCheckTriggered(AEVK_A)) testX -= l3_gridStep;
-    else if (AEInputCheckTriggered(AEVK_D)) testX += l3_gridStep;
-    if (testX != l3_player.x ||
-        testY != l3_player.y)
+    // ======================================================================
+    // WIN / LOSE OVERLAY INPUT
+    // ======================================================================
+    if (l3_showLose || l3_showWin)
     {
-        if (IsTileWalkable(testX, testY))
+        s32 mxS, myS;
+        TransformScreentoWorld(mxS, myS);
+        float mx = (float)mxS, my = (float)myS;
+
+        if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            l3_player.x = testX;
-            l3_player.y = testY;
-            l3_playerMoved = true;
+            // Retry button
+            if (IsAreaClicked(kL3BtnRetryX, kL3BtnRetryY, kL3BtnW, kL3BtnH, mx, my))
+            {
+                // play click audio -ths
+                if (AEAudioIsValidAudio(l3_sfxButton))
+                    AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
+
+                l3_showLose = l3_showWin = false;
+                next = GS_LEVEL3;
+                return;
+            }
+            // Exit button
+            if (IsAreaClicked(kL3BtnExitX, kL3BtnExitY, kL3BtnW, kL3BtnH, mx, my))
+            {
+                if (AEAudioIsValidAudio(l3_sfxButton))
+                    AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
+
+                l3_showLose = l3_showWin = false;
+                next = MAINMENUSTATE;
+                return;
+            }
         }
+
+        // Restart hotkey
+        if (AEInputCheckReleased(AEVK_R))
+        {
+            next = GS_LEVEL3;
+            l3_showLose = l3_showWin = false;
+            return;
+        }
+
+        // Level Select
+        if (AEInputCheckReleased(AEVK_RETURN))
+        {
+            next = LEVELPAGE;
+            l3_showLose = l3_showWin = false;
+            return;
+        }
+
+        if (AEInputCheckReleased(AEVK_Q) ||
+            0 == AESysDoesWindowExist()) {
+            next = GS_QUIT;
+            return;
+        }
+
+        return; // overlay freeze
     }
 
-    // ===== ADDED: power‑up pickup ===== -ths
+    // ======================================================================
+    // PAUSE LOGIC
+    // ======================================================================
+    if (AEInputCheckReleased(AEVK_P))
+    {
+        l3_paused = !l3_paused;
+    }
+    if (l3_paused) return;
+
+    // ======================================================================
+    // PLAYER MOVEMENT (WASD)
+    // ======================================================================
+    float testX = l3_player.x;
+    float testY = l3_player.y;
+
+    bool attemptedMove = false;   // -ths
+
+    if (AEInputCheckTriggered(AEVK_W)) { testY += l3_gridStep; attemptedMove = true; }
+    else if (AEInputCheckTriggered(AEVK_S)) { testY -= l3_gridStep; attemptedMove = true; }
+    else if (AEInputCheckTriggered(AEVK_A)) { testX -= l3_gridStep; attemptedMove = true; }
+    else if (AEInputCheckTriggered(AEVK_D)) { testX += l3_gridStep; attemptedMove = true; }
+
+    if (attemptedMove &&
+        IsTileWalkable(testX, testY))
+    {
+        l3_player.x = testX;
+        l3_player.y = testY;
+        l3_playerMoved = true;
+
+        // ===== PLAY MOVEMENT AUDIO ===== -ths
+        if (AEAudioIsValidAudio(l3_sfxPlayerMove))
+            AEAudioPlay(l3_sfxPlayerMove, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
+    }
+
+    // ======================================================================
+    // POWER-UP PICKUP
+    // ======================================================================
     if (l3_powerupActive &&
         fabsf(l3_player.x - l3_powerup.x) < 1.0f &&
         fabsf(l3_player.y - l3_powerup.y) < 1.0f)
     {
-        if (l3_powerupType == L3_PWR_IMMUNE)  l3Power.invFrames = 300; // ~5s -ths
-        else                                   l3Power.freezeFrames = 180; // ~3s -ths
-        l3_powerupActive = false; l3_powerup.x = l3_powerup.y = 2000.0f;   // off-screen -ths
+        // play powerup audio -ths
+        if (AEAudioIsValidAudio(l3_sfxPowerup))
+            AEAudioPlay(l3_sfxPowerup, l3AudioGroup, 1.0f, 1.0f, 0);   // -ths
+
+        if (l3_powerupType == L3_PWR_IMMUNE)
+            l3Power.invFrames = 300;        // 5s
+        else
+            l3Power.freezeFrames = 180;     // 3s
+
+        l3_powerupActive = false;
+        l3_powerup.x = l3_powerup.y = 2000.0f;
     }
 
-    // --- Per-turn logic ---
+    // ======================================================================
+    // PER TURN LOGIC
+    // ======================================================================
     if (l3_playerMoved)
     {
         l3_turnCounter++;
 
-        // Tile coin collection (value 4)
+        // Coin tile collection
         int r, c;
         WorldToGrid(l3_player.x, l3_player.y, r, c);
         if (level[r][c] == 4)
@@ -481,8 +594,7 @@ void Level3_Update()
             std::cout << "L3 Coin collected! Total: " << l3_coinCounter << "\n";
         }
 
-        // All 3 mummies advance every 2nd player turn
-        // ===== ADDED: skip movement while freezeFrames > 0 ===== -ths
+        // Mummy movement every 2nd turn, unless frozen
         if (l3_turnCounter % 2 == 0 && l3Power.freezeFrames <= 0)
         {
             MoveMummyTowardPlayer(l3_mummy1, l3_player.x, l3_player.y, l3_gridStep);
@@ -494,32 +606,54 @@ void Level3_Update()
         l3_playerMoved = false;
     }
 
-    // --- Lose check: player caught by ANY of the 3 mummies ---
-    if (l3_turnCounter > 0 && !L3IsInvincibleNow() &&
+    // ======================================================================
+    // LOSE CONDITION (THREE MUMMIES)
+    // ======================================================================
+    if (l3_turnCounter > 0 &&
+        !L3IsInvincibleNow() &&
         (PlayerTouchesMummy(l3_mummy1, l3_player.x, l3_player.y) ||
             PlayerTouchesMummy(l3_mummy2, l3_player.x, l3_player.y) ||
             PlayerTouchesMummy(l3_mummy3, l3_player.x, l3_player.y)))
     {
+        // Play jumpscare -ths
+        if (AEAudioIsValidAudio(l3_sfxJumpscare))
+            AEAudioPlay(l3_sfxJumpscare, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
+
+        // Play gameover -ths
+        if (AEAudioIsValidAudio(l3_sfxGameOver))
+            AEAudioPlay(l3_sfxGameOver, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
+
         ResetLevel3();
         printf("L3: Caught by a Mummy!\n");
         l3_showLose = true;
     }
 
-    // --- Win check ---
+    // ======================================================================
+    // WIN CONDITION (EXIT PORTAL)
+    // ======================================================================
     if (fabsf(l3_player.x - l3_exitPortal.x) < 1.0f &&
         fabsf(l3_player.y - l3_exitPortal.y) < 1.0f)
     {
+        // Exit audio -ths
+        if (AEAudioIsValidAudio(l3_sfxExitDoor))
+            AEAudioPlay(l3_sfxExitDoor, l3AudioGroup, 1.0f, 1.0f, 0);   // -ths
+
         printf("L3: You Escaped!\n");
+
+        gLastLevelPlayed = 3;   // so WinPage restarts Level 3 -ths
+
         next = GS_WIN;
     }
 
-    // --- Legacy coin entity collect ---
+    // ---------------------------------------------------------------------
+    // Legacy Coin entity
+    // ---------------------------------------------------------------------
     if (fabsf(l3_player.x - l3_coin.x) < 1.0f &&
         fabsf(l3_player.y - l3_coin.y) < 1.0f)
     {
         ++l3_coinCounter;
         printf("L3 Coin! Total: %d\n", l3_coinCounter);
-        l3_coin.x = 2000.0f; l3_coin.y = 2000.0f; // "remove" by moving off-screen
+        l3_coin.x = l3_coin.y = 2000.0f;
     }
 }
 
@@ -537,6 +671,15 @@ void Level3_Update()
 void Level3_Draw()
 {
     AEGfxSetBackgroundColor(0.22f, 0.14f, 0.09f);
+
+    // ===== Reset dirty render state before overlays ===== -ths
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);       // -ths
+    AEGfxSetColorToMultiply(1, 1, 1, 1);            // -ths
+    AEGfxSetColorToAdd(0, 0, 0, 0);                 // -ths
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);          // -ths
+    // ===================================================== -ths
+
+    // Delegate overlay pages
     if (l3_showLose) { LosePage_Draw(); return; }
     if (l3_showWin) { WinPage_Draw();  return; }
     if (l3_paused) { PausePage_Draw(); return; }
@@ -549,11 +692,13 @@ void Level3_Draw()
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     AEGfxTextureSet(l3_FloorTex, 0, 0);
+
     for (int row = 0; row < GRID_ROWS; row++)
         for (int col = 0; col < GRID_COLS; col++)
             if (level[row][col] == 0)
             {
-                float x, y; GridToWorldCenter(row, col, x, y);
+                float x, y;
+                GridToWorldCenter(row, col, x, y);
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
@@ -563,11 +708,13 @@ void Level3_Draw()
 
     // --- Wall tiles (value == 1) ---
     AEGfxTextureSet(l3_DesertBlockTex, 0, 0);
+
     for (int row = 0; row < GRID_ROWS; row++)
         for (int col = 0; col < GRID_COLS; col++)
             if (level[row][col] == 1)
             {
-                float x, y; GridToWorldCenter(row, col, x, y);
+                float x, y;
+                GridToWorldCenter(row, col, x, y);
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
@@ -575,7 +722,7 @@ void Level3_Draw()
                 AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
             }
 
-    // --- Player (explorer.png) ---
+    // --- Player ---
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxTextureSet(l3_player.pTex, 0, 0);
     AEMtx33Scale(&scale, l3_player.size, l3_player.size);
@@ -619,15 +766,18 @@ void Level3_Draw()
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 
-    // ===== ADDED: render power‑up if active ===== -ths
+    // ===== Render power‑up if active ===== -ths
     if (l3_powerupActive)
     {
-        AEGfxTextureSet((l3_powerupType == L3_PWR_IMMUNE) ? l3_ImmuneTex : l3_FreezeTex, 0, 0); // -ths
-        AEMtx33Scale(&scale, l3_powerup.size, l3_powerup.size);  // -ths
-        AEMtx33Trans(&trans, l3_powerup.x, l3_powerup.y);        // -ths
-        AEMtx33Concat(&transform, &trans, &scale);               // -ths
-        AEGfxSetTransform(transform.m);                          // -ths
-        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);              // -ths
+        AEGfxTextureSet(
+            (l3_powerupType == L3_PWR_IMMUNE) ? l3_ImmuneTex : l3_FreezeTex,
+            0, 0
+        );
+        AEMtx33Scale(&scale, l3_powerup.size, l3_powerup.size);
+        AEMtx33Trans(&trans, l3_powerup.x, l3_powerup.y);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 
     // --- Exit portal ---
@@ -638,27 +788,25 @@ void Level3_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // ===== ADDED: HUD for active power-ups (top-left) ===== -ths
+    // ===== HUD for active power-ups ===== -ths
     if (l3Power.invFrames > 0)
     {
         char buf[64];
-        std::snprintf(buf, sizeof(buf), "IMMUNE  %.1fs", l3Power.invFrames / 60.0f); // ~60 FPS -ths
-        AEGfxPrint(fontId, buf, -0.95f, 0.90f, 0.8f, 0.90f, 0.90f, 0.20f, 1.0f);     // yellow-ish -ths
+        std::snprintf(buf, sizeof(buf), "IMMUNE  %.1fs", l3Power.invFrames / 60.0f);
+        AEGfxPrint(fontId, buf, -0.95f, 0.90f, 0.8f, 0.90f, 0.90f, 0.20f, 1.0f);
     }
     if (l3Power.freezeFrames > 0)
     {
         char buf[64];
-        std::snprintf(buf, sizeof(buf), "FREEZE  %.1fs", l3Power.freezeFrames / 60.0f); // ~60 FPS -ths
-        AEGfxPrint(fontId, buf, -0.95f, 0.82f, 0.8f, 0.60f, 0.85f, 1.00f, 1.0f);        // cyan-ish -ths
+        std::snprintf(buf, sizeof(buf), "FREEZE  %.1fs", l3Power.freezeFrames / 60.0f);
+        AEGfxPrint(fontId, buf, -0.95f, 0.82f, 0.8f, 0.60f, 0.85f, 1.00f, 1.0f);
     }
-    // ===== END ADDED HUD ===== -ths
 
-    // Reset render state
+    // Reset render state for next frame
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+    AEGfxSetColorToMultiply(1, 1, 1, 1);
+    AEGfxSetColorToAdd(0, 0, 0, 0);
 }
-
 // ----------------------------------------------------------------------------
 // Level3_Free -- currently empty; no additional cleanup needed.
 // ----------------------------------------------------------------------------
@@ -675,6 +823,34 @@ void Level3_Free()
 void Level3_Unload()
 {
     std::cout << "Level3:Unload\n";
+
+    // ==================== AUDIO UNLOAD (LEVEL 3) ===================== // -ths
+    if (AEAudioIsValidAudio(l3_sfxPlayerMove))
+        AEAudioUnloadAudio(l3_sfxPlayerMove);        // -ths
+
+    if (AEAudioIsValidAudio(l3_sfxChest))
+        AEAudioUnloadAudio(l3_sfxChest);             // -ths
+
+    if (AEAudioIsValidAudio(l3_sfxPowerup))
+        AEAudioUnloadAudio(l3_sfxPowerup);           // -ths
+
+    if (AEAudioIsValidAudio(l3_sfxJumpscare))
+        AEAudioUnloadAudio(l3_sfxJumpscare);         // -ths
+
+    if (AEAudioIsValidAudio(l3_sfxExitDoor))
+        AEAudioUnloadAudio(l3_sfxExitDoor);          // -ths
+
+    if (AEAudioIsValidAudio(l3_sfxGameOver))
+        AEAudioUnloadAudio(l3_sfxGameOver);          // -ths
+
+    if (AEAudioIsValidAudio(l3_sfxButton))
+        AEAudioUnloadAudio(l3_sfxButton);            // -ths
+
+    AEAudioUnloadAudioGroup(l3AudioGroup);           // -ths
+    // ================================================================= // -ths
+
+
+    // ========== ORIGINAL TEXTURE & MESH CLEANUP ==========
     AEGfxTextureUnload(l3_player.pTex);
     AEGfxTextureUnload(l3_DesertBlockTex);
     AEGfxTextureUnload(l3_FloorTex);
@@ -684,10 +860,15 @@ void Level3_Unload()
     AEGfxTextureUnload(l3_coin.pTex);
     AEGfxTextureUnload(l3_exitPortal.pTex);
 
-    // ===== ADDED: unload power‑up textures ===== -ths
-    AEGfxTextureUnload(l3_ImmuneTex); // -ths
-    AEGfxTextureUnload(l3_FreezeTex); // -ths
+    // ===== ADDED: unload power-up textures ===== -ths
+    AEGfxTextureUnload(l3_ImmuneTex);   // -ths
+    AEGfxTextureUnload(l3_FreezeTex);   // -ths
 
-    if (pMesh) { AEGfxMeshFree(pMesh); pMesh = nullptr; }
+    if (pMesh)
+    {
+        AEGfxMeshFree(pMesh);
+        pMesh = nullptr;
+    }
+
     l3_initialised = false;
 }

@@ -22,6 +22,9 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 #include "System.h"
 #include <iostream>
 
+// Tracks which level sent the player to the Win Page -ths
+int gLastLevelPlayed = 1;   // default = Level 1
+
 // The three state variables used by the main loop in Main.cpp:
 //   current  = state whose functions are currently executing
 //   previous = state that was active before the current one
