@@ -175,13 +175,27 @@ void MainMenu_Draw()
     AEMtx33Trans(&button_tran, createbutton_x, createbutton_y);
     AEMtx33Concat(&buttons[4], &button_tran, &button_scale);
 
-    AEGfxSetBackgroundColor(0.84f, 0.76f, 0.58f);
+    //AEGfxSetBackgroundColor(0.84f, 0.76f, 0.58f);
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 0.0f);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
 
-    for (int i = 0; i < array_count(buttons); ++i)
+    //for (int i = 0; i < array_count(buttons); ++i)
+    //{
+    //    AEGfxSetTransform(buttons[i].m);
+    //    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    //}
+
+    for (int i = 0; i < array_count(buttons); ++i) // added the colour - jas for colour
     {
+        //AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+
+        if (i == 0 || i == 1 || i == 2 || i == 3)
+            AEGfxSetColorToAdd(0.21f, 0.11f, 0.12f, 1.0f);
+        else
+            AEGfxSetColorToAdd(0.37f, 0.14f, 0.14f, 1.0f);
+
         AEGfxSetTransform(buttons[i].m);
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
