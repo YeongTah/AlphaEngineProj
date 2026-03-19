@@ -54,8 +54,7 @@ extern int level[18][32]; // -ths
 
 /* NEW: forward decls to reuse mouse + click helpers (already in your project) -ths */
 extern void TransformScreentoWorld(s32& mouseX, s32& mouseY); // -ths
-extern bool IsAreaClicked(float area_center_x, float area_center_y, float area_width, float area_height,
-    float click_x, float click_y); // -ths
+extern bool IsAreaClicked(float cx, float cy, float halfW, float halfH); // correct -ths
 
 // --- Variables declaration start here --- (original)
 static bool level1_initialised = false; // Flag to prevent re-initialisation mid-level
@@ -424,12 +423,11 @@ void Level1_Load()
     sfxPlayerMove = AEAudioLoadSound("Assets/audio/player.wav");           // -ths
     sfxChest = AEAudioLoadSound("Assets/audio/chest.wav");            // -ths
     sfxPowerup = AEAudioLoadSound("Assets/audio/powerup.wav");          // -ths
-    //sfxButton = AEAudioLoadSound("Assets/audio/button.wav");
+    //sfxButton   = AEAudioLoadSound("Assets/audio/button.wav");
     sfxJumpscare = AEAudioLoadSound("Assets/audio/jumpscare.wav");        // -ths
     sfxExitDoor = AEAudioLoadSound("Assets/audio/exit.wav");             // -ths
     sfxGameOver = AEAudioLoadSound("Assets/audio/gameover.wav");         // -ths
     // ==================================================================== // -ths
-
 
     // Step 1: Load the tile map from disk into level[][]
     LoadLevelTxt();
@@ -452,8 +450,8 @@ void Level1_Load()
     // Step 4: Spawn extra enemy entities at far grid cells
     gExtraEnemyCount = 0;
     float ex, ey;
-    GridToWorldCenter(2, 2, ex, ey);                 // near top-left -ths
-    SpawnExtraEnemy(ex, ey, ENEMY_SCOUT);            // orange scout -ths
+    GridToWorldCenter(2, 2, ex, ey);        // near top-left -ths
+    SpawnExtraEnemy(ex, ey, ENEMY_SCOUT);   // orange scout -ths
 }
 // ----------------------------------------------------------------------------
 // FindFreeSpawnCell
@@ -535,9 +533,6 @@ void Level1_Initialize()
     // STOP ALL PREVIOUS AUDIO (stops MainMenu BGM completely) // -ths
     // =============================================================
 
-    
-    
-
     // ============================================================= // -ths
 
     // Always reset powerups and overlays on every (re)entry
@@ -551,6 +546,7 @@ void Level1_Initialize()
 
     // Force re-initialisation every time (handles restart correctly)
     level1_initialised = false;
+
     if (!level1_initialised)
     {
         player.size = GRID_TILE_SIZE;
@@ -620,8 +616,10 @@ void Level1_Initialize()
 
         level1_initialised = true;
     }
-}
 
+    // ===== ADDED: call ResetLevel1 to ensure all entities are placed correctly after load ===== -ths
+    ResetLevel1(); // -ths
+}
 // ----------------------------------------------------------------------------
 // Level1_Update
 // Called every frame during the Level 1 game loop.
@@ -695,7 +693,30 @@ void Level1_Update()
         return;
     }
 
-    // --- Pause toggle ---
+    // =========================================================================
+    // ADDED: PAUSE BUTTON CLICK DETECTION (top-right corner) -ths
+    // =========================================================================
+    {
+        int sx, sy;
+        AEInputGetCursorPosition(&sx, &sy);  // get screen coords -ths
+
+        float mx = (float)sx - 800.0f;       // convert to world coords -ths
+        float my = 450.0f - (float)sy;       // convert to world coords -ths
+
+        // detect click inside pause rectangle -ths
+        if (AEInputCheckReleased(AEVK_LBUTTON))
+        {
+            if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mx, my)) // top-right pause button -ths
+            {
+                next = GS_PAUSE;   // go to PausePage -ths
+                return;
+            }
+        }
+    }
+    // =========================================================================
+
+
+    // --- Pause toggle via keyboard ---
     if (AEInputCheckReleased(AEVK_P)) { gPaused = !gPaused; }
     if (gPaused) { return; }
 
@@ -860,7 +881,42 @@ void Level1_Update()
     }
 }
 
+// ============================================================================
+// DrawPauseButton - draws a gray rectangle and centers "PAUSE" text inside it -ths
+// ============================================================================
+static void DrawPauseButton()
+{
+    // Draw the button background rectangle -ths
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_NONE);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.2f, 0.2f, 0.2f, 1.0f);  // dark gray
 
+    AEMtx33 s, t, m;
+    AEMtx33Scale(&s, 80.0f, 40.0f);       // button size
+    AEMtx33Trans(&t, 750.0f, 420.0f);     // button center (world)
+    AEMtx33Concat(&m, &t, &s);
+    AEGfxSetTransform(m.m);
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+
+    // ---- Center the "PAUSE" text inside the button ----
+    const float textScale = 0.8f;
+    const char* text = "PAUSE";
+
+    // Get text dimensions in NDC
+    float w, h;
+    AEGfxGetPrintSize(fontId, text, textScale, &w, &h);
+
+    // Convert button center to NDC
+    float centerNDCX = 750.0f / 800.0f;   // 0.9375
+    float centerNDCY = 420.0f / 450.0f;   // 0.93333...
+
+    // Left X for centered text = centerNDCX - w/2
+    float leftX = centerNDCX - w * 0.5f;
+
+    // Print text centered over the button
+    AEGfxPrint(fontId, text, leftX, centerNDCY, textScale, 1, 1, 1, 1);
+}
 // ----------------------------------------------------------------------------
 // Level1_Draw
 // Called every frame to render Level 1.
@@ -926,6 +982,25 @@ void Level1_Draw()
         }
     }
 
+    // ====== ADDED: Draw coin tiles (value 4) ====== -ths
+    AEGfxTextureSet(coin.pTex, 0, 0);  // use the coin texture -ths
+    for (int row = 0; row < GRID_ROWS; row++)
+    {
+        for (int col = 0; col < GRID_COLS; col++)
+        {
+            if (level[row][col] == 4)
+            {
+                float x, y;
+                GridToWorldCenter(row, col, x, y);
+                AEMtx33Scale(&scale, GRID_TILE_SIZE * 0.8f, GRID_TILE_SIZE * 0.8f); // slightly smaller -ths
+                AEMtx33Trans(&trans, x, y);
+                AEMtx33Concat(&transform, &trans, &scale);
+                AEGfxSetTransform(transform.m);
+                AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+            }
+        }
+    }
+
     // --- Render Player ---
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxTextureSet(player.pTex, 0, 0);
@@ -942,6 +1017,21 @@ void Level1_Draw()
     AEMtx33Concat(&transform, &trans, &scale);
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+
+    // ====== ADDED: Draw extra enemies as colored squares ====== -ths
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR); // switch to color mode -ths
+    for (int i = 0; i < gExtraEnemyCount; ++i)
+    {
+        ExtraEnemy& e = gExtraEnemies[i];
+        AEGfxSetColorToMultiply(e.r, e.g, e.b, 1.0f); // set the enemy color -ths
+        AEMtx33Scale(&scale, e.size, e.size);
+        AEMtx33Trans(&trans, e.x, e.y);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    }
+    // Switch back to texture mode for subsequent draws -ths
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 
     // --- Legacy Coin rendering ---
     if (coin.x < 1000.0f)
@@ -986,6 +1076,11 @@ void Level1_Draw()
         std::snprintf(buf, sizeof(buf), "FREEZE  %.1fs", gPower.freezeFrames / 60.0f); // -ths
         AEGfxPrint(fontId, buf, -0.95f, 0.82f, 0.8f, 0.60f, 0.85f, 1.00f, 1.0f);       // -ths
     }
+
+    // ====================================================================
+    // ADD: Top‑right PAUSE BUTTON (Draw only during gameplay) -ths
+    // ====================================================================
+    DrawPauseButton();   // renders the pause button using helper from earlier -ths
 }
 // ----------------------------------------------------------------------------
 // Level1_Free
@@ -1070,6 +1165,10 @@ void ResetLevel1()
     // Re-spawn legacy coin at grid center
     FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
     coin.x = px; coin.y = py;
+
+    // ====== ADDED: respawn exit portal on reset ====== -ths
+    FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS - 5, px, py);
+    exitPortal.x = px; exitPortal.y = py; // -ths
 
     // ====== ADDED: respawn power-up on reset ====== -ths
     SpawnRandomPowerup(); // -ths

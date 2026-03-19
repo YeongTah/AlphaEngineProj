@@ -1,4 +1,4 @@
-﻿/* Start Header ****************************************************************
+﻿﻿/* Start Header ****************************************************************
 /*!
 \file Level2.cpp
 \author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
@@ -30,7 +30,8 @@ Technology is prohibited.
 #include <cstdio>  // snprintf for HUD text -ths
 
 // ======================= LEVEL 2 AUDIO HANDLES ======================= // -ths
-static AEAudio l2_sfxPlayerMove;   // -ths
+
+static AEAudio l2_sfxPlayerMove;  // -ths
 static AEAudio l2_sfxChest;        // -ths
 static AEAudio l2_sfxPowerup;      // -ths
 static AEAudio l2_sfxJumpscare;    // -ths
@@ -516,6 +517,44 @@ void Level2_Initialize()
     }
 }
 
+// ============================================================================
+// DrawPauseButton - draws a gray rectangle and "PAUSE" text at top-right -ths
+// ============================================================================
+
+static void DrawPauseButton()
+{
+    // Draw the button background rectangle -ths
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_NONE);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.2f, 0.2f, 0.2f, 1.0f);  // dark gray
+
+    AEMtx33 s, t, m;
+    AEMtx33Scale(&s, 80.0f, 40.0f);       // button size
+    AEMtx33Trans(&t, 750.0f, 420.0f);     // button center (world)
+    AEMtx33Concat(&m, &t, &s);
+    AEGfxSetTransform(m.m);
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+
+    // ---- Center the "PAUSE" text inside the button ----
+    const float textScale = 0.8f;
+    const char* text = "PAUSE";
+
+    // Get text dimensions in NDC
+    float w, h;
+    AEGfxGetPrintSize(fontId, text, textScale, &w, &h);
+
+    // Convert button center to NDC
+    float centerNDCX = 750.0f / 800.0f;   // 0.9375
+    float centerNDCY = 420.0f / 450.0f;   // 0.93333...
+
+    // Left X for centered text = centerNDCX - w/2
+    float leftX = centerNDCX - w * 0.5f;
+
+    // Print text centered over the button
+    AEGfxPrint(fontId, text, leftX, centerNDCY, textScale, 1, 1, 1, 1);
+}
+
 // ----------------------------------------------------------------------------
 // Level2_Update
 // Called every frame during the Level 2 game loop.
@@ -606,6 +645,28 @@ void Level2_Update()
 
         return;
     }
+
+    // =========================================================================
+    // ADDED: PAUSE BUTTON CLICK DETECTION (top-right corner) -ths
+    // =========================================================================
+    {
+        int sx, sy;
+        AEInputGetCursorPosition(&sx, &sy);  // get screen coords -ths
+
+        float mx = (float)sx - 800.0f;       // convert to world coords -ths
+        float my = 450.0f - (float)sy;       // convert to world coords -ths
+
+        // detect click inside pause rectangle -ths
+        if (AEInputCheckReleased(AEVK_LBUTTON))
+        {
+            if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mx, my)) // top-right pause button -ths
+            {
+                next = GS_PAUSE;   // go to PausePage -ths
+                return;
+            }
+        }
+    }
+    // =========================================================================
 
     // --- Pause toggle ---
     if (AEInputCheckReleased(AEVK_P)) { l2_paused = !l2_paused; }
@@ -904,7 +965,9 @@ void Level2_Draw()
         std::snprintf(buf, sizeof(buf), "FREEZE  %.1fs", l2Power.freezeFrames / 60.0f); // ~60 FPS -ths
         AEGfxPrint(fontId, buf, -0.95f, 0.82f, 0.8f, 0.60f, 0.85f, 1.00f, 1.0f);        // cyan-ish -ths
     }
-    // ===== END ADDED HUD ===== -ths
+
+    // ===== ADDED: Pause button (top-right) ===== -ths
+    DrawPauseButton(); // -ths
 
     // Reset render state to clean defaults
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
