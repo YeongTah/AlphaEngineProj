@@ -56,6 +56,11 @@ extern int level[18][32]; // -ths
 extern void TransformScreentoWorld(s32& mouseX, s32& mouseY); // -ths
 extern bool IsAreaClicked(float cx, float cy, float halfW, float halfH); // correct -ths
 
+/* Forward declarations for local helpers used by SpawnTreasureBox / OpenTreasureBox */
+static int RandInt(int minV, int maxV);
+static void FindFreeSpawnCell(int startRow, int startCol, float& outX, float& outY,
+    int avoidRow = -1, int avoidCol = -1, int minDist = 0, int maxRadius = 15);
+
 // --- Variables declaration start here --- (original)
 static bool level1_initialised = false; // Flag to prevent re-initialisation mid-level
 Entity player; // The player entity (position, size, color, texture)
@@ -75,25 +80,118 @@ float nextX = player.x; // Stores the player's proposed next X position before v
 float nextY = player.y; // Stores the player's proposed next Y position before validation
 // --- Variables declaration end here ---
 
-// ========================== NEW: enemy variants & powerups (local-only) ===========================
-// Enemy types for minimal variety without touching GSM -ths
-enum EnemyType { ENEMY_SCOUT = 1, ENEMY_BRUTE = 2 }; // your mummy remains as-is; these are extra -ths
-struct ExtraEnemy { float x, y, size; float r, g, b; EnemyType type; }; // kept simple -ths
-static ExtraEnemy gExtraEnemies[8]; // Fixed-size array of extra enemies (max 8) -ths
-static int gExtraEnemyCount = 0; // Current number of active extra enemies -ths
+// ========================== TREASURE BOX SYSTEM ===========================
+// Treasure box system: replaces the old enemy spawning with an interactive chest.
+// A treasure box sits on the map; when the player touches it, it despawns and
+// randomly spawns EITHER a bonus coin (50 %) OR a new chasing mummy (50 %).
+// Spawned mummies are stored in gBoxMummies[] and chase the player each turn.
+// --------------------------------------------------------------------------
+
+// Treasure box entity state
+static Entity gTreasureBox;           // the treasure chest on the map
+static bool   gTreasureBoxActive = false; // true while the box is visible/touchable
+static AEGfxTexture* gTreasureBoxTex = nullptr; // TreasureBox.png (or fallback color)
+
+// Mummies spawned by treasure boxes (max 8)
+struct BoxMummy { float x, y, size; };
+static BoxMummy gBoxMummies[8];
+static int      gBoxMummyCount = 0;
+
+// Treasure box popup message (shown for ~3 seconds after opening a chest)
+static char gPopupMsg[64] = "";  // text to display, empty = no popup
+static int  gPopupFrames = 0;   // counts down at 60fps; popup visible while > 0
 
 // ----------------------------------------------------------------------------
-// SpawnExtraEnemy
-// Adds a new extra enemy to gExtraEnemies[] at world position (x, y).
-// Scout = orange, Brute = purple. Does nothing if the array is already full.
+// SpawnTreasureBox
+// Places the treasure box at a random free cell at least 6 Manhattan cells
+// away from the player. Called at init and after each box is opened.
 // ----------------------------------------------------------------------------
-static void SpawnExtraEnemy(float x, float y, EnemyType t)
+static void SpawnTreasureBox()
 {
-    if (gExtraEnemyCount >= (int)(sizeof(gExtraEnemies) / sizeof(gExtraEnemies[0]))) return;
-    ExtraEnemy& e = gExtraEnemies[gExtraEnemyCount++];
-    e.x = x; e.y = y; e.size = gridStep; e.type = t;
-    if (t == ENEMY_SCOUT) { e.r = 0.9f; e.g = 0.5f; e.b = 0.0f; } // orange scout -ths
-    if (t == ENEMY_BRUTE) { e.r = 0.6f; e.g = 0.2f; e.b = 0.8f; } // purple brute -ths
+    for (int tries = 0; tries < 256; ++tries)
+    {
+        int r = RandInt(0, GRID_ROWS - 1);
+        int c = RandInt(0, GRID_COLS - 1);
+        if (level[r][c] != 0) continue; // must be walkable
+
+        // Keep it a fair distance from the player
+        int pr, pc;
+        WorldToGrid(player.x, player.y, pr, pc);
+        if (abs(r - pr) + abs(c - pc) < 3) continue;
+
+        float wx, wy;
+        GridToWorldCenter(r, c, wx, wy);
+        gTreasureBox.x = wx;
+        gTreasureBox.y = wy;
+        gTreasureBox.size = gridStep * 0.9f;
+        gTreasureBoxActive = true;
+        printf("TreasureBox spawned at grid (%d, %d) | world (%.1f, %.1f)\n", r, c, wx, wy);
+        return;
+    }
+    // Fallback: retry without distance constraint so the box is always visible
+    for (int tries = 0; tries < 256; ++tries)
+    {
+        int r = RandInt(0, GRID_ROWS - 1);
+        int c = RandInt(0, GRID_COLS - 1);
+        if (level[r][c] != 0) continue;
+        float wx, wy;
+        GridToWorldCenter(r, c, wx, wy);
+        gTreasureBox.x = wx;
+        gTreasureBox.y = wy;
+        gTreasureBox.size = gridStep * 0.9f;
+        gTreasureBoxActive = true;
+        printf("TreasureBox spawned (fallback) at grid (%d, %d) | world (%.1f, %.1f)\n", r, c, wx, wy);
+        return;
+    }
+    gTreasureBoxActive = false; // map is entirely walled (should never happen)
+}
+
+// ----------------------------------------------------------------------------
+// OpenTreasureBox
+// Called when the player steps onto the treasure box.
+// 50 % chance: awards +1 coin instantly.
+// 50 % chance: spawns a new chasing mummy near the box position.
+// The box then despawns and is re-placed at a new location.
+// ----------------------------------------------------------------------------
+static void OpenTreasureBox()
+{
+    gTreasureBoxActive = false;
+
+    // Play chest audio if available
+    if (AEAudioIsValidAudio(sfxChest))
+        AEAudioPlay(sfxChest, level1Group, 1.0f, 1.0f, 0);
+
+    bool spawnMummy = (AERandFloat() >= 0.5f); // 50/50
+
+    if (!spawnMummy)
+    {
+        // Reward: instant bonus coin
+        coinCounter++;
+        printf("Treasure Box: COIN! Total coins: %d\n", coinCounter);
+        std::snprintf(gPopupMsg, sizeof(gPopupMsg), "Treasure: +1 Coin! (Total: %d)", coinCounter);
+        gPopupFrames = 180; // show for ~3 seconds
+    }
+    else
+    {
+        // Hazard: spawn a new chasing mummy near the box
+        if (gBoxMummyCount < (int)(sizeof(gBoxMummies) / sizeof(gBoxMummies[0])))
+        {
+            float sx, sy;
+            int br, bc;
+            WorldToGrid(gTreasureBox.x, gTreasureBox.y, br, bc);
+            // Find a nearby free cell that is NOT the player's cell
+            int pr, pc;
+            WorldToGrid(player.x, player.y, pr, pc);
+            FindFreeSpawnCell(br, bc, sx, sy, pr, pc, 2);
+
+            BoxMummy& m = gBoxMummies[gBoxMummyCount++];
+            m.x = sx; m.y = sy; m.size = gridStep;
+            printf("Treasure Box: MUMMY spawned at (%.0f, %.0f)!\n", sx, sy);
+            std::snprintf(gPopupMsg, sizeof(gPopupMsg), "Treasure: A Mummy appeared!");
+            gPopupFrames = 180; // show for ~3 seconds
+        }
+    }
+
 }
 
 // Powerup tile values encoded in the level[][] grid (set via level editor).
@@ -205,6 +303,8 @@ static float kBtnExitY = -130.0f;
 static float kBtnW = 280.0f;
 static float kBtnH = 90.0f;
 
+// ========================== Treasure box popup message ==========================
+
 // ========================== NEW: world<- >NDC helpers & UI draw helpers ============================
 // Converts a world X coordinate to Normalized Device Coordinates [-1, 1]. -ths
 static inline float ToNDCX(float worldX) { return worldX / ((float)AEGfxGetWindowWidth() * 0.5f); }
@@ -259,7 +359,7 @@ static void SnapToGridCenter(float inX, float inY, float& outX, float& outY)
 // ----------------------------------------------------------------------------
 // SaveLevel1State
 // Writes the current Level 1 runtime state (player position, counters, active
-// powerups, and extra enemy list) to 'path' as plain text.
+// powerups, and box-mummy list) to 'path' as plain text.
 // Returns true on success, false if the file cannot be opened.
 // Triggered by F5 in Level1_Update.
 // ----------------------------------------------------------------------------
@@ -273,16 +373,16 @@ static bool SaveLevel1State(const char* path)
         << (int)gPower.freeze << ' ' << gPower.freezeTurns << ' '
         << (int)gPower.invincible << ' ' << gPower.invTurns << ' '
         << gPower.invFrames << '\n';
-    f << gExtraEnemyCount << '\n';
-    for (int i = 0; i < gExtraEnemyCount; ++i)
-        f << (int)gExtraEnemies[i].type << ' ' << gExtraEnemies[i].x << ' ' << gExtraEnemies[i].y << '\n';
+    f << gBoxMummyCount << '\n';
+    for (int i = 0; i < gBoxMummyCount; ++i)
+        f << gBoxMummies[i].x << ' ' << gBoxMummies[i].y << '\n';
     return true;
 }
 
 // ----------------------------------------------------------------------------
 // LoadLevel1State
 // Reads a previously saved Level 1 state from 'path' and restores player
-// position, counters, powerup durations, and extra enemy positions.
+// position, counters, powerup durations, and box-mummy positions.
 // Returns true on success, false if the file cannot be opened.
 // Triggered by F9 in Level1_Update.
 // ----------------------------------------------------------------------------
@@ -297,15 +397,13 @@ static bool LoadLevel1State(const char* path)
     gPower.speed = (sp != 0);
     gPower.freeze = (fr != 0);
     gPower.invincible = (iv != 0);
-    f >> gExtraEnemyCount; if (gExtraEnemyCount < 0) gExtraEnemyCount = 0;
-    if (gExtraEnemyCount > (int)(sizeof(gExtraEnemies) / sizeof(gExtraEnemies[0])))
-        gExtraEnemyCount = (int)(sizeof(gExtraEnemies) / sizeof(gExtraEnemies[0]));
-    for (int i = 0; i < gExtraEnemyCount; ++i)
+    f >> gBoxMummyCount; if (gBoxMummyCount < 0) gBoxMummyCount = 0;
+    if (gBoxMummyCount > (int)(sizeof(gBoxMummies) / sizeof(gBoxMummies[0])))
+        gBoxMummyCount = (int)(sizeof(gBoxMummies) / sizeof(gBoxMummies[0]));
+    for (int i = 0; i < gBoxMummyCount; ++i)
     {
-        int t; f >> t >> gExtraEnemies[i].x >> gExtraEnemies[i].y;
-        gExtraEnemies[i].type = (EnemyType)t; gExtraEnemies[i].size = gridStep;
-        if (gExtraEnemies[i].type == ENEMY_SCOUT) { gExtraEnemies[i].r = 0.9f; gExtraEnemies[i].g = 0.5f; gExtraEnemies[i].b = 0.0f; }
-        if (gExtraEnemies[i].type == ENEMY_BRUTE) { gExtraEnemies[i].r = 0.6f; gExtraEnemies[i].g = 0.2f; gExtraEnemies[i].b = 0.8f; }
+        f >> gBoxMummies[i].x >> gBoxMummies[i].y;
+        gBoxMummies[i].size = gridStep;
     }
     return true;
 }
@@ -408,8 +506,7 @@ static void LoadLevelTxt()
 // 2. Loads all textures needed for this level (player, wall, floor, mummy,
 // coin, exit portal).
 // 3. Creates the shared pMesh (unit square) used for all rendering.
-// 4. Spawns two extra enemies (Scout near top-left, Brute near bottom-right)
-// snapped to grid cell centers.
+// 4. Initialises the treasure box state (actual spawn happens in Initialize).
 // ----------------------------------------------------------------------------
 void Level1_Load()
 {
@@ -444,14 +541,15 @@ void Level1_Load()
     gImmuneTex = AEGfxTextureLoad("Assets/Immune.png"); // -ths
     gFreezeTex = AEGfxTextureLoad("Assets/Freeze.png"); // -ths
 
+    // ====== ADDED: load treasure box texture ======
+    gTreasureBoxTex = AEGfxTextureLoad("Assets/TreasureChest.png");
+
     // Step 3: Create the unit square mesh used to draw all sprites and tiles
     pMesh = CreateSquareMesh();
 
-    // Step 4: Spawn extra enemy entities at far grid cells
-    gExtraEnemyCount = 0;
-    float ex, ey;
-    GridToWorldCenter(2, 2, ex, ey);        // near top-left -ths
-    SpawnExtraEnemy(ex, ey, ENEMY_SCOUT);   // orange scout -ths
+    // Step 4: Initialise treasure box state (actual spawn happens in Initialize)
+    gBoxMummyCount = 0;
+    gTreasureBoxActive = false;
 }
 // ----------------------------------------------------------------------------
 // FindFreeSpawnCell
@@ -470,7 +568,7 @@ void Level1_Load()
 // at safe, non-overlapping positions without hardcoding coordinates.
 // ----------------------------------------------------------------------------
 static void FindFreeSpawnCell(int startRow, int startCol, float& outX, float& outY,
-    int avoidRow = -1, int avoidCol = -1, int minDist = 0, int maxRadius = 15)
+    int avoidRow, int avoidCol, int minDist, int maxRadius)
 {
     // Clamp start cell to grid bounds
     if (startRow < 0) startRow = 0;
@@ -599,6 +697,10 @@ void Level1_Initialize()
         // ====== ADDED: spawn a random power-up at a free cell ====== -ths
         SpawnRandomPowerup(); // -ths
 
+        // ====== Initialise treasure box (gridStep is now set) ======
+        gBoxMummyCount = 0;
+        SpawnTreasureBox();
+
         // Legacy wall entity (unused for collision now)
         wall.x = -60.0f;
         wall.y = 0.0f;
@@ -617,8 +719,6 @@ void Level1_Initialize()
         level1_initialised = true;
     }
 
-    // ===== ADDED: call ResetLevel1 to ensure all entities are placed correctly after load ===== -ths
-    ResetLevel1(); // -ths
 }
 // ----------------------------------------------------------------------------
 // Level1_Update
@@ -640,7 +740,7 @@ void Level1_Initialize()
 // c. TickPowers() -- decrement turn-based powerup durations.
 // 8. Lose check: if player and mummy share the same cell (and player has moved
 // at least once and is not invincible), call ResetLevel1() and show lose overlay.
-// Also checks gExtraEnemies.
+// Also checks box mummies spawned by the treasure box.
 // 9. Win check: if player reaches exitPortal cell, set next = GS_WIN.
 // 10. Legacy coin entity collect (moves coin off-screen on contact).
 // ----------------------------------------------------------------------------
@@ -727,6 +827,7 @@ void Level1_Update()
     // ====== Frame counters ====== -ths
     TickFramePowers();
     TickFreezeFrames();
+    if (gPopupFrames > 0) --gPopupFrames;
 
     // --- Player movement ---
     float testNextX = player.x;
@@ -811,48 +912,73 @@ void Level1_Update()
 
         TickPowers();
         playerMoved = false;
+
+        // ====== BOX MUMMY AI: chase player every 2nd turn ======
+        if (turnCounter % 2 == 0 && gPower.freezeFrames <= 0)
+        {
+            for (int i = 0; i < gBoxMummyCount; ++i)
+            {
+                BoxMummy& bm = gBoxMummies[i];
+                float dxB = player.x - bm.x;
+                float dyB = player.y - bm.y;
+                if (fabsf(dxB) > 1.0f)
+                {
+                    float stepX = (dxB > 0) ? gridStep : -gridStep;
+                    if (canMove(bm.x + stepX, bm.y)) bm.x += stepX;
+                }
+                dyB = player.y - bm.y;
+                if (fabsf(dyB) > 1.0f)
+                {
+                    float stepY = (dyB > 0) ? gridStep : -gridStep;
+                    if (canMove(bm.x, bm.y + stepY)) bm.y += stepY;
+                }
+            }
+        }
     }
 
     const bool effectiveInv = IsInvincibleNow();
 
-    // ====== MAIN MUMMY CATCH ====== -ths
+    // ====== MAIN MUMMY CATCH ======
     if (turnCounter > 0 && !effectiveInv &&
         fabsf(player.x - mummy.x) < 1.0f &&
         fabsf(player.y - mummy.y) < 1.0f)
     {
-        // Play jumpscare audio -ths
         if (AEAudioIsValidAudio(sfxJumpscare))
-            AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0); // -ths
-
-        // Also play gameover sound -ths
+            AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
         if (AEAudioIsValidAudio(sfxGameOver))
-            AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0); // -ths
+            AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0);
 
         ResetLevel1();
         printf("Caught by the Mummy! Level Reset!\n");
         gShowLose = true;
+        return; // skip remaining update logic this frame
     }
 
-    // ====== EXTRA ENEMY CATCH ====== -ths
+    // ====== TREASURE BOX TOUCH ======
+    if (gTreasureBoxActive &&
+        fabsf(player.x - gTreasureBox.x) < 1.0f &&
+        fabsf(player.y - gTreasureBox.y) < 1.0f)
+    {
+        OpenTreasureBox(); // randomly gives coin or spawns mummy; re-places box
+    }
+
+    // ====== BOX MUMMY CATCH ======
     if (turnCounter > 0 && !effectiveInv)
     {
-        for (int i = 0; i < gExtraEnemyCount; ++i)
+        for (int i = 0; i < gBoxMummyCount; ++i)
         {
-            if (fabsf(player.x - gExtraEnemies[i].x) < 1.0f &&
-                fabsf(player.y - gExtraEnemies[i].y) < 1.0f)
+            if (fabsf(player.x - gBoxMummies[i].x) < 1.0f &&
+                fabsf(player.y - gBoxMummies[i].y) < 1.0f)
             {
-                // Play jumpscare audio -ths
                 if (AEAudioIsValidAudio(sfxJumpscare))
-                    AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0); // -ths
-
-                // Gameover sound -ths
+                    AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
                 if (AEAudioIsValidAudio(sfxGameOver))
-                    AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0); // -ths
+                    AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0);
 
                 ResetLevel1();
-                printf("Caught by an Enemy! Level Reset!\n");
+                printf("Caught by a Box Mummy! Level Reset!\n");
                 gShowLose = true;
-                break;
+                return; // skip remaining update logic this frame
             }
         }
     }
@@ -1018,20 +1144,33 @@ void Level1_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // ====== ADDED: Draw extra enemies as colored squares ====== -ths
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR); // switch to color mode -ths
-    for (int i = 0; i < gExtraEnemyCount; ++i)
+    // ====== DRAW TREASURE BOX ======
+    if (gTreasureBoxActive)
     {
-        ExtraEnemy& e = gExtraEnemies[i];
-        AEGfxSetColorToMultiply(e.r, e.g, e.b, 1.0f); // set the enemy color -ths
-        AEMtx33Scale(&scale, e.size, e.size);
-        AEMtx33Trans(&trans, e.x, e.y);
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(gTreasureBoxTex, 0, 0);
+        AEMtx33Scale(&scale, gTreasureBox.size, gTreasureBox.size);
+        AEMtx33Trans(&trans, gTreasureBox.x, gTreasureBox.y);
         AEMtx33Concat(&transform, &trans, &scale);
         AEGfxSetTransform(transform.m);
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
-    // Switch back to texture mode for subsequent draws -ths
+
+    // ====== DRAW BOX MUMMIES (reuse main mummy texture, red-tinted) ======
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetColorToMultiply(1.0f, 0.3f, 0.3f, 1.0f); // reddish tint to distinguish
+    AEGfxTextureSet(mummy.pTex, 0, 0);
+    for (int i = 0; i < gBoxMummyCount; ++i)
+    {
+        AEMtx33Scale(&scale, gBoxMummies[i].size, gBoxMummies[i].size);
+        AEMtx33Trans(&trans, gBoxMummies[i].x, gBoxMummies[i].y);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    }
+    // Reset tint to white for subsequent draws
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
     // --- Legacy Coin rendering ---
     if (coin.x < 1000.0f)
@@ -1077,6 +1216,20 @@ void Level1_Draw()
         AEGfxPrint(fontId, buf, -0.95f, 0.82f, 0.8f, 0.60f, 0.85f, 1.00f, 1.0f);       // -ths
     }
 
+    // ====== Coin counter HUD (just below immunity/freeze stack) ======
+    {
+        char buf[64];
+        std::snprintf(buf, sizeof(buf), "Coins: %d", coinCounter);
+        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 0.8f, 1.00f, 0.85f, 0.10f, 1.0f); // golden yellow
+    }
+
+    // ====== Treasure box popup message -- centered, fades out after ~3 seconds ======
+    if (gPopupFrames > 0)
+    {
+        float alpha = (gPopupFrames < 60) ? gPopupFrames / 60.0f : 1.0f;
+        AEGfxPrint(fontId, gPopupMsg, -0.35f, 0.0f, 0.85f, 1.0f, 1.0f, 0.4f, alpha);
+    }
+
     // ====================================================================
     // ADD: Top‑right PAUSE BUTTON (Draw only during gameplay) -ths
     // ====================================================================
@@ -1114,6 +1267,9 @@ void Level1_Unload()
     // ====== ADDED: unload power-up textures ====== -ths
     AEGfxTextureUnload(gImmuneTex);  // -ths
     AEGfxTextureUnload(gFreezeTex);  // -ths
+
+    // ====== Unload treasure box texture ======
+    if (gTreasureBoxTex) { AEGfxTextureUnload(gTreasureBoxTex); gTreasureBoxTex = nullptr; }
 
     // ---------------- AUDIO UNLOAD ---------------- // -ths
     if (AEAudioIsValidAudio(sfxPlayerMove)) AEAudioUnloadAudio(sfxPlayerMove);   // -ths
@@ -1173,6 +1329,10 @@ void ResetLevel1()
     // ====== ADDED: respawn power-up on reset ====== -ths
     SpawnRandomPowerup(); // -ths
 
+    // ====== Treasure box: clear spawned mummies and re-place the box ======
+    gBoxMummyCount = 0;
+    SpawnTreasureBox();
+
     // Reset movement tracking
     nextX = player.x;
     nextY = player.y;
@@ -1185,4 +1345,8 @@ void ResetLevel1()
     gPower.invincible = false; gPower.invTurns = 0;
     gPower.invFrames = 0;
     gPower.freezeFrames = 0; // -ths
+
+    // Clear any lingering treasure box popup
+    gPopupFrames = 0;
+    gPopupMsg[0] = '\0';
 }
