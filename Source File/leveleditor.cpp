@@ -1,4 +1,5 @@
 #include "pch.h"
+
 #include "AEEngine.h"
 #include "leveleditor.hpp"
 #include <fstream>
@@ -7,163 +8,104 @@
 #include "GridUtils.h"
 #include "Level1.h"
 
-/*************************************************************************************************/
-/*!
-\file   leveleditor.h
-\author your name here
+// Tile size is 50.0f -- matches GRID_TILE_SIZE in GridUtils.h
+// level[][] is the SHARED global tile map used by ALL levels and the editor.
+// Each level's Load function overwrites this array from its own .txt file.
+int level[GRID_ROWS][GRID_COLS];
 
-\par    email: your email here
-
-\brief
-  This file contains the declaration of functions to generate a level from the level editor in game.
-
-  Functions included
-    - generateLevel
-    - canMove
-
-*/
-/*************************************************************************************************/
-
-/*************************************************************************************************/
-/*!
-\brief
-    This function writes the current level to a CSV text file.
-
-*/
-/*************************************************************************************************/
-int print_file();
-
-/*************************************************************************************************/
-/*!
-\brief
-    This function reads the level from a text file and loads it into memory.
-
-*/
-/*************************************************************************************************/
-void readfile();
-
-int level[GRID_ROWS][GRID_COLS]; // Updated the array name to match the extern
-
-/*-----------------------------------------------------------------------------------------------*/
-/*!
-    Enum for different object types in the level.
-
-    0 - walkable space
-    1 - non-walkable blocked tile
-    4 - coin tile
-
-*/
-/*-----------------------------------------------------------------------------------------------*/
+// Tile value meanings (used throughout leveleditor, GridUtils, and all Level files):
+//   0  = empty / walkable floor
+//   1  = NON_WALKABLE wall (rendered as DesertBlock, blocks movement)
+//   2  = PLAYER_SPAWN  (reserved marker; actual spawn via FindFreeSpawnCell)
+//   3  = ENEMY_SPAWN   (reserved marker; actual spawn via FindFreeSpawnCell)
+//   4  = COIN          (collected when player steps on it; tile set to 0 on collect)
+//   5+ = powerup tiles (Level1 only)
 typedef enum Objects
 {
-    NON_WALKABLE = 1,
-    ENEMY_SPAWN = 3,    // Added enemy spawn support for save/load -ths
-    COIN = 4
+    NON_WALKABLE = 1, // Wall tile -- impassable
+    //PLAYER_SPAWN = 2, // Player start marker (not used directly at runtime)
+    //ENEMY_SPAWN = 3, // Enemy start marker  (not used directly at runtime)
+    COIN = 4  // Coin tile -- collected on player overlap
+    /* NEW: value 8 = black buff block (5s immunity in Level1) -ths */
 } Objects;
+
+// Forward declarations for functions defined later in this file
+int  print_file();
+void readfile();
 
 namespace
 {
-    int gActiveLevel = 1;     // Current active level number
-    bool gLocked = false;     // Lock editing
-    int gBrushValue = NON_WALKABLE; // Active brush value
-    int Selected = 1;         // Current selected button
-    AEGfxTexture* CoinTex = nullptr;   // Coin texture reference
-    bool EditorOpen = false;  // Is the side panel open?
+    int  gActiveLevel = 1; // Which level file the editor is currently editing (1, 2, or 3)
+    bool gLocked = false;             // When true, mouse clicks do NOT paint tiles
+    int  gBrushValue = NON_WALKABLE;      // Tile value placed when clicking the grid
+    int  Selected = 1;                 // Currently highlighted button ID
+    AEGfxTexture* CoinTex = nullptr;
+    bool EditorOpen = false;   // false = collapsed, true = full editor shown
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Button structure: position, size, color, ID
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // Represents one UI button in the level editor panel
     struct Button
     {
-        float pos_x;
-        float pos_y;
-        float width;
-        float height;
-        float r;
-        float g;
-        float b;
-        int id;
+        float pos_x, pos_y;   // World-space center of the button
+        float width, height;  // Dimensions of the button rectangle
+        float r, g, b;        // RGB fill color
+        int   id;             // ButtonID enum value for click dispatch
     };
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Enum for all button IDs
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // Identifies each editor panel button
     enum ButtonID
     {
-        BTN_WALL,
-        BTN_COIN,
-        BTN_ERASE,
-        BTN_SAVE,
-        BTN_LOAD,
-        BTN_LOCK,
-        BTN_L1,
-        BTN_L2,
-        BTN_L3,
-        BTN_ENEMY,       // New button for placing enemy spawn tile -ths
-        BTN_EDITOR
+        BTN_WALL,   // Paint wall (NON_WALKABLE) tiles
+        BTN_ERASE,  // Erase tiles back to 0 (walkable)
+        BTN_SAVE,   // Save current level[][] to the active .txt file
+        BTN_LOAD,   // Reload level[][] from the active .txt file
+        BTN_LOCK,   // Toggle tile painting on/off (lock mode)
+        BTN_L1,     // Switch editor to level1.txt
+        BTN_L2,     // Switch editor to level2.txt
+        BTN_L3,      // Switch editor to level3.txt
+        BTN_COIN,    // Add coins
+        BTN_EDITOR // Editor Button to close / open the table
     };
 
     Button const ToggleButton =
     {
-        730.0f,
-        400.0f,
-        120.0f,
-        40.0f,
-        0.85f,
-        0.25f,
-        0.25f,
-        BTN_EDITOR
+        730.0f, 400.0f, 120.0f, 40.0f, 0.85f, 0.25f, 0.25f, BTN_EDITOR
     };
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Editor side panel buttons array
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // All editor panel buttons -- positions are in world space (right side of screen)
     static Button const gButtons[] =
     {
-        {650.0f, 240.0f, 220.0f, 50.0f, 0.95f, 0.65f, 0.35f, BTN_WALL},
-        {650.0f, 180.0f, 220.0f, 50.0f, 0.95f, 0.85f, 0.45f, BTN_COIN},
-        {650.0f, 120.0f, 220.0f, 50.0f, 0.75f, 0.75f, 0.75f, BTN_ERASE},
-        {650.0f,  60.0f, 220.0f, 50.0f, 0.55f, 0.85f, 0.55f, BTN_SAVE},
-        {650.0f,   0.0f, 220.0f, 50.0f, 0.55f, 0.70f, 0.95f, BTN_LOAD},
-        {650.0f, -60.0f, 220.0f, 50.0f, 0.80f, 0.65f, 0.95f, BTN_LOCK},
-        {575.0f, -180.0f, 70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L1},
-        {650.0f, -180.0f, 70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L2},
-        {725.0f, -180.0f, 70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L3},
-
-        // NEW enemy tile button -ths
-        {650.0f, 300.0f, 220.0f, 50.0f, 0.95f, 0.45f, 0.45f, BTN_ENEMY}
+        //pos_x  | pos_y  | width  | height|  r    |  g    |  b    | id
+        {650.0f,  240.0f, 220.0f, 50.0f, 0.95f, 0.65f, 0.35f, BTN_WALL},  // Wall button - bright red
+        {650.0f,  180.0f, 220.0f, 50.0f, 0.95f, 0.85f, 0.45f, BTN_COIN},   // Coin button - bright gold
+        {650.0f,  120.0f, 220.0f, 50.0f, 0.75f, 0.75f, 0.75f, BTN_ERASE},  // Erase button - light grey
+        {650.0f,   60.0f, 220.0f, 50.0f, 0.55f, 0.85f, 0.55f, BTN_SAVE},   // Save button - bright yellow
+        {650.0f,    0.0f, 220.0f, 50.0f, 0.55f, 0.70f, 0.95f, BTN_LOAD},   // Load button - bright cyan
+        {650.0f,  -60.0f, 220.0f, 50.0f, 0.80f, 0.65f, 0.95f, BTN_LOCK},   // Lock button - bright purple
+        {575.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L1},     // Level 1 selector - green
+        {650.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L2},      // Level 2 selector - blue
+        {725.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L3},     // Level 3 selector - orange
     };
 
-    static int const gButtonCount =
-        (int)(sizeof(gButtons) / sizeof(gButtons[0]));
+    static int const gButtonCount = (int)(sizeof(gButtons) / sizeof(gButtons[0]));
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Convert mouse cursor from screen space to world coordinates.
-
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // -------------------------------------------------------------------------
+    // GetMouseWorld
+    // Converts the raw screen cursor position (pixels, top-left origin) to
+    // world space (center origin, Y-up).  Window assumed 1600x900.
+    // -------------------------------------------------------------------------
     void GetMouseWorld(float& worldX, float& worldY)
     {
         int mouseX, mouseY;
         AEInputGetCursorPosition(&mouseX, &mouseY);
-
-        worldX = (float)mouseX - 800.0f;
-        worldY = 450.0f - (float)mouseY;
+        worldX = (float)mouseX - 800.0f;  // shift so center = 0
+        worldY = 450.0f - (float)mouseY;  // flip Y axis
     }
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Return filename of currently active level.
-
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // -------------------------------------------------------------------------
+    // GetLevelFilename
+    // Returns the .txt asset path for the currently active editor level.
+    // Used by readfile() and print_file() to know which file to read/write.
+    // -------------------------------------------------------------------------
     const char* GetLevelFilename()
     {
         switch (gActiveLevel)
@@ -175,47 +117,38 @@ namespace
         }
     }
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Clear the level array to all zeros.
-
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // -------------------------------------------------------------------------
+    // ClearLevelToZeros
+    // Sets every cell in level[][] to 0 (empty/walkable).
+    // Called when creating a blank new level or before loading a fresh file.
+    // -------------------------------------------------------------------------
     void ClearLevelToZeros()
     {
         for (int row = 0; row < GRID_ROWS; ++row)
-        {
             for (int col = 0; col < GRID_COLS; ++col)
-            {
                 level[row][col] = 0;
-            }
-        }
     }
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Check if there's a non-walkable tile at given position.
-
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // -------------------------------------------------------------------------
+    // isBlockedAt
+    // Returns true if the grid cell under world position (worldX, worldY) has
+    // value NON_WALKABLE (1), or if the position is outside the grid bounds.
+    // Used internally by canMove() to validate movement.
+    // -------------------------------------------------------------------------
     bool isBlockedAt(float worldX, float worldY)
     {
         int row, col;
         WorldToGrid(worldX, worldY, row, col);
-
-        if (row < 0 || row >= GRID_ROWS ||
-            col < 0 || col >= GRID_COLS)
-            return true;
-
+        if (row < 0 || row >= GRID_ROWS || col < 0 || col >= GRID_COLS)
+            return true; // treat out-of-bounds as blocked
         return level[row][col] == NON_WALKABLE;
     }
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Check if mouse point is inside a UI button.
-
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // -------------------------------------------------------------------------
+    // PointInRect
+    // Returns true if (mouse_x, mouse_y) is inside the rectangle defined by
+    // the button's center and half-extents.  Used for editor UI hit-testing.
+    // -------------------------------------------------------------------------
     bool PointInRect(float mouse_x, float mouse_y, Button const& button)
     {
         return (mouse_x >= button.pos_x - button.width * 0.5f &&
@@ -224,151 +157,118 @@ namespace
             mouse_y <= button.pos_y + button.height * 0.5f);
     }
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Draw a rectangle with given color.
-
-    */
-    /*-------------------------------------------------------------------------------------------*/
-    void DrawRect
-    (float cx, float cy, float w, float h, float r, float g, float b)
+    // -------------------------------------------------------------------------
+    // DrawRect
+    // Draws a solid colored rectangle at world position (centre_x, centre_y)
+    // with the given dimensions, using the shared pMesh.
+    // Used to draw editor UI backgrounds and button fill colors.
+    // -------------------------------------------------------------------------
+    void DrawRect(float centre_x, float centre_y, float width, float height,
+        float r, float g, float b)
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_NONE);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(r, g, b, 1.0f);
-
-        AEMtx33 scale, trans, result;
-        AEMtx33Scale(&scale, w, h);
-        AEMtx33Trans(&trans, cx, cy);
-        AEMtx33Concat(&result, &trans, &scale);
-
-        AEGfxSetTransform(result.m);
-        AEGfxMeshDraw
-        (pMesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxSetColorToAdd(0.f, 0.f, 0.f, 0.f);
+        AEMtx33 Scale, Transform, ConTrans;
+        AEMtx33Scale(&Scale, width, height);
+        AEMtx33Trans(&Transform, centre_x, centre_y);
+        AEMtx33Concat(&ConTrans, &Transform, &Scale);
+        AEGfxSetTransform(ConTrans.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Draw button background and highlight if selected.
-
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // -------------------------------------------------------------------------
+    // DrawButton
+    // Renders one editor button.  If the button's id matches 'Selected',
+    // draws a red highlight border (8px larger) before the button fill rect.
+    // -------------------------------------------------------------------------
     void DrawButton(Button const& b)
     {
-        if (b.id == Selected)
+        if (b.id == Selected) // Highlight selected button with red border
         {
-            DrawRect(b.pos_x, b.pos_y,
-                b.width + 8.0f, b.height + 8.0f,
-                1.0f, 0.0f, 0.0f);
+            DrawRect(b.pos_x, b.pos_y, b.width + 8.0f, b.height + 8.0f, 1.0f, 0.0f, 0.0f);
         }
-        DrawRect(b.pos_x, b.pos_y,
-            b.width, b.height,
-            b.r, b.g, b.b);
+        DrawRect(b.pos_x, b.pos_y, b.width, b.height, b.r, b.g, b.b);
     }
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Change active level and optionally load from file.
-
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // -------------------------------------------------------------------------
+    // SetActiveLevel
+    // Switches the editor to edit a different level file (1, 2, or 3).
+    // If loadFromFile is true, reads the existing .txt file into level[][].
+    // If false, clears level[][] to all zeros (blank canvas).
+    // -------------------------------------------------------------------------
     void SetActiveLevel(int newLevel, bool loadFromFile)
     {
         gActiveLevel = newLevel;
-        if (gActiveLevel < 1)
-            gActiveLevel = 1;
-        if (gActiveLevel > 3)
-            gActiveLevel = 3;
-
-        if (loadFromFile)
-            readfile();
-        else
-            ClearLevelToZeros();
+        if (gActiveLevel < 1) gActiveLevel = 1;
+        if (gActiveLevel > 3) gActiveLevel = 3;
+        if (loadFromFile) readfile();
+        else              ClearLevelToZeros();
     }
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Handle clicks on editor UI buttons.
-
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // -------------------------------------------------------------------------
+    // HandleButtonClick
+    // Checks whether a mouse click at (mouseWorldX, mouseWorldY) hit any editor
+    // button.  If so, sets the Selected button and performs the button action:
+    //   BTN_WALL  -> set brush to paint NON_WALKABLE tiles
+    //   BTN_ERASE -> set brush to erase (value 0)
+    //   BTN_SAVE  -> write current level[][] to the active .txt file
+    //   BTN_LOAD  -> reload level[][] from the active .txt file
+    //   BTN_LOCK  -> toggle the locked/edit state
+    //   BTN_L1/2/3 -> switch active level and reload from file
+    // Returns true if a button was hit (caller skips grid painting in that case).
+    // -------------------------------------------------------------------------
     bool HandleButtonClick(float mouseWorldX, float mouseWorldY)
     {
+        // Always allow the small top-right toggle button
         if (PointInRect(mouseWorldX, mouseWorldY, ToggleButton))
         {
             EditorOpen = !EditorOpen;
             return true;
         }
 
+        // If editor is closed, do not check the big panel buttons
         if (!EditorOpen)
             return false;
 
+
+
         for (int i = 0; i < gButtonCount; ++i)
         {
-            if (!PointInRect(mouseWorldX, mouseWorldY, gButtons[i]))
-                continue;
+            if (!PointInRect(mouseWorldX, mouseWorldY, gButtons[i])) continue;
 
             Selected = gButtons[i].id;
 
             switch (gButtons[i].id)
             {
-            case BTN_WALL:
-                gBrushValue = NON_WALKABLE;
-                return true;
-
-            case BTN_COIN:
-                gBrushValue = COIN;
-                return true;
-
-            case BTN_ERASE:
-                gBrushValue = 0;
-                return true;
-
-            case BTN_SAVE:
-                print_file();
-                return true;
-
-            case BTN_LOAD:
-                readfile();
-                return true;
-
-            case BTN_LOCK:
-                gLocked = !gLocked;
-                return true;
-
-            case BTN_L1:
-                SetActiveLevel(1, true);
-                return true;
-
-            case BTN_L2:
-                SetActiveLevel(2, true);
-                return true;
-
-            case BTN_L3:
-                SetActiveLevel(3, true);
-                return true;
-
-            case BTN_ENEMY:
-                gBrushValue = ENEMY_SPAWN;  // select enemy tile -ths
-                return true;
-
-            default:
-                break;
+            case BTN_WALL:  gBrushValue = NON_WALKABLE; return true;
+            case BTN_COIN:  gBrushValue = COIN;         return true;
+            case BTN_ERASE: gBrushValue = 0;            return true;
+            case BTN_SAVE:  print_file();               return true;
+            case BTN_LOAD:  readfile();                 return true;
+            case BTN_LOCK:  gLocked = !gLocked;         return true;
+            case BTN_L1:    SetActiveLevel(1, true);    return true;
+            case BTN_L2:    SetActiveLevel(2, true);    return true;
+            case BTN_L3:    SetActiveLevel(3, true);    return true;
+            default: break;
             }
         }
-
         return false;
     }
 
-    /*-------------------------------------------------------------------------------------------*/
-    /*!
-        Draw the side panel UI.
-
-    */
-    /*-------------------------------------------------------------------------------------------*/
+    // -------------------------------------------------------------------------
+    // DrawEditorUI
+    // Renders the entire right-side editor panel each frame:
+    //   1. Brown background rectangle behind the buttons.
+    //   2. All editor buttons (with selection highlight via DrawButton).
+    //   3. Text labels centered on each button using AEGfxPrint.
+    //      The LOCK button label changes to "LOCKED" or "EDIT" based on state.
+    // -------------------------------------------------------------------------
     void DrawEditorUI()
     {
+        // Always draw the small top-right toggle button
         DrawButton(ToggleButton);
 
         if (fontId >= 0)
@@ -377,113 +277,59 @@ namespace
             float const HalfH = 1.0f / 450.0f;
 
             if (EditorOpen)
-            {
-                AEGfxPrint(fontId, "CLOSE",
-                    (ToggleButton.pos_x * HalfW) - 0.06f,
-                    (ToggleButton.pos_y * HalfH) - 0.02f,
-                    0.8f, 0, 0, 0, 1);
-            }
+                AEGfxPrint(fontId, "CLOSE", (ToggleButton.pos_x * HalfW) - 0.05f, (ToggleButton.pos_y * HalfH) - 0.02f, 0.8f, 0, 0, 0, 1);
             else
-            {
-                AEGfxPrint(fontId, "EDITOR",
-                    (ToggleButton.pos_x * HalfW) - 0.07f,
-                    (ToggleButton.pos_y * HalfH) - 0.02f,
-                    0.8f, 0, 0, 0, 1);
-            }
+                AEGfxPrint(fontId, "EDITOR", (ToggleButton.pos_x * HalfW) - 0.05f, (ToggleButton.pos_y * HalfH) - 0.02f, 0.8f, 0, 0, 0, 1);
         }
 
+        // If closed, stop here
         if (!EditorOpen)
             return;
 
-        DrawRect(650.0f, 30.0f, 240.0f, 560.0f,
-            0.16f, 0.11f, 0.06f);
+        DrawRect(650.0f, 30.0f, 240.0f, 560.0f, 0.16f, 0.11f, 0.06f); // Brown UI background
 
         for (int i = 0; i < gButtonCount; ++i)
-        {
             DrawButton(gButtons[i]);
-        }
 
         if (fontId >= 0)
         {
+            // NDC conversion constants: map world positions to AEGfxPrint's [-1,1] coordinate system
             float const HalfW = 1.0f / 800.0f;
             float const HalfH = 1.0f / 450.0f;
 
-            AEGfxPrint(fontId, "WALL",
-                (gButtons[0].pos_x * HalfW) - 0.05f,
-                (gButtons[0].pos_y * HalfH) - 0.02f,
-                1.0f, 0, 0, 0, 1);
-
-            AEGfxPrint(fontId, "COIN",
-                (gButtons[1].pos_x * HalfW) - 0.05f,
-                (gButtons[1].pos_y * HalfH) - 0.02f,
-                1.0f, 0, 0, 0, 1);
-
-            AEGfxPrint(fontId, "ERASE",
-                (gButtons[2].pos_x * HalfW) - 0.06f,
-                (gButtons[2].pos_y * HalfH) - 0.02f,
-                1.0f, 0, 0, 0, 1);
-
-            AEGfxPrint(fontId, "SAVE",
-                (gButtons[3].pos_x * HalfW) - 0.05f,
-                (gButtons[3].pos_y * HalfH) - 0.02f,
-                1.0f, 0, 0, 0, 1);
-
-            AEGfxPrint(fontId, "LOAD",
-                (gButtons[4].pos_x * HalfW) - 0.05f,
-                (gButtons[4].pos_y * HalfH) - 0.02f,
-                1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "WALL", (gButtons[0].pos_x * HalfW) - 0.05f, (gButtons[0].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "COIN", (gButtons[1].pos_x * HalfW) - 0.05f, (gButtons[1].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "ERASE", (gButtons[2].pos_x * HalfW) - 0.06f, (gButtons[2].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "SAVE", (gButtons[3].pos_x * HalfW) - 0.05f, (gButtons[3].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "LOAD", (gButtons[4].pos_x * HalfW) - 0.05f, (gButtons[4].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
 
             if (gLocked)
-            {
-                AEGfxPrint(fontId, "LOCKED",
-                    (gButtons[5].pos_x * HalfW) - 0.085f,
-                    (gButtons[5].pos_y * HalfH) - 0.02f,
-                    1.0f, 0, 0, 0, 1);
-            }
+                AEGfxPrint(fontId, "LOCKED", (gButtons[5].pos_x * HalfW) - 0.085f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
             else
-            {
-                AEGfxPrint(fontId, "EDIT",
-                    (gButtons[5].pos_x * HalfW) - 0.055f,
-                    (gButtons[5].pos_y * HalfH) - 0.02f,
-                    1.0f, 0, 0, 0, 1);
-            }
+                AEGfxPrint(fontId, "EDIT", (gButtons[5].pos_x * HalfW) - 0.055f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
 
-            AEGfxPrint(fontId, "L1",
-                (gButtons[6].pos_x * HalfW) - 0.02f,
-                (gButtons[6].pos_y * HalfH) - 0.02f,
-                1.0f, 0, 0, 0, 1);
-
-            AEGfxPrint(fontId, "L2",
-                (gButtons[7].pos_x * HalfW) - 0.02f,
-                (gButtons[7].pos_y * HalfH) - 0.02f,
-                1.0f, 0, 0, 0, 1);
-
-            AEGfxPrint(fontId, "L3",
-                (gButtons[8].pos_x * HalfW) - 0.02f,
-                (gButtons[8].pos_y * HalfH) - 0.02f,
-                1.0f, 0, 0, 0, 1);
-
-            // New ENEMY label -ths
-            AEGfxPrint(fontId, "ENEMY",
-                (gButtons[9].pos_x * HalfW) - 0.07f,
-                (gButtons[9].pos_y * HalfH) - 0.02f,
-                1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L1", (gButtons[6].pos_x * HalfW) - 0.02f, (gButtons[6].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L2", (gButtons[7].pos_x * HalfW) - 0.02f, (gButtons[7].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L3", (gButtons[8].pos_x * HalfW) - 0.02f, (gButtons[8].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
         }
     }
+} // end anonymous namespace
 
-} // anonymous namespace end
-
-/*************************************************************************************************/
-/*!
-\brief
-    Writes the current level values to a CSV file.
-
-*/
-/*************************************************************************************************/
+// ----------------------------------------------------------------------------
+// print_file  <-- THIS SAVES THE LEVEL TO DISK
+// Writes the current level[][] contents to the active level .txt file
+// (determined by GetLevelFilename() / gActiveLevel).
+//
+// Output format: each cell is written as  <value>,  with rows separated by
+// newlines.  Example row for 32 cols: 0,1,0,0,1,0,0,...,0,
+//
+// This is the file that Level1/2/3 Load functions read back at game startup.
+// The level editor calls this when the SAVE button is clicked.
+// Returns 0 on success.
+// ----------------------------------------------------------------------------
 int print_file()
 {
     std::ofstream os(GetLevelFilename());
-
     if (!os.is_open())
     {
         std::cout << "cannot find\n";
@@ -493,56 +339,71 @@ int print_file()
     for (int i = 0; i < GRID_ROWS; ++i)
     {
         for (int j = 0; j < GRID_COLS; ++j)
-        {
-            os << level[i][j] << ",";
-        }
-        os << "\n";
+            os << level[i][j] << ","; // value then comma, no space
+        os << "\n"; // newline after each row
     }
 
     os.close();
     return 0;
 }
 
-/*************************************************************************************************/
-/*!
-\brief
-    Read the level file into memory.
-
-*/
-/*************************************************************************************************/
+// ----------------------------------------------------------------------------
+// readfile  <-- THIS LOADS THE LEVEL FROM DISK
+// Reads the active level .txt file (e.g. "Assets/level1.txt") and populates
+// level[][] with the tile values.
+//
+// Expected format: each cell is <value>,  rows separated by newlines.
+// Reads exactly GRID_ROWS * GRID_COLS (int, char) pairs.
+//
+// If the file cannot be opened, calls LoadDefaultLevel() (which places a
+// minimal default layout: two walls at [5][5] and [5][6], rest zeros).
+//
+// Also called at runtime by Level1/2/3 Load functions indirectly through
+// the level-specific LoadLevelTxt wrappers.
+// ----------------------------------------------------------------------------
 void readfile()
 {
     std::ifstream is(GetLevelFilename());
-
     if (!is.is_open())
     {
-        LoadDefaultLevel();
+        LoadDefaultLevel(); // fall back to a minimal default map
         std::cout << "No file: " << GetLevelFilename() << " starting blank\n";
         return;
     }
 
-    int tile;
+    int  tile;
     char comma;
 
     for (int row = 0; row < GRID_ROWS; row++)
-    {
         for (int col = 0; col < GRID_COLS; col++)
         {
-            is >> tile >> comma;
+            is >> tile >> comma; // reads: integer value then ',' character
             level[row][col] = tile;
         }
-    }
 
     is.close();
 }
 
-/*************************************************************************************************/
-/*!
-\brief
-    Generate the level editor, draw tiles, handle clicks.
-
-*/
-/*************************************************************************************************/
+// ----------------------------------------------------------------------------
+// generateLevel
+// Called each frame when the Level Editor game state is active.
+// Handles two responsibilities:
+//
+//   INPUT (on left-mouse-button triggered):
+//     1. Gets mouse position in world space.
+//     2. Checks if the click hit an editor UI button (HandleButtonClick).
+//        - If yes: execute the button action; do NOT paint the grid.
+//        - If no AND not locked: convert mouse world pos to grid coords and
+//          set level[row][col] = gBrushValue (currently selected tile value).
+//
+//   RENDERING (every frame):
+//     1. Iterates all grid cells and draws the DesertBlock texture on any cell
+//        with value NON_WALKABLE (1).
+//     2. Calls DrawEditorUI() to render the right-side editor panel.
+//
+// NOTE: Floor tiles (value 0) are NOT drawn here -- the editor shows an empty
+// background for walkable cells so the grid structure is clear.
+// ----------------------------------------------------------------------------
 void generateLevel(void)
 {
     CoinTex = AEGfxTextureLoad("Assets/Coin.png");
@@ -550,107 +411,103 @@ void generateLevel(void)
     if (AEInputCheckTriggered(AEVK_LBUTTON))
     {
         float wx, wy;
-        GetMouseWorld(wx, wy);
+        GetMouseWorld(wx, wy); // convert cursor to world coordinates
 
+        // If click hit a UI button, handle it and skip grid painting
         if (!HandleButtonClick(wx, wy))
         {
-            if (!gLocked)
+            if (!gLocked) // Only paint when editor is in edit (unlocked) mode
             {
                 int row, col;
-                WorldToGrid(wx, wy, row, col);
+                WorldToGrid(wx, wy, row, col); // find which grid cell was clicked
 
-                if (row >= 0 && row < GRID_ROWS &&
-                    col >= 0 && col < GRID_COLS)
-                {
-                    level[row][col] = gBrushValue;
-                    std::cout << "Painted row=" << row
-                        << " col=" << col
-                        << " value=" << gBrushValue << "\n";
-                }
+                if (row >= 0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS)
+                    level[row][col] = gBrushValue; // paint with active brush value
+                std::cout << "Painted row=" << row << " col=" << col
+                    << " value=" << gBrushValue << "\n";
             }
         }
     }
 
+    // Draw all wall tiles using the DesertBlock texture
     for (int row = 0; row < GRID_ROWS; row++)
     {
         for (int col = 0; col < GRID_COLS; col++)
         {
             float x, y;
-            GridToWorldCenter(row, col, x, y);
+            GridToWorldCenter(row, col, x, y); // world center of this tile
 
             if (level[row][col] == NON_WALKABLE)
             {
                 AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(1.0f);
                 AEGfxTextureSet(gDesertBlockTex, 0, 0);
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-                AEMtx33 scale, trans, res;
+                AEMtx33 scale, translate, transform;
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
-                AEMtx33Trans(&trans, x, y);
-                AEMtx33Concat(&res, &trans, &scale);
+                AEMtx33Trans(&translate, x, y);
+                AEMtx33Concat(&transform, &translate, &scale);
 
-                AEGfxSetTransform(res.m);
+                AEGfxSetTransform(transform.m);
                 AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
             }
             else if (level[row][col] == COIN)
             {
                 AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(1.0f);
+
+                // use your coin texture here
                 AEGfxTextureSet(CoinTex, 0, 0);
 
-                AEMtx33 scale, trans, res;
-                AEMtx33Scale(&scale,
-                    GRID_TILE_SIZE * 0.8f,
-                    GRID_TILE_SIZE * 0.8f);
-                AEMtx33Trans(&trans, x, y);
-                AEMtx33Concat(&res, &trans, &scale);
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-                AEGfxSetTransform(res.m);
-                AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-            }
+                AEMtx33 scale, translate, transform;
+                AEMtx33Scale(&scale, GRID_TILE_SIZE * 0.8f, GRID_TILE_SIZE * 0.8f);
+                AEMtx33Trans(&translate, x, y);
+                AEMtx33Concat(&transform, &translate, &scale);
 
-            else if (level[row][col] == ENEMY_SPAWN)  // Draw enemy tile -ths
-            {
-                AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-                AEGfxSetBlendMode(AE_GFX_BM_NONE);
-                AEGfxSetColorToMultiply(1.0f, 0.2f, 0.2f, 1.0f); // red tile -ths
-
-                AEMtx33 scale, trans, res;
-                AEMtx33Scale(&scale,
-                    GRID_TILE_SIZE * 0.8f,
-                    GRID_TILE_SIZE * 0.8f);
-                AEMtx33Trans(&trans, x, y);
-                AEMtx33Concat(&res, &trans, &scale);
-
-                AEGfxSetTransform(res.m);
+                AEGfxSetTransform(transform.m);
                 AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
             }
         }
     }
 
-    DrawEditorUI();
+    DrawEditorUI(); // Draw right-side editor panel on top of tiles
 }
 
-/*************************************************************************************************/
-/*!
-\brief
-    Check if the player can move to a given position.
-
-*/
-/*************************************************************************************************/
+// ----------------------------------------------------------------------------
+// canMove
+// Returns true if it is safe for an entity centered at (nextX, nextY) to move
+// there, based on the current level[][] grid.
+//
+// Performs 8-point collision sampling:  center-edges (N/S/E/W) and all four
+// corners of a square with radius = (GRID_TILE_SIZE / 2) - 1 pixel.
+// If ANY sampled point lands on a NON_WALKABLE cell (value 1) or out of bounds,
+// the move is blocked.
+//
+// Used by the mummy AI in all levels to prevent enemies from walking through walls.
+// (Player movement uses IsTileWalkable() instead -- a simpler single-point check.)
+// ----------------------------------------------------------------------------
 bool canMove(float nextX, float nextY)
 {
-    float collisionrad = (GRID_TILE_SIZE * 0.5f) - 1.0f;
+    float collisionrad = (GRID_TILE_SIZE * 0.5f) - 1.0f; // slightly inside tile edge
 
-    if (isBlockedAt(nextX + collisionrad, nextY)) return false;
-    if (isBlockedAt(nextX - collisionrad, nextY)) return false;
-    if (isBlockedAt(nextX, nextY + collisionrad)) return false;
-    if (isBlockedAt(nextX, nextY - collisionrad)) return false;
+    // Cardinal direction checks
+    if (isBlockedAt(nextX + collisionrad, nextY)) return false; // right
+    if (isBlockedAt(nextX - collisionrad, nextY)) return false; // left
+    if (isBlockedAt(nextX, nextY + collisionrad)) return false; // up
+    if (isBlockedAt(nextX, nextY - collisionrad)) return false; // down
 
-    if (isBlockedAt(nextX + collisionrad, nextY + collisionrad)) return false;
-    if (isBlockedAt(nextX - collisionrad, nextY + collisionrad)) return false;
-    if (isBlockedAt(nextX + collisionrad, nextY - collisionrad)) return false;
-    if (isBlockedAt(nextX - collisionrad, nextY - collisionrad)) return false;
+    // Corner checks
+    if (isBlockedAt(nextX + collisionrad, nextY + collisionrad)) return false; // top-right
+    if (isBlockedAt(nextX - collisionrad, nextY + collisionrad)) return false; // top-left
+    if (isBlockedAt(nextX + collisionrad, nextY - collisionrad)) return false; // bottom-right
+    if (isBlockedAt(nextX - collisionrad, nextY - collisionrad)) return false; // bottom-left
 
-    return true;
+    return true; // all 8 sample points are on walkable tiles
 }

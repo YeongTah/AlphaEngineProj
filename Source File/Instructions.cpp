@@ -19,26 +19,28 @@ namespace
     InstructionsLine Instructions[] =
     {
         {"INSTRUCTIONS", -0.18f,  0.75f, 1.55f},
-        {"Welcome to Mummy Game!", -0.20f,  0.61f, 1.10f},
-        {"Created by Intro Lab", -0.16f,  0.51f, 0.85f},
+        {"Welcome to Mummy Game!", -0.25f,  0.61f, 1.10f},
+        {"By Intro Lab", -0.10f,  0.51f, 0.85f},
 
-        {"Objective", -0.40f,  0.31f, 1.00f},
-        {"Avoid the enemies and collect all the coins.", -0.40f,  0.20f, 0.78f},
-        {"Watch out for mummies chasing you through the level.", -0.40f,  0.11f, 0.78f},
-        {"Plan your moves carefully to survive and win.", -0.40f, 0.02f, 0.78f},
+        {"Goal", -0.25f,  0.31f, 1.00f},
+        {"Collect all coins. Avoid enemies and mummies.",  -0.25f,  0.20f, 0.78f},
+        {"Survive to win.",  -0.25f,  0.11f, 0.78f},
+        //{"Survive to win.",  -0.20f, 0.02f, 0.78f},
 
-        {"Game Features", -0.40f, -0.13f, 1.00f},
-        {"Three difficulty levels: Easy, Medium, and Hard.", -0.40f, -0.24f, 0.78f},
-        {"Use the Level Editor to create and customize your own levels.", -0.40f, -0.33f, 0.74f},
+        {"Features",  -0.25f, -0.10f, 1.00f},
+        {"Easy / Medium / Hard Levels",  -0.25f, -0.21f, 0.78f},
+        {"Level Editor to customise",  -0.25f, -0.30f, 0.74f},
 
-        {"[Controls]",                       -0.40f, -0.49f, 1.00f},
-        {"Move: W A S D",                  -0.40f, -0.59f, 0.82f},
-        {"ESC or B: Return to Main Menu",  -0.40f, -0.70f, 0.78f},
-        {"Q: Quit Game",                   -0.40f, -0.79f, 0.78f}
+        {"[Controls]",  -0.25f, -0.49f, 1.00f},
+        {"W A S D: Move",  -0.25f, -0.59f, 0.82f},
+        {"ESC / B: Menu",  -0.25f, -0.70f, 0.78f},
+        {"Q: Quit",  -0.25f, -0.79f, 0.78f},
     };
 
     int InstructionsCount = sizeof(Instructions) / sizeof(Instructions[0]);
     AEGfxTexture* wallimage = nullptr;
+    AEGfxTexture* wasd = nullptr;
+
 
     // text = the string to display
     // x = horizontal print position
@@ -66,6 +68,8 @@ void Instructions_Load()
 {
     std::cout << "Instructions:Load\n";
     wallimage = AEGfxTextureLoad("Assets/Bigwall.png"); // floor tile texture
+    wasd = AEGfxTextureLoad("Assets/WASD.png"); // floor tile texture
+
     pMesh = CreateSquareMesh();
 }
 
@@ -130,6 +134,28 @@ void Instructions_Draw()
 
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES); // main menu image
 
+    //adding the wasd ----
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxTextureSet(wasd, 0, 0);
+
+    AEMtx33 wasdScale, wasdTrans, wasdTransform;
+
+    // size of the WASD image
+    AEMtx33Scale(&wasdScale, 220.0f, 200.0f);
+
+    // position on screen
+    // move x more right/left, y more up/down
+    AEMtx33Trans(&wasdTrans, 200.0f, -270.0f);
+
+    AEMtx33Concat(&wasdTransform, &wasdTrans, &wasdScale);
+    AEGfxSetTransform(wasdTransform.m);
+
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     //rendering mode to colour mode
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 
