@@ -18,6 +18,7 @@
     <ClCompile Include="Source File\GridUtils.cpp" />
     <ClCompile Include="Source File\Instructions.cpp" />
     <ClCompile Include="Source File\IntroLogo.cpp" />
+    <ClCompile Include="Source File\JumpScare.cpp" />
     <ClCompile Include="Source File\Level1.cpp" />
     <ClCompile Include="Source File\Level2.cpp" />
     <ClCompile Include="Source File\Level3.cpp" />
@@ -44,6 +45,7 @@
     <ClInclude Include="Source File\GridUtils.h" />
     <ClInclude Include="Source File\Instructions.h" />
     <ClInclude Include="Source File\IntroLogo.h" />
+    <ClInclude Include="Source File\JumpScare.h" />
     <ClInclude Include="Source File\Level1.h" />
     <ClInclude Include="Source File\Level2.h" />
     <ClInclude Include="Source File\LevelPage.h" />

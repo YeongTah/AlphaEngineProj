@@ -21,6 +21,7 @@ Technology is prohibited.
 #include "GridUtils.h"
 #include "Level1.h"
 #include "Level2.h"
+#include "JumpScare.h"
 #include "gamestatemanager.h"
 #include "GameStateList.h"
 #include "Main.h"
@@ -406,6 +407,9 @@ void Level2_Load()
     // ===== ADDED: load scorpion texture ===== -ths
     l2_ScorpionTex = AEGfxTextureLoad("Assets/scorpion.png");          // -ths
 
+    // Load jump scare texture
+    JumpScare_Load();
+
     pMesh = CreateSquareMesh();                                        // unit square mesh shared by sprites
 }
 
@@ -438,6 +442,9 @@ void Level2_Initialize()
 
     // ===== ADDED: clear frame-based freeze ===== -ths
     l2Power.freezeFrames = 0; // -ths
+
+    // Initialise jump scare
+    JumpScare_Init();
 
     if (!l2_initialised)
     {
@@ -572,6 +579,7 @@ static void DrawPauseButton()
 //    b. Both mummies move every 2nd turn using axis-priority greedy chase.
 //    c. L2TickPowers() -- decrement powerup durations.
 // 6. Lose check: player shares cell with either mummy AND not invincible.
+// Jump Scare is also shown.
 // 7. Win check: player reaches exit portal cell.
 // 8. Legacy coin entity collect.
 // ----------------------------------------------------------------------------
@@ -795,23 +803,45 @@ void Level2_Update()
         l2_playerMoved = false;
     }
 
+    // ====== UPDATE JUMP SCARE ANIMATION =======
+    JumpScare_Update(); // Before lose conditions
+
+    // Ensure jumpscare is drawn before level resets
+    static bool pendingGameOverReset = false;
+
     // ===== LOSE CHECK ===== -ths
     if (l2_turnCounter > 0 && !L2IsInvincibleNow() &&
         ((fabsf(l2_player.x - l2_mummy.x) < 1.0f && fabsf(l2_player.y - l2_mummy.y) < 1.0f) ||
             (fabsf(l2_player.x - l2_mummy2.x) < 1.0f && fabsf(l2_player.y - l2_mummy2.y) < 1.0f) ||
             (fabsf(l2_player.x - l2_scorpion.x) < 1.0f && fabsf(l2_player.y - l2_scorpion.y) < 1.0f)))
     {
-        // play jumpscare -ths
-        if (AEAudioIsValidAudio(l2_sfxJumpscare))
-            AEAudioPlay(l2_sfxJumpscare, l2AudioGroup, 1.0f, 1.0f, 0); // -ths
 
+        if (!JumpScare_IsActive() && !pendingGameOverReset)
+        {
+            if (AEAudioIsValidAudio(l2_sfxJumpscare))
+                AEAudioPlay(l2_sfxJumpscare, l2AudioGroup, 1.0f, 1.0f, 0);
+
+            // Trigger jump scare immediately when caught
+            JumpScare_Trigger();
+            pendingGameOverReset = true; // Mark that we need to reset after jump scare
+            std::cout << "CAUGHT! Playing jump scare...\n";
+        }
+    }
+
+    // ========= LEVEL RESET FOR LOSE CONDITION =========
+    // All lose conditions and jump scare occurance is in
+    // Reset level can commence
+    if (pendingGameOverReset && !JumpScare_IsActive())
+    {
         // play gameover -ths
         if (AEAudioIsValidAudio(l2_sfxGameOver))
             AEAudioPlay(l2_sfxGameOver, l2AudioGroup, 1.0f, 1.0f, 0); // -ths
 
         ResetLevel2();
-        printf("L2: Caught by an Enemy!\n");
+        pendingGameOverReset = false;
+        std::cout << "Jump scare finished, resetting level...\n";
         l2_showLose = true;
+        return; // skip remaining update logic this frame
     }
 
     // ===== WIN (EXIT DOOR) ===== -ths
@@ -952,6 +982,9 @@ void Level2_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
+    // --- Jump Scare --- 
+    JumpScare_Draw();
+
     // ===== ADDED: HUD for active power-ups (top-left) ===== -ths
     if (l2Power.invFrames > 0)
     {
@@ -1029,6 +1062,9 @@ void Level2_Unload()
     AEGfxTextureUnload(l2_ImmuneTex);   // -ths
     AEGfxTextureUnload(l2_FreezeTex);   // -ths
     AEGfxTextureUnload(l2_ScorpionTex); // -ths
+
+    // ===== Unload Jump Scare =====
+    JumpScare_Unload();
 
     if (pMesh)
     {

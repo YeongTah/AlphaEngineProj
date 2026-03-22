@@ -20,6 +20,7 @@ Technology is prohibited.
 #include "GridUtils.h"
 #include "Level1.h"
 #include "Level3.h"
+#include "JumpScare.h"
 #include "gamestatemanager.h"
 #include "GameStateList.h"
 #include "Main.h"
@@ -327,6 +328,9 @@ void Level3_Load()
     l3_coin.pTex = AEGfxTextureLoad("Assets/Coin.png");
     l3_exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png");
 
+    // Load jump scare texture
+    JumpScare_Load();
+
     // ===== ADDED: load power‑up textures ===== -ths
     l3_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png");   // -ths
     l3_FreezeTex = AEGfxTextureLoad("Assets/Freeze.png");   // -ths
@@ -401,6 +405,9 @@ void Level3_Initialize()
 
     // ===== ADDED: clear frame-based freeze ===== -ths
     l3Power.freezeFrames = 0; // -ths
+
+    // Initialise jump scare
+    JumpScare_Init();
 
     if (!l3_initialised)
     {
@@ -482,6 +489,7 @@ void Level3_Initialize()
 // Same structure as Level2_Update, but with three mummies.
 // All 3 mummies move every 2nd player turn via MoveMummyTowardPlayer().
 // Lose condition triggers if ANY of the 3 mummies occupies the player's cell.
+// Jump Scare is also shown.
 // ----------------------------------------------------------------------------
 void Level3_Update()
 {
@@ -665,6 +673,12 @@ void Level3_Update()
         l3_playerMoved = false;
     }
 
+    // ====== UPDATE JUMP SCARE ANIMATION =======
+    JumpScare_Update(); // Before lose conditions
+
+    // Ensure jumpscare is drawn before level resets
+    static bool pendingGameOverReset = false;
+
     // ======================================================================
     // LOSE CONDITION (THREE MUMMIES)
     // ======================================================================
@@ -674,17 +688,42 @@ void Level3_Update()
             PlayerTouchesMummy(l3_mummy2, l3_player.x, l3_player.y) ||
             PlayerTouchesMummy(l3_mummy3, l3_player.x, l3_player.y)))
     {
-        // Play jumpscare -ths
-        if (AEAudioIsValidAudio(l3_sfxJumpscare))
-            AEAudioPlay(l3_sfxJumpscare, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
 
         // Play gameover -ths
         if (AEAudioIsValidAudio(l3_sfxGameOver))
             AEAudioPlay(l3_sfxGameOver, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
 
+        if (!JumpScare_IsActive() && !pendingGameOverReset)
+        {
+            // Play jumpscare -ths
+            if (AEAudioIsValidAudio(l3_sfxJumpscare))
+                AEAudioPlay(l3_sfxJumpscare, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
+
+            // Trigger jump scare immediately when caught
+            JumpScare_Trigger();
+            pendingGameOverReset = true; // Mark that we need to reset after jump scare
+            std::cout << "CAUGHT! Playing jump scare...\n";
+        }
+
         ResetLevel3();
         printf("L3: Caught by a Mummy!\n");
         l3_showLose = true;
+    }
+
+    // ========= LEVEL RESET FOR LOSE CONDITION =========
+    // All lose conditions and jump scare occurance is in
+    // Reset level can commence
+    if (pendingGameOverReset && !JumpScare_IsActive())
+    {
+        // Play gameover -ths
+        if (AEAudioIsValidAudio(l3_sfxGameOver))
+            AEAudioPlay(l3_sfxGameOver, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
+
+        ResetLevel3();
+        pendingGameOverReset = false;
+        std::cout << "Jump scare finished, resetting level...\n";
+        l3_showLose = true;
+        return; // skip remaining update logic this frame
     }
 
     // ======================================================================
@@ -847,6 +886,9 @@ void Level3_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
+    // --- Jump Scare --- 
+    JumpScare_Draw();
+
     // ===== HUD for active power-ups ===== -ths
     if (l3Power.invFrames > 0)
     {
@@ -925,6 +967,9 @@ void Level3_Unload()
     // ===== ADDED: unload power-up textures ===== -ths
     AEGfxTextureUnload(l3_ImmuneTex);   // -ths
     AEGfxTextureUnload(l3_FreezeTex);   // -ths
+
+    // ===== Unload Jump Scare =====
+    JumpScare_Unload();
 
     if (pMesh)
     {

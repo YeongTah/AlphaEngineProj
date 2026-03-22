@@ -19,6 +19,7 @@ Technology is prohibited.
 #include "leveleditor.hpp"
 #include "GridUtils.h"
 #include "Level1.h"
+#include "JumpScare.h"
 #include "gamestatemanager.h"
 #include "GameStateList.h"
 #include "Main.h"
@@ -54,7 +55,8 @@ extern int level[18][32]; // -ths
 
 /* NEW: forward decls to reuse mouse + click helpers (already in your project) -ths */
 extern void TransformScreentoWorld(s32& mouseX, s32& mouseY); // -ths
-extern bool IsAreaClicked(float cx, float cy, float halfW, float halfH); // correct -ths
+extern bool IsAreaClicked(float area_center_x, float area_center_y, float area_width, float area_height,
+    float click_x, float click_y); // correct -ths
 
 /* Forward declarations for local helpers used by SpawnTreasureBox / OpenTreasureBox */
 static int RandInt(int minV, int maxV);
@@ -544,6 +546,9 @@ void Level1_Load()
     // ====== ADDED: load treasure box texture ======
     gTreasureBoxTex = AEGfxTextureLoad("Assets/TreasureChest.png");
 
+    // Load jump scare texture
+    JumpScare_Load();
+
     // Step 3: Create the unit square mesh used to draw all sprites and tiles
     pMesh = CreateSquareMesh();
 
@@ -641,6 +646,9 @@ void Level1_Initialize()
 
     // ======= ADDED: clear frame-based freeze each entry ======= -ths
     gPower.freezeFrames = 0; // -ths
+
+    // Initialise jump scare
+    JumpScare_Init();
 
     // Force re-initialisation every time (handles restart correctly)
     level1_initialised = false;
@@ -741,6 +749,7 @@ void Level1_Initialize()
 // 8. Lose check: if player and mummy share the same cell (and player has moved
 // at least once and is not invincible), call ResetLevel1() and show lose overlay.
 // Also checks box mummies spawned by the treasure box.
+// Jump Scare is also shown.
 // 9. Win check: if player reaches exitPortal cell, set next = GS_WIN.
 // 10. Legacy coin entity collect (moves coin off-screen on contact).
 // ----------------------------------------------------------------------------
@@ -938,20 +947,40 @@ void Level1_Update()
 
     const bool effectiveInv = IsInvincibleNow();
 
+    // ====== UPDATE JUMP SCARE ANIMATION =======
+    JumpScare_Update(); // Before lose conditions
+
+    // Ensure jumpscare is drawn before level resets
+    static bool pendingGameOverReset = false; 
+
     // ====== MAIN MUMMY CATCH ======
     if (turnCounter > 0 && !effectiveInv &&
         fabsf(player.x - mummy.x) < 1.0f &&
         fabsf(player.y - mummy.y) < 1.0f)
     {
-        if (AEAudioIsValidAudio(sfxJumpscare))
-            AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
-        if (AEAudioIsValidAudio(sfxGameOver))
-            AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0);
+        // S 22/3: shifted audio to jumpscare and losing screen logic
+        //if (AEAudioIsValidAudio(sfxJumpscare))
+        //    AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
+        //if (AEAudioIsValidAudio(sfxGameOver))
+        //    AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0);
 
-        ResetLevel1();
-        printf("Caught by the Mummy! Level Reset!\n");
-        gShowLose = true;
-        return; // skip remaining update logic this frame
+        if (!JumpScare_IsActive() && !pendingGameOverReset)
+        {
+            if (AEAudioIsValidAudio(sfxJumpscare))
+                AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
+
+            // Trigger jump scare immediately when caught
+            JumpScare_Trigger();
+            pendingGameOverReset = true; // Mark that we need to reset after jump scare
+            std::cout << "CAUGHT! Playing jump scare...\n";
+        }
+
+        // S: 22/3 need to move to reset to later else level will reset immediately upon losing,
+        // S: 22/3 causing the jump scare to load AFTER game over scene
+        //ResetLevel1();
+        //printf("Caught by the Mummy! Level Reset!\n");
+        //gShowLose = true;
+        //return; // skip remaining update logic this frame
     }
 
     // ====== TREASURE BOX TOUCH ======
@@ -970,17 +999,46 @@ void Level1_Update()
             if (fabsf(player.x - gBoxMummies[i].x) < 1.0f &&
                 fabsf(player.y - gBoxMummies[i].y) < 1.0f)
             {
-                if (AEAudioIsValidAudio(sfxJumpscare))
-                    AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
-                if (AEAudioIsValidAudio(sfxGameOver))
-                    AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0);
+                // S 22/3: shifted audio to jumpscare and losing screen logic
+                //if (AEAudioIsValidAudio(sfxJumpscare))
+                //    AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
+                //if (AEAudioIsValidAudio(sfxGameOver))
+                //    AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0);
 
-                ResetLevel1();
-                printf("Caught by a Box Mummy! Level Reset!\n");
-                gShowLose = true;
-                return; // skip remaining update logic this frame
+                if (!JumpScare_IsActive() && !pendingGameOverReset)
+                {
+                    if (AEAudioIsValidAudio(sfxJumpscare))
+                        AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
+
+                    // Trigger jump scare immediately when caught
+                    JumpScare_Trigger();
+                    pendingGameOverReset = true; // Mark that we need to reset after jump scare
+                    std::cout << "CAUGHT! Playing jump scare...\n";
+                }
+
+                // S: 22/3 need to move to reset to later else level will reset immediately upon losing,
+                // S: 22/3 causing the jump scare to load AFTER game over scene
+                //ResetLevel1();
+                //printf("Caught by a Box Mummy! Level Reset!\n");
+                //gShowLose = true;
+                //return; // skip remaining update logic this frame
             }
         }
+    }
+
+    // ========= LEVEL RESET FOR LOSE CONDITION =========
+    // All lose conditions and jump scare occurance is in
+    // Reset level can commence
+    if (pendingGameOverReset && !JumpScare_IsActive())
+    {
+        if (AEAudioIsValidAudio(sfxGameOver))
+            AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0);
+
+        ResetLevel1();
+        pendingGameOverReset = false;
+        std::cout << "Jump scare finished, resetting level...\n";
+        gShowLose = true;
+        return; // skip remaining update logic this frame
     }
 
     // ====== EXIT PORTAL WIN ====== -ths
@@ -1202,6 +1260,9 @@ void Level1_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
+    // --- Jump Scare --- 
+    JumpScare_Draw();
+
     // ===== HUD FOR ACTIVE POWER-UPS ===== -ths
     if (gPower.invFrames > 0)
     {
@@ -1267,6 +1328,9 @@ void Level1_Unload()
     // ====== ADDED: unload power-up textures ====== -ths
     AEGfxTextureUnload(gImmuneTex);  // -ths
     AEGfxTextureUnload(gFreezeTex);  // -ths
+
+    // ------ Unload Jump Scare ------
+    JumpScare_Unload();
 
     // ====== Unload treasure box texture ======
     if (gTreasureBoxTex) { AEGfxTextureUnload(gTreasureBoxTex); gTreasureBoxTex = nullptr; }
