@@ -405,7 +405,7 @@ void Level2_Load()
     l2_FreezeTex = AEGfxTextureLoad("Assets/Freeze.png");              // -ths
 
     // ===== ADDED: load scorpion texture ===== -ths
-    l2_ScorpionTex = AEGfxTextureLoad("Assets/scorpion.png");          // -ths
+    l2_ScorpionTex = AEGfxTextureLoad("Assets/Spider.png");          // -ths
 
     // Load jump scare texture
     JumpScare_Load();

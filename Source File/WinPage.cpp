@@ -58,14 +58,9 @@ void WinPage_Update()
         return;
     }
 
-    // M -> Quit to Main Menu
-    if (AEInputCheckReleased(AEVK_M))
-    {
-        if (AEAudioIsValidAudio(sfxButton))
-            AEAudioPlay(sfxButton, winGroup, 1.0f, 1.0f, 0);
-        next = MAINMENUSTATE;
-        return;
-    }
+    // Quit on ESC
+    if (AEInputCheckReleased(AEVK_ESCAPE))
+        next = GS_QUIT;
 }
 
 // ======================================================
