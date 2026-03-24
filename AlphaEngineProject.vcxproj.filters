@@ -81,6 +81,9 @@
     <ClCompile Include="Source File\JumpScare.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source File\Confirmation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Player.png">
@@ -154,6 +157,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source File\JumpScare.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source File\Confirmation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

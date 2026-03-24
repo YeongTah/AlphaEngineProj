@@ -20,6 +20,7 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 #include "Level2.h"
 #include "Level3.h"
 #include "PausePage.h"   // added for GS_PAUSE -ths
+#include "Confirmation.h"
 #include "System.h"
 #include <iostream>
 
@@ -178,6 +179,14 @@ void GSM_Update()
         fpDraw = PausePage_Draw;       // -ths
         fpFree = PausePage_Free;       // -ths
         fpUnload = PausePage_Unload;     // -ths
+        break;
+    case CONFIRM:
+        fpLoad = Confirmation_Load;
+        fpInitialize = Confirmation_Initialize;
+        fpUpdate = Confirmation_Update;
+        fpDraw = Confirmation_Draw;
+        fpFree = Confirmation_Free;
+        fpUnload = Confirmation_Unload;
         break;
 
     case GS_RESTART:

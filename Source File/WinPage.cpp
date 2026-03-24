@@ -3,6 +3,7 @@
 #include "WinPage.h"
 #include "gamestatemanager.h"
 #include "Main.h"
+#include "Confirmation.h"
 #include <iostream>
 
 // ======================================================
@@ -42,7 +43,8 @@ void WinPage_Update()
     {
         if (AEAudioIsValidAudio(sfxButton))
             AEAudioPlay(sfxButton, winGroup, 1.0f, 1.0f, 0);
-        next = LEVELPAGE;
+        Confirmation_Level(GS_WIN, LEVELPAGE, "Are you sure you want to go to Level Select?");
+        next = CONFIRM;
         return;
     }
 
@@ -52,6 +54,7 @@ void WinPage_Update()
         if (gLastLevelPlayed == 1) next = GS_LEVEL1;
         else if (gLastLevelPlayed == 2) next = GS_LEVEL2;
         else if (gLastLevelPlayed == 3) next = GS_LEVEL3;
+
         return;
     }
 
