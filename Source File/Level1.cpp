@@ -175,6 +175,13 @@ static void OpenTreasureBox()
     }
     else
     {
+        // Trigger jump scare when mummy spawns from chest
+        JumpScare_Trigger();
+
+        // Play sound for the jump scare
+        if (AEAudioIsValidAudio(sfxJumpscare))
+            AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
+
         // Hazard: spawn a new chasing mummy near the box
         if (gBoxMummyCount < (int)(sizeof(gBoxMummies) / sizeof(gBoxMummies[0])))
         {
@@ -804,16 +811,12 @@ void Level1_Update()
     // ADDED: PAUSE BUTTON CLICK DETECTION (top-right corner) -ths
     // =========================================================================
     {
-        int sx, sy;
-        AEInputGetCursorPosition(&sx, &sy);  // get screen coords -ths
-
-        float mx = (float)sx - 800.0f;       // convert to world coords -ths
-        float my = 450.0f - (float)sy;       // convert to world coords -ths
+        s32 mxS, myS; TransformScreentoWorld(mxS, myS);
 
         // detect click inside pause rectangle -ths
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mx, my)) // top-right pause button -ths
+            if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mxS, myS)) // top-right pause button -ths
             {
                 next = GS_PAUSE;   // go to PausePage -ths
                 return;

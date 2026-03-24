@@ -28,6 +28,12 @@ void PausePage_Update()
         next = previous; // resume last game state
     }
 
+    // Go to levele selection page on B
+    if (AEInputCheckReleased(AEVK_B))
+    {
+        next = LEVELPAGE;
+    }
+
     // Quit on ESC
     if (AEInputCheckReleased(AEVK_ESCAPE))
         next = GS_QUIT;
