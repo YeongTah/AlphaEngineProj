@@ -100,7 +100,7 @@ void LevelPage_Update()
     }
 
     // --- Back button: B key, ESCAPE, or clicking the back button texture ---
-    if (AEInputCheckReleased(AEVK_B) || (AEInputCheckReleased(AEVK_ESCAPE)) ||
+    if (AEInputCheckReleased(AEVK_B) ||
         (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(backbutton_x, backbutton_y,
             50.0f, 50.0f, mouseX, mouseY)))
     {
@@ -109,7 +109,7 @@ void LevelPage_Update()
     }
 
     // --- Quit ---
-    if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist())
+    if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
     {
         next = GS_QUIT;
         std::cout << "Q key released\n";

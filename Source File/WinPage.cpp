@@ -55,8 +55,8 @@ void WinPage_Update()
         return;
     }
 
-    // Q -> Quit to Main Menu
-    if (AEInputCheckReleased(AEVK_Q))
+    // M -> Quit to Main Menu
+    if (AEInputCheckReleased(AEVK_M))
     {
         if (AEAudioIsValidAudio(sfxButton))
             AEAudioPlay(sfxButton, winGroup, 1.0f, 1.0f, 0);
@@ -91,7 +91,7 @@ void WinPage_Draw()
     AEGfxGetPrintSize(fontId, t2, lineScale, &w, &h);
     AEGfxPrint(fontId, t2, -0.5f * w, -0.11f, lineScale, 1.0f, 0.95f, 0.82f, 1.0f);
 
-    const char* t3 = "[Q] Quit";
+    const char* t3 = "[ESCAPE] Quit";
     AEGfxGetPrintSize(fontId, t3, lineScale, &w, &h);
     AEGfxPrint(fontId, t3, -0.5f * w, -0.20f, lineScale, 1.0f, 0.95f, 0.82f, 1.0f);
 }

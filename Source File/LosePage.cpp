@@ -30,7 +30,7 @@ void LosePage_Update()
 {
     if (AEInputCheckReleased(AEVK_RETURN)) next = LEVELPAGE;
     if (AEInputCheckReleased(AEVK_R)) { next = previous; } // previous = the level that triggered the lose
-    if (AEInputCheckReleased(AEVK_Q) ||
+    if (AEInputCheckReleased(AEVK_ESCAPE) ||
         0 == AESysDoesWindowExist()) next = GS_QUIT;
 }
 
@@ -87,7 +87,7 @@ void LosePage_Draw()
     float x2 = -0.5f * w;                                    // ADDED
     AEGfxPrint(fontId, t2, x2, -0.11f, itemScale, 1.0f, 0.95f, 0.82f, 1.0f);
 
-    const char* t3 = "[Q] Quit";
+    const char* t3 = "[ESCAPE] Quit";
     AEGfxGetPrintSize(fontId, t3, itemScale, &w, &h);        // ADDED
     float x3 = -0.5f * w;                                    // ADDED
     AEGfxPrint(fontId, t3, x3, -0.20f, itemScale, 1.0f, 0.95f, 0.82f, 1.0f);

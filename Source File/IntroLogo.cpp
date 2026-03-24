@@ -23,10 +23,11 @@ Technology is prohibited.
 
 // --- Variables declaration start here ---
 AEGfxTexture* DPLogo = nullptr;      // Digipen logo texture
-AEGfxTexture* GameLogo = nullptr;    // (unused, we print text instead)
 
 static int page_index = 0;                // 0 = Digipen Logo, 1 = Game Logo text
-static const float PAGE_AUTO_TIME = 2.5f; // auto-advance after 2.5 seconds
+// PAGE_MIN_TIME IS ZERO FOR THE TIME BEING BUT NEED CHANGE TO 2.0f BEFORE SUBMISSION
+static const float PAGE_MIN_TIME = 0.0f;  // prevent instantaneous skip 
+static const float PAGE_AUTO_TIME = 3.0f; // auto-advance after 3 seconds
 static float page_timer = 0.0f;           // time accumulator for current page
 
 // Small delay after pressing skip to prevent accidental double‑skip -ths
@@ -43,7 +44,6 @@ void Intro_Load()
     std::cout << "Intro:Load\n";
 
     DPLogo = AEGfxTextureLoad("Assets/DigipenLogo.png");
-    // GameLogo texture is not used; we print text manually.
 
     pMesh = CreateSquareMesh();
 }
@@ -79,8 +79,20 @@ void Intro_Update()
         advanceRequested = true;
     }
 
+    // Only allow skip if we've met the minimum time requirement for the current page
+    bool canSkip = false;
+
+    if (page_index == 0) {
+        // Page 0 (Digipen logo): Can only skip after PAGE_MIN_TIME (2.0f seconds)
+        canSkip = (page_timer >= PAGE_MIN_TIME);
+    }
+    else if (page_index == 1) {
+        // Page 1 (Game title): Can skip immediately (no minimum time)
+        canSkip = true;
+    }
+
     // Manual skip (spacebar or left mouse button) with cooldown -ths
-    if (skip_timer >= SKIP_COOLDOWN)
+    if (canSkip && skip_timer >= SKIP_COOLDOWN)
     {
         if (AEInputCheckTriggered(AEVK_SPACE) || AEInputCheckTriggered(AEVK_LBUTTON))
         {
@@ -107,8 +119,8 @@ void Intro_Update()
         }
     }
 
-    // Quit game when Q is hit or window closed
-    if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist())
+    // Quit game when ESC is hit or window closed
+    if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
     {
         std::cout << "Intro: Q key released, quitting\n";
         next = GS_QUIT;

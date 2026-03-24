@@ -48,7 +48,7 @@ static void SpawnRandomPowerup(); // -ths
 
 // IsAreaClicked has no header declaration
 extern bool IsAreaClicked(float area_center_x, float area_center_y, float area_width, float area_height,
-    float click_x, float click_y);
+    s32 click_x, s32 click_y);
 
 // ---- Level 3 local entities ----
 static Entity l3_player;   // Player (explorer.png)
@@ -494,12 +494,11 @@ void Level3_Initialize()
 void Level3_Update()
 {
     // --- Navigation keys ---
-    if (AEInputCheckReleased(AEVK_B) ||
-        AEInputCheckReleased(AEVK_ESCAPE)) {
+    if (AEInputCheckReleased(AEVK_B)) {
         next = LEVELPAGE;
         return;
     }
-    if (AEInputCheckReleased(AEVK_Q) ||
+    if (AEInputCheckReleased(AEVK_ESCAPE) ||
         0 == AESysDoesWindowExist()) {
         next = GS_QUIT;
         return;
@@ -516,12 +515,11 @@ void Level3_Update()
     {
         s32 mxS, myS;
         TransformScreentoWorld(mxS, myS);
-        float mx = (float)mxS, my = (float)myS;
 
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
             // Retry button
-            if (IsAreaClicked(kL3BtnRetryX, kL3BtnRetryY, kL3BtnW, kL3BtnH, mx, my))
+            if (IsAreaClicked(kL3BtnRetryX, kL3BtnRetryY, kL3BtnW, kL3BtnH, mxS, myS))
             {
                 // play click audio -ths
                 if (AEAudioIsValidAudio(l3_sfxButton))
@@ -532,7 +530,7 @@ void Level3_Update()
                 return;
             }
             // Exit button
-            if (IsAreaClicked(kL3BtnExitX, kL3BtnExitY, kL3BtnW, kL3BtnH, mx, my))
+            if (IsAreaClicked(kL3BtnExitX, kL3BtnExitY, kL3BtnW, kL3BtnH, mxS, myS))
             {
                 if (AEAudioIsValidAudio(l3_sfxButton))
                     AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
@@ -559,7 +557,7 @@ void Level3_Update()
             return;
         }
 
-        if (AEInputCheckReleased(AEVK_Q) ||
+        if (AEInputCheckReleased(AEVK_ESCAPE) ||
             0 == AESysDoesWindowExist()) {
             next = GS_QUIT;
             return;
@@ -572,16 +570,13 @@ void Level3_Update()
     // ADDED: PAUSE BUTTON CLICK DETECTION (top-right corner) -ths
     // =========================================================================
     {
-        int sx, sy;
-        AEInputGetCursorPosition(&sx, &sy);  // get screen coords -ths
-
-        float mx = (float)sx - 800.0f;       // convert to world coords -ths
-        float my = 450.0f - (float)sy;       // convert to world coords -ths
+        s32 mxS, myS;
+        TransformScreentoWorld(mxS, myS);
 
         // detect click inside pause rectangle -ths
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mx, my)) // top-right pause button -ths
+            if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mxS, myS)) // top-right pause button -ths
             {
                 next = GS_PAUSE;   // go to PausePage -ths
                 return;

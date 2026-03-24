@@ -81,8 +81,8 @@ namespace
         {"ASEPRITE", 0.85f},
         {"WWW.DIGIPEN.EDU", 0.85f},
 
-        {"PRESS ESC TO RETURN TO MAIN MENU", 0.75f},
-        {"PRESS Q TO QUIT", 0.75f}
+        {"PRESS B TO RETURN TO MAIN MENU", 0.75f},
+        {"PRESS ESCAPE TO QUIT", 0.75f}
     };
 
     int CreditCount = sizeof(Credits) / sizeof(Credits[0]);
@@ -141,14 +141,14 @@ void Credit_Update()
     std::cout << "Credit:Update\n";
 
     // Move back to main menu upon triggering "B"
-    if (AEInputCheckReleased(AEVK_B) || AEInputCheckReleased(AEVK_ESCAPE))
+    if (AEInputCheckReleased(AEVK_B))
     {
         next = MAINMENUSTATE;
         std::cout << "Back key Released" << '\n';
     }
 
-    // Quit game when Q is hit or when the window is closed
-    if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist())
+    // Quit game when ESC is hit or when the window is closed
+    if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
     {
         next = GS_QUIT;
         std::cout << "Q key Released" << '\n';

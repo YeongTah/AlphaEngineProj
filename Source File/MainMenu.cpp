@@ -101,7 +101,7 @@ void MainMenu_Update()
     }
 
     // CLICK: EXIT
-    if (AEInputCheckReleased(AEVK_Q) ||
+    if (AEInputCheckReleased(AEVK_ESCAPE) ||
         0 == AESysDoesWindowExist() ||
         (AEInputCheckReleased(AEVK_LBUTTON) &&
             IsAreaClicked(button_x, exitbutton_y, 300.0f, 90.0f, mouseX, mouseY)))
@@ -114,10 +114,8 @@ void MainMenu_Update()
     }
 
     // CLICK: CREATOR
-    if (AEInputCheckReleased(AEVK_Q) ||
-        0 == AESysDoesWindowExist() ||
-        (AEInputCheckReleased(AEVK_LBUTTON) &&
-            IsAreaClicked(createbutton_x, createbutton_y, 150.0f, 65.0f, mouseX, mouseY)))
+    if (AEInputCheckReleased(AEVK_LBUTTON) &&
+            IsAreaClicked(createbutton_x, createbutton_y, 150.0f, 65.0f, mouseX, mouseY))
     {
         // BUTTON CLICK SOUND // -ths
         if (AEAudioIsValidAudio(sfxButtonClick)) // -ths

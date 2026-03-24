@@ -22,14 +22,14 @@ void PausePage_Initialize() {}
 // ----------------------------------------------------------------------------
 void PausePage_Update()
 {
-    // Resume on P or ESC
-    if (AEInputCheckReleased(AEVK_P) || AEInputCheckReleased(AEVK_ESCAPE))
+    // Resume on P
+    if (AEInputCheckReleased(AEVK_P))
     {
         next = previous; // resume last game state
     }
 
-    // Quit on Q
-    if (AEInputCheckReleased(AEVK_Q))
+    // Quit on ESC
+    if (AEInputCheckReleased(AEVK_ESCAPE))
         next = GS_QUIT;
 
     // Save on F5
@@ -82,11 +82,11 @@ void PausePage_Draw()
     AEGfxGetPrintSize(fontId, t1, lineScale, &w, &h);
     AEGfxPrint(fontId, t1, -0.5f * w, 0.02f, lineScale, beigeR, beigeG, beigeB, 1.0f);
 
-    const char* t2 = "ESC to Level Select";
+    const char* t2 = "B to Level Select";
     AEGfxGetPrintSize(fontId, t2, lineScale, &w, &h);
     AEGfxPrint(fontId, t2, -0.5f * w, -0.08f, lineScale, beigeR, beigeG, beigeB, 1.0f);
 
-    const char* t3 = "Q to Quit";
+    const char* t3 = "ESC to Quit";
     AEGfxGetPrintSize(fontId, t3, lineScale, &w, &h);
     AEGfxPrint(fontId, t3, -0.5f * w, -0.18f, lineScale, beigeR, beigeG, beigeB, 1.0f);
 

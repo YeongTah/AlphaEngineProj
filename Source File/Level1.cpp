@@ -56,7 +56,7 @@ extern int level[18][32]; // -ths
 /* NEW: forward decls to reuse mouse + click helpers (already in your project) -ths */
 extern void TransformScreentoWorld(s32& mouseX, s32& mouseY); // -ths
 extern bool IsAreaClicked(float area_center_x, float area_center_y, float area_width, float area_height,
-    float click_x, float click_y); // correct -ths
+    s32 click_x, s32 click_y); // correct -ths
 
 /* Forward declarations for local helpers used by SpawnTreasureBox / OpenTreasureBox */
 static int RandInt(int minV, int maxV);
@@ -733,7 +733,7 @@ void Level1_Initialize()
 // Called every frame during the Level 1 game loop.
 // Handles (in order):
 // 1. Legacy level1_counter decrement -- transitions to MAINMENUSTATE at 0.
-// 2. Back (B/ESC) and Quit (Q) key handling.
+// 2. Back (B) and Quit (ESC) key handling.
 // 3. Win/Lose overlay input (mouse click on Retry/Exit buttons, R, ENTER, Q).
 // Returns early -- game logic is frozen while overlays are visible.
 // 4. Pause toggle (P) -- returns early when paused.
@@ -763,11 +763,10 @@ void Level1_Update()
     }
 
     // --- Navigation keys ---
-    if (AEInputCheckReleased(AEVK_B) ||
-        AEInputCheckReleased(AEVK_ESCAPE)) {
+    if (AEInputCheckReleased(AEVK_B)) {
         next = LEVELPAGE;
     }
-    if (AEInputCheckReleased(AEVK_Q) ||
+    if (AEInputCheckReleased(AEVK_ESCAPE) ||
         0 == AESysDoesWindowExist()) {
         next = GS_QUIT;
     }
@@ -777,16 +776,15 @@ void Level1_Update()
         gShowWin)
     {
         s32 mxS, myS; TransformScreentoWorld(mxS, myS);
-        float mx = (float)mxS, my = (float)myS;
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            if (IsAreaClicked(kBtnRetryX, kBtnRetryY, kBtnW, kBtnH, mx, my))
+            if (IsAreaClicked(kBtnRetryX, kBtnRetryY, kBtnW, kBtnH, mxS, myS))
             {
                 next = GS_LEVEL1;
                 gShowLose = gShowWin = false;
                 return;
             }
-            if (IsAreaClicked(kBtnExitX, kBtnExitY, kBtnW, kBtnH, mx, my))
+            if (IsAreaClicked(kBtnExitX, kBtnExitY, kBtnW, kBtnH, mxS, myS))
             {
                 next = MAINMENUSTATE;
                 gShowLose = gShowWin = false;
@@ -795,7 +793,7 @@ void Level1_Update()
         }
         if (AEInputCheckReleased(AEVK_R)) { next = GS_LEVEL1; gShowLose = gShowWin = false; return; }
         if (AEInputCheckReleased(AEVK_RETURN)) { next = MAINMENUSTATE; gShowLose = gShowWin = false; return; }
-        if (AEInputCheckReleased(AEVK_Q) ||
+        if (AEInputCheckReleased(AEVK_ESCAPE) ||
             0 == AESysDoesWindowExist()) {
             next = GS_QUIT; return;
         }

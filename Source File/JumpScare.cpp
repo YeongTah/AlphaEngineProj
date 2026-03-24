@@ -5,19 +5,22 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <cstdlib> // For rand()
+#include <ctime>   // For time()
 
 //                                                                --- Variables declaration start here ---
 
 static bool jumpScareActive = false;
 static float jumpScareTimer = 0.0f;
 static float jumpScareScale = 0.0f;
-static AEGfxTexture* jumpScareTexture = nullptr;
+static AEGfxTexture* jumpScareTextures[2] = { nullptr, nullptr }; // 2 images
+static int currentTextureIndex = 0; // Which image to show
 
 // Animation constants
 static const float JUMP_SCARE_DURATION = 2.0f;
 static const float POP_OUT_TIME = 0.5f;
-static const float MAX_SCALE = 1.8f;
-static const float MIN_SCALE = 0.8f;
+static const float MAX_SCALE = 1.4f;
+static const float MIN_SCALE = 0.6f;
 
 //                                                                --- Variables declaration end here ---
 
@@ -30,11 +33,19 @@ void JumpScare_Init()
 
 void JumpScare_Load()
 {
-    // Load your jump scare image
-    jumpScareTexture = AEGfxTextureLoad("Assets/JumpScare.png");
+    // Load both jump scare images
+    jumpScareTextures[0] = AEGfxTextureLoad("Assets/JumpScare1.jpg");
+    jumpScareTextures[1] = AEGfxTextureLoad("Assets/JumpScare2.jpg");
 
-    if (!jumpScareTexture) {
-        std::cout << "Failed to load jump scare texture!\n";
+    // Check if loaded successfully
+    if (!jumpScareTextures[0]) std::cout << "Failed to load JumpScare1.png\n";
+    if (!jumpScareTextures[1]) std::cout << "Failed to load JumpScare2.png\n";
+
+    // Seed random once
+    static bool seeded = false;
+    if (!seeded) {
+        srand((unsigned int)time(NULL));
+        seeded = true;
     }
 
     pMesh = CreateSquareMesh();
@@ -45,6 +56,9 @@ void JumpScare_Trigger()
     jumpScareActive = true;
     jumpScareTimer = 0.0f;
     jumpScareScale = 0.0f;
+
+    // Randomly choose which image to show (0 or 1)
+    currentTextureIndex = rand() % 2; // 0 or 1
 
     std::cout << "JUMP SCARE TRIGGERED!\n"; // Debug
 }
@@ -89,7 +103,10 @@ void JumpScare_Update()
 
 void JumpScare_Draw()
 {
-    if (!jumpScareActive || !jumpScareTexture) return;
+    if (!jumpScareActive) return;
+
+    // Check if current texture exists
+    if (!jumpScareTextures[currentTextureIndex]) return;
 
     // Setup for texture rendering
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -98,8 +115,8 @@ void JumpScare_Draw()
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-    // Set the jump scare texture
-    AEGfxTextureSet(jumpScareTexture, 0, 0);
+    // Set the randomly chosen texture
+    AEGfxTextureSet(jumpScareTextures[currentTextureIndex], 0, 0);
 
     // Calculate scale and position
     float screenWidth = 1600.0f;
@@ -118,22 +135,6 @@ void JumpScare_Draw()
 
     // Draw jumpscare
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-
-    // Optional: Add a screen flash during pop out
-    if (jumpScareTimer < 0.1f)
-    {
-        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 0.3f);  // White flash
-        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-
-        AEMtx33Scale(&scale, screenWidth, screenHeight);
-        AEMtx33Trans(&trans, 0.0f, 0.0f);
-        AEMtx33Concat(&transform, &trans, &scale);
-        AEGfxSetTransform(transform.m);
-
-        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-    }
 }
 
 bool JumpScare_IsActive()
@@ -143,10 +144,12 @@ bool JumpScare_IsActive()
 
 void JumpScare_Unload()
 {
-    if (jumpScareTexture)
-    {
-        AEGfxTextureUnload(jumpScareTexture);
-        jumpScareTexture = nullptr;
+    // Unload both textures
+    for (int i = 0; i < 2; i++) {
+        if (jumpScareTextures[i]) {
+            AEGfxTextureUnload(jumpScareTextures[i]);
+            jumpScareTextures[i] = nullptr;
+        }
     }
 
     // Mesh cleanup

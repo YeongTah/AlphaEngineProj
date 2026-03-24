@@ -90,14 +90,14 @@ void Instructions_Update()
     std::cout << "Instructions:Update\n";
 
     // Move back to main menu upon triggering "B"
-    if (AEInputCheckReleased(AEVK_B) || AEInputCheckReleased(AEVK_ESCAPE))
+    if (AEInputCheckReleased(AEVK_B))
     {
         next = MAINMENUSTATE;
         std::cout << "Back key Released" << '\n';
     }
 
     // Quit game when Q is hit or when the window is closed
-    if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist())
+    if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
     {
         next = GS_QUIT;
         std::cout << "Q key Released" << '\n';
