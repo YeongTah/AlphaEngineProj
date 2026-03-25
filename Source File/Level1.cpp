@@ -908,14 +908,30 @@ void Level1_Update()
 
             if (fabsf(diffX) > 1.0f) {
                 float stepX = (diffX > 0) ? gridStep : -gridStep;
-                if (canMove(mummy.x + stepX, mummy.y))
+                float nx = mummy.x + stepX, ny = mummy.y;
+                // Don't move onto a cell occupied by a box mummy
+                bool blocked = false;
+                for (int i = 0; i < gBoxMummyCount; ++i)
+                    if (fabsf(gBoxMummies[i].x - nx) < 1.0f && fabsf(gBoxMummies[i].y - ny) < 1.0f)
+                    {
+                        blocked = true; break;
+                    }
+                if (!blocked && canMove(nx, ny))
                     mummy.x += stepX;
             }
 
             diffY = player.y - mummy.y;
             if (fabsf(diffY) > 1.0f) {
                 float stepY = (diffY > 0) ? gridStep : -gridStep;
-                if (canMove(mummy.x, mummy.y + stepY))
+                float nx = mummy.x, ny = mummy.y + stepY;
+                // Don't move onto a cell occupied by a box mummy
+                bool blocked = false;
+                for (int i = 0; i < gBoxMummyCount; ++i)
+                    if (fabsf(gBoxMummies[i].x - nx) < 1.0f && fabsf(gBoxMummies[i].y - ny) < 1.0f)
+                    {
+                        blocked = true; break;
+                    }
+                if (!blocked && canMove(nx, ny))
                     mummy.y += stepY;
             }
         }
@@ -934,13 +950,31 @@ void Level1_Update()
                 if (fabsf(dxB) > 1.0f)
                 {
                     float stepX = (dxB > 0) ? gridStep : -gridStep;
-                    if (canMove(bm.x + stepX, bm.y)) bm.x += stepX;
+                    float nx = bm.x + stepX, ny = bm.y;
+                    // Don't move onto the main mummy's cell or another box mummy's cell
+                    bool blocked = (fabsf(mummy.x - nx) < 1.0f && fabsf(mummy.y - ny) < 1.0f);
+                    if (!blocked)
+                        for (int j = 0; j < gBoxMummyCount; ++j)
+                            if (j != i && fabsf(gBoxMummies[j].x - nx) < 1.0f && fabsf(gBoxMummies[j].y - ny) < 1.0f)
+                            {
+                                blocked = true; break;
+                            }
+                    if (!blocked && canMove(nx, ny)) bm.x += stepX;
                 }
                 dyB = player.y - bm.y;
                 if (fabsf(dyB) > 1.0f)
                 {
                     float stepY = (dyB > 0) ? gridStep : -gridStep;
-                    if (canMove(bm.x, bm.y + stepY)) bm.y += stepY;
+                    float nx = bm.x, ny = bm.y + stepY;
+                    // Don't move onto the main mummy's cell or another box mummy's cell
+                    bool blocked = (fabsf(mummy.x - nx) < 1.0f && fabsf(mummy.y - ny) < 1.0f);
+                    if (!blocked)
+                        for (int j = 0; j < gBoxMummyCount; ++j)
+                            if (j != i && fabsf(gBoxMummies[j].x - nx) < 1.0f && fabsf(gBoxMummies[j].y - ny) < 1.0f)
+                            {
+                                blocked = true; break;
+                            }
+                    if (!blocked && canMove(nx, ny)) bm.y += stepY;
                 }
             }
         }
@@ -952,7 +986,7 @@ void Level1_Update()
     JumpScare_Update(); // Before lose conditions
 
     // Ensure jumpscare is drawn before level resets
-    static bool pendingGameOverReset = false; 
+    static bool pendingGameOverReset = false;
 
     // ====== MAIN MUMMY CATCH ======
     if (turnCounter > 0 && !effectiveInv &&

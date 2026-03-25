@@ -1,4 +1,4 @@
-﻿﻿/* Start Header ****************************************************************
+﻿/* Start Header ****************************************************************
 /*!
 \file Level2.cpp
 \author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
@@ -734,6 +734,19 @@ void Level2_Update()
         // Mummy & Scorpion movement (frozen if freezeFrames > 0)
         if (l2_turnCounter % 2 == 0 && l2Power.freezeFrames <= 0)
         {
+            // Helper lambda: returns true if (nx, ny) is already occupied by another enemy
+            // Enemies: l2_mummy, l2_mummy2, l2_scorpion
+            auto enemyOccupies = [](float nx, float ny, float skipX, float skipY) -> bool {
+                // Check each of the three enemies, skipping the one that is moving (skipX/skipY)
+                float ex[] = { l2_mummy.x,  l2_mummy2.x,  l2_scorpion.x };
+                float ey[] = { l2_mummy.y,  l2_mummy2.y,  l2_scorpion.y };
+                for (int k = 0; k < 3; ++k)
+                    if (!(fabsf(ex[k] - skipX) < 1.0f && fabsf(ey[k] - skipY) < 1.0f))
+                        if (fabsf(ex[k] - nx) < 1.0f && fabsf(ey[k] - ny) < 1.0f)
+                            return true;
+                return false;
+                };
+
             // ========== MUMMY 1 MOVEMENT ========== -ths
             float diffX = l2_player.x - l2_mummy.x;
             float diffY = l2_player.y - l2_mummy.y;
@@ -742,7 +755,8 @@ void Level2_Update()
             if (fabsf(diffX) > 1.0f)
             {
                 float stepX = (diffX > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_mummy.x + stepX, l2_mummy.y))
+                float nx = l2_mummy.x + stepX, ny = l2_mummy.y;
+                if (!enemyOccupies(nx, ny, l2_mummy.x, l2_mummy.y) && canMove(nx, ny))
                     l2_mummy.x += stepX;
             }
             // vertical second
@@ -750,7 +764,8 @@ void Level2_Update()
             if (fabsf(diffY) > 1.0f)
             {
                 float stepY = (diffY > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_mummy.x, l2_mummy.y + stepY))
+                float nx = l2_mummy.x, ny = l2_mummy.y + stepY;
+                if (!enemyOccupies(nx, ny, l2_mummy.x, l2_mummy.y) && canMove(nx, ny))
                     l2_mummy.y += stepY;
             }
 
@@ -762,14 +777,16 @@ void Level2_Update()
             if (fabsf(diff2X) > 1.0f)
             {
                 float stepX = (diff2X > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_mummy2.x + stepX, l2_mummy2.y))
+                float nx = l2_mummy2.x + stepX, ny = l2_mummy2.y;
+                if (!enemyOccupies(nx, ny, l2_mummy2.x, l2_mummy2.y) && canMove(nx, ny))
                     l2_mummy2.x += stepX;
             }
             diff2Y = l2_player.y - l2_mummy2.y;
             if (fabsf(diff2Y) > 1.0f)
             {
                 float stepY = (diff2Y > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_mummy2.x, l2_mummy2.y + stepY))
+                float nx = l2_mummy2.x, ny = l2_mummy2.y + stepY;
+                if (!enemyOccupies(nx, ny, l2_mummy2.x, l2_mummy2.y) && canMove(nx, ny))
                     l2_mummy2.y += stepY;
             }
 
@@ -782,7 +799,8 @@ void Level2_Update()
             if (fabsf(diffSX) > 1.0f)
             {
                 float stepX = (diffSX > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_scorpion.x + stepX, l2_scorpion.y))
+                float nx = l2_scorpion.x + stepX, ny = l2_scorpion.y;
+                if (!enemyOccupies(nx, ny, l2_scorpion.x, l2_scorpion.y) && canMove(nx, ny))
                     l2_scorpion.x += stepX;
             }
             // vertical second
@@ -790,7 +808,8 @@ void Level2_Update()
             if (fabsf(diffSY) > 1.0f)
             {
                 float stepY = (diffSY > 0) ? l2_gridStep : -l2_gridStep;
-                if (canMove(l2_scorpion.x, l2_scorpion.y + stepY))
+                float nx = l2_scorpion.x, ny = l2_scorpion.y + stepY;
+                if (!enemyOccupies(nx, ny, l2_scorpion.x, l2_scorpion.y) && canMove(nx, ny))
                     l2_scorpion.y += stepY;
             }
         }

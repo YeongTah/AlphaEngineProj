@@ -1,4 +1,4 @@
-﻿﻿/* Start Header ****************************************************************
+﻿/* Start Header ****************************************************************
 /*!
 \file Level3.cpp
 \author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
@@ -659,9 +659,46 @@ void Level3_Update()
         // Mummy movement every 2nd turn, unless frozen
         if (l3_turnCounter % 2 == 0 && l3Power.freezeFrames <= 0)
         {
-            MoveMummyTowardPlayer(l3_mummy1, l3_player.x, l3_player.y, l3_gridStep);
-            MoveMummyTowardPlayer(l3_mummy2, l3_player.x, l3_player.y, l3_gridStep);
-            MoveMummyTowardPlayer(l3_mummy3, l3_player.x, l3_player.y, l3_gridStep);
+            // Before moving each mummy, check that its target cell is not already
+            // occupied by one of the other two mummies. This prevents them from
+            // stacking on the same tile and appearing as a single merged enemy.
+            Entity* mummies[3] = { &l3_mummy1, &l3_mummy2, &l3_mummy3 };
+
+            for (int i = 0; i < 3; ++i)
+            {
+                Entity& m = *mummies[i];
+                float diffX = l3_player.x - m.x;
+                float diffY = l3_player.y - m.y;
+
+                // Horizontal step
+                if (fabsf(diffX) > 1.0f)
+                {
+                    float stepX = (diffX > 0) ? l3_gridStep : -l3_gridStep;
+                    float nx = m.x + stepX, ny = m.y;
+                    bool blocked = false;
+                    for (int j = 0; j < 3; ++j)
+                        if (j != i && fabsf(mummies[j]->x - nx) < 1.0f && fabsf(mummies[j]->y - ny) < 1.0f)
+                        {
+                            blocked = true; break;
+                        }
+                    if (!blocked && canMove(nx, ny)) m.x += stepX;
+                }
+
+                // Vertical step (re-evaluate diffY after potential horizontal move)
+                diffY = l3_player.y - m.y;
+                if (fabsf(diffY) > 1.0f)
+                {
+                    float stepY = (diffY > 0) ? l3_gridStep : -l3_gridStep;
+                    float nx = m.x, ny = m.y + stepY;
+                    bool blocked = false;
+                    for (int j = 0; j < 3; ++j)
+                        if (j != i && fabsf(mummies[j]->x - nx) < 1.0f && fabsf(mummies[j]->y - ny) < 1.0f)
+                        {
+                            blocked = true; break;
+                        }
+                    if (!blocked && canMove(nx, ny)) m.y += stepY;
+                }
+            }
         }
 
         L3TickPowers();
