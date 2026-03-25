@@ -28,6 +28,8 @@ Technology is prohibited.
 #include <cmath> /* fabsf -ths */
 #include <cstring> /* strlen -ths */
 #include <cstdio>  /* snprintf for HUD text -ths */
+#include <cstdlib>
+#include "Confirmation.h"
 
 // ====================== LEVEL 1 AUDIO VARIABLES ====================== // -ths
 static AEAudio sfxPlayerMove;     // -ths
@@ -36,6 +38,7 @@ static AEAudio sfxPowerup;        // -ths
 static AEAudio sfxJumpscare;      // -ths
 static AEAudio sfxExitDoor;       // -ths
 static AEAudio sfxGameOver;       // -ths
+static AEAudio sfxButton;
 
 static AEAudioGroup level1Group;  // -ths
 // ===================================================================== // -ths
@@ -275,31 +278,76 @@ static int RandInt(int minV, int maxV)
     return minV + (int)(t * (float)span);
 }
 
-// Find a random walkable (value==0) cell and place the power-up there -ths
 static void SpawnRandomPowerup()
 {
-    // randomly decide the type 50/50 -ths
-    gPowerupType = (AERandFloat() < 0.5f) ? PWR_IMMUNE : PWR_FREEZE; // -ths
+    gPowerupType = (AERandFloat() < 0.5f) ? PWR_IMMUNE : PWR_FREEZE;
 
-    // try up to N times to find a free cell -ths
-    for (int tries = 0; tries < 128; ++tries) // -ths
+    int pr, pc;
+    WorldToGrid(player.x, player.y, pr, pc);
+    const int NEAR_RADIUS = 5;
+
+    // Store all valid nearby cells
+    struct Candidate { int r, c; };
+    Candidate candidates[256];
+    int candidateCount = 0;
+
+    for (int radius = 1; radius <= NEAR_RADIUS; ++radius)
     {
-        int r = RandInt(0, GRID_ROWS - 1); // -ths
-        int c = RandInt(0, GRID_COLS - 1); // -ths
-        if (level[r][c] == 0) // walkable -ths
+        for (int dr = -radius; dr <= radius; ++dr)
         {
+            for (int dc = -radius; dc <= radius; ++dc)
+            {
+                // Only outer ring of the current radius
+                if (abs(dr) != radius && abs(dc) != radius) continue;
+
+                int r = pr + dr;
+                int c = pc + dc;
+                if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS) continue;
+                if (level[r][c] != 0) continue;        // must be walkable
+                if (r == pr && c == pc) continue;      // don't spawn on player
+
+                candidates[candidateCount].r = r;
+                candidates[candidateCount].c = c;
+                candidateCount++;
+            }
+        }
+    }
+
+    // If we found any nearby free cells, pick one randomly
+    if (candidateCount > 0)
+    {
+        int idx = RandInt(0, candidateCount - 1);
+        int r = candidates[idx].r;
+        int c = candidates[idx].c;
+        float x, y;
+        GridToWorldCenter(r, c, x, y);
+        gPowerup.x = x; gPowerup.y = y;
+        gPowerup.size = 30.0f;
+        gPowerupActive = true;
+        return;
+    }
+
+    // Fallback: random walkable cell anywhere (avoid player)
+    for (int tries = 0; tries < 128; ++tries)
+    {
+        int r = RandInt(0, GRID_ROWS - 1);
+        int c = RandInt(0, GRID_COLS - 1);
+        if (level[r][c] == 0)
+        {
+            int pr2, pc2;
+            WorldToGrid(player.x, player.y, pr2, pc2);
+            if (r == pr2 && c == pc2) continue;
+
             float x, y;
-            GridToWorldCenter(r, c, x, y); // -ths
+            GridToWorldCenter(r, c, x, y);
             gPowerup.x = x; gPowerup.y = y;
-            gPowerup.size = 30.0f; // small icon -ths
+            gPowerup.size = 30.0f;
             gPowerupActive = true;
             return;
         }
     }
-    // fallback off-screen if none found (unlikely) -ths
-    gPowerupActive = false; // -ths
+    gPowerupActive = false;
 }
-
 // ========================== NEW: overlay flags + button layout (file-scope) =======================
 static bool gPaused = false; // True while P-key pause is active; Update skips game logic -ths
 static bool gShowLose = false; // True while the Lose overlay is displayed -ths
@@ -533,6 +581,7 @@ void Level1_Load()
     sfxJumpscare = AEAudioLoadSound("Assets/audio/jumpscare.wav");        // -ths
     sfxExitDoor = AEAudioLoadSound("Assets/audio/exit.wav");             // -ths
     sfxGameOver = AEAudioLoadSound("Assets/audio/gameover.wav");         // -ths
+    sfxButton = AEAudioLoadSound("Assets/audio/button.wav");
     // ==================================================================== // -ths
 
     // Step 1: Load the tile map from disk into level[][]
@@ -779,8 +828,7 @@ void Level1_Update()
     }
 
     // --- Win / Lose overlay input handling ---
-    if (gShowLose ||
-        gShowWin)
+    if (gShowLose || gShowWin)
     {
         s32 mxS, myS; TransformScreentoWorld(mxS, myS);
         if (AEInputCheckReleased(AEVK_LBUTTON))
@@ -798,27 +846,47 @@ void Level1_Update()
                 return;
             }
         }
-        if (AEInputCheckReleased(AEVK_R)) { next = GS_LEVEL1; gShowLose = gShowWin = false; return; }
-        if (AEInputCheckReleased(AEVK_RETURN)) { next = MAINMENUSTATE; gShowLose = gShowWin = false; return; }
-        if (AEInputCheckReleased(AEVK_ESCAPE) ||
-            0 == AESysDoesWindowExist()) {
-            next = GS_QUIT; return;
+
+        // --- Keyboard handling with confirmation ---
+        if (AEInputCheckReleased(AEVK_R))
+        {
+            if (AEAudioIsValidAudio(sfxButton))
+                AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
+            Confirmation_Level(GS_LEVEL1, GS_LEVEL1, "Are you sure you want to restart?");
+            next = CONFIRM;
+            gShowLose = false;
+            return;
+        }
+        if (AEInputCheckReleased(AEVK_RETURN) || AEInputCheckReleased(AEVK_B))
+        {
+            if (AEAudioIsValidAudio(sfxButton))
+                AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
+            Confirmation_Level(GS_LEVEL1, LEVELPAGE, "Are you sure you want to go to Level Select?");
+            next = CONFIRM;
+            gShowLose = false;
+            return;
+        }
+        if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+        {
+            next = GS_QUIT;
+            return;
         }
         return;
     }
-
     // =========================================================================
     // ADDED: PAUSE BUTTON CLICK DETECTION (top-right corner) -ths
     // =========================================================================
+    // --- PAUSE BUTTON CLICK DETECTION (top-right corner) ---
     {
         s32 mxS, myS; TransformScreentoWorld(mxS, myS);
-
-        // detect click inside pause rectangle -ths
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mxS, myS)) // top-right pause button -ths
+            if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mxS, myS))
             {
-                next = GS_PAUSE;   // go to PausePage -ths
+                // Play button click sound
+                if (AEAudioIsValidAudio(sfxButton))
+                    AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
+                gPaused = !gPaused;
                 return;
             }
         }
@@ -826,9 +894,19 @@ void Level1_Update()
     // =========================================================================
 
 
-    // --- Pause toggle via keyboard ---
+   // --- Pause toggle via keyboard ---
     if (AEInputCheckReleased(AEVK_P)) { gPaused = !gPaused; }
-    if (gPaused) { return; }
+
+    // --- Restart while paused ---
+    if (gPaused)
+    {
+        if (AEInputCheckReleased(AEVK_R))
+        {
+            next = GS_RESTART;   // triggers a full level restart
+            return;
+        }
+        return; // freeze game logic while paused
+    }
 
     // --- Save (F5) / Load (F9) ---
     if (AEInputCheckReleased(AEVK_F5)) { if (SaveLevel1State("Assets/save1.txt")) std::cout << "Saved (Assets/save1.txt)\n"; }
@@ -1377,6 +1455,7 @@ void Level1_Unload()
     if (AEAudioIsValidAudio(sfxJumpscare))  AEAudioUnloadAudio(sfxJumpscare);    // -ths
     if (AEAudioIsValidAudio(sfxExitDoor))   AEAudioUnloadAudio(sfxExitDoor);     // -ths
     if (AEAudioIsValidAudio(sfxGameOver))   AEAudioUnloadAudio(sfxGameOver);     // -ths
+    if (AEAudioIsValidAudio(sfxButton)) AEAudioUnloadAudio(sfxButton);
 
     // Unload group (no harm if empty) -ths
     AEAudioUnloadAudioGroup(level1Group);  // -ths

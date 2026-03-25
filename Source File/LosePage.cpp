@@ -24,12 +24,14 @@ void LosePage_Initialize() {}
 // ENTER : go to Level Select page (LEVELPAGE)
 // R     : restart the level that was lost (next = previous, which holds
 //         the losing level's state ID, set by the level before transitioning)
+// B     : go to Level Select page (direct)
 // Q / close window : quit the game
 // ----------------------------------------------------------------------------
 void LosePage_Update()
 {
     if (AEInputCheckReleased(AEVK_RETURN)) next = LEVELPAGE;
     if (AEInputCheckReleased(AEVK_R)) { next = previous; } // previous = the level that triggered the lose
+    if (AEInputCheckReleased(AEVK_B)) next = LEVELPAGE;
     if (AEInputCheckReleased(AEVK_ESCAPE) ||
         0 == AESysDoesWindowExist()) next = GS_QUIT;
 }
@@ -40,7 +42,7 @@ void LosePage_Update()
 // 1. Dark red background color.
 // 2. Full-screen semi-transparent red rectangle (1600x900) to cover the game.
 // 3. "CAUGHT BY THE MUMMY!" title text (large, white, centered).
-// 4. Instruction text showing ENTER / R / Q key bindings (smaller, white).
+// 4. Instruction text showing ENTER / R / B / Q key bindings (smaller, white).
 // Called directly from Level1/2/3_Draw() when the lose flag is active,
 // so no separate GSM state transition is needed for the overlay use case.
 // ----------------------------------------------------------------------------
@@ -63,7 +65,7 @@ void LosePage_Draw()
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
     // ============================
-    // ADDED: Centered text helpers
+    // Centered text helpers
     // ============================
     const float titleScale = 1.8f;
     const float itemScale = 0.75f;
@@ -72,25 +74,30 @@ void LosePage_Draw()
 
     // Title
     const char* t0 = "CAUGHT BY THE MUMMY!";
-    AEGfxGetPrintSize(fontId, t0, titleScale, &w, &h);      // ADDED
-    float x0 = -0.5f * w;                                    // ADDED (center)
+    AEGfxGetPrintSize(fontId, t0, titleScale, &w, &h);
+    float x0 = -0.5f * w;
     AEGfxPrint(fontId, t0, x0, 0.12f, titleScale, 0.65f, 0.12f, 0.12f, 1.0f);
 
     // Options
     const char* t1 = "[ENTER] Level Select";
-    AEGfxGetPrintSize(fontId, t1, itemScale, &w, &h);        // ADDED
-    float x1 = -0.5f * w;                                    // ADDED
+    AEGfxGetPrintSize(fontId, t1, itemScale, &w, &h);
+    float x1 = -0.5f * w;
     AEGfxPrint(fontId, t1, x1, -0.02f, itemScale, 1.0f, 0.95f, 0.82f, 1.0f);
 
     const char* t2 = "[R] Restart";
-    AEGfxGetPrintSize(fontId, t2, itemScale, &w, &h);        // ADDED
-    float x2 = -0.5f * w;                                    // ADDED
+    AEGfxGetPrintSize(fontId, t2, itemScale, &w, &h);
+    float x2 = -0.5f * w;
     AEGfxPrint(fontId, t2, x2, -0.11f, itemScale, 1.0f, 0.95f, 0.82f, 1.0f);
 
-    const char* t3 = "[ESCAPE] Quit";
-    AEGfxGetPrintSize(fontId, t3, itemScale, &w, &h);        // ADDED
-    float x3 = -0.5f * w;                                    // ADDED
+    const char* t3 = "[B] Level Select";
+    AEGfxGetPrintSize(fontId, t3, itemScale, &w, &h);
+    float x3 = -0.5f * w;
     AEGfxPrint(fontId, t3, x3, -0.20f, itemScale, 1.0f, 0.95f, 0.82f, 1.0f);
+
+    const char* t4 = "[ESCAPE] Quit";
+    AEGfxGetPrintSize(fontId, t4, itemScale, &w, &h);
+    float x4 = -0.5f * w;
+    AEGfxPrint(fontId, t4, x4, -0.29f, itemScale, 1.0f, 0.95f, 0.82f, 1.0f);
 }
 
 // LosePage_Free -- nothing to clean up.

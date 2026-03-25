@@ -38,7 +38,7 @@ void WinPage_Initialize() {}
 // ======================================================
 void WinPage_Update()
 {
-    // ENTER -> Level Select
+    // ENTER -> Level Select (already with confirmation)
     if (AEInputCheckReleased(AEVK_RETURN))
     {
         if (AEAudioIsValidAudio(sfxButton))
@@ -48,17 +48,29 @@ void WinPage_Update()
         return;
     }
 
-    // R -> Restart Level
+    // R -> Restart Level (now with confirmation)
     if (AEInputCheckReleased(AEVK_R))
     {
-        if (gLastLevelPlayed == 1) next = GS_LEVEL1;
-        else if (gLastLevelPlayed == 2) next = GS_LEVEL2;
-        else if (gLastLevelPlayed == 3) next = GS_LEVEL3;
-
+        if (AEAudioIsValidAudio(sfxButton))
+            AEAudioPlay(sfxButton, winGroup, 1.0f, 1.0f, 0);
+        int restartState = (gLastLevelPlayed == 1) ? GS_LEVEL1 :
+            (gLastLevelPlayed == 2) ? GS_LEVEL2 : GS_LEVEL3;
+        Confirmation_Level(GS_WIN, restartState, "Are you sure you want to restart the level?");
+        next = CONFIRM;
         return;
     }
 
-    // Quit on ESC
+    // B -> Level Select (with confirmation)
+    if (AEInputCheckReleased(AEVK_B))
+    {
+        if (AEAudioIsValidAudio(sfxButton))
+            AEAudioPlay(sfxButton, winGroup, 1.0f, 1.0f, 0);
+        Confirmation_Level(GS_WIN, LEVELPAGE, "Are you sure you want to go to Level Select?");
+        next = CONFIRM;
+        return;
+    }
+
+    // Quit on ESC (no confirmation)
     if (AEInputCheckReleased(AEVK_ESCAPE))
         next = GS_QUIT;
 }
@@ -89,9 +101,13 @@ void WinPage_Draw()
     AEGfxGetPrintSize(fontId, t2, lineScale, &w, &h);
     AEGfxPrint(fontId, t2, -0.5f * w, -0.11f, lineScale, 1.0f, 0.95f, 0.82f, 1.0f);
 
-    const char* t3 = "[ESCAPE] Quit";
+    const char* t3 = "[B] Level Select";
     AEGfxGetPrintSize(fontId, t3, lineScale, &w, &h);
     AEGfxPrint(fontId, t3, -0.5f * w, -0.20f, lineScale, 1.0f, 0.95f, 0.82f, 1.0f);
+
+    const char* t4 = "[ESCAPE] Quit";
+    AEGfxGetPrintSize(fontId, t4, lineScale, &w, &h);
+    AEGfxPrint(fontId, t4, -0.5f * w, -0.29f, lineScale, 1.0f, 0.95f, 0.82f, 1.0f);
 }
 
 // ======================================================

@@ -29,6 +29,8 @@ Technology is prohibited.
 #include <fstream>
 #include <cmath>
 #include <cstdio>  // snprintf for HUD text -ths
+#include <cstdlib>
+#include "Confirmation.h"
 
 // ======================= LEVEL 2 AUDIO HANDLES ======================= // -ths
 
@@ -364,24 +366,73 @@ static int L2RandInt(int mn, int mx)                                // -ths
     return mn + (int)(t * (float)span);                                // -ths
 }
 
-static void SpawnRandomPowerup()                                    // -ths
+static void SpawnRandomPowerup()
 {
-    l2_powerupType = (AERandFloat() < 0.5f) ? L2_PWR_IMMUNE : L2_PWR_FREEZE; // -ths
-    for (int tries = 0; tries < 128; ++tries)                                  // -ths
+    l2_powerupType = (AERandFloat() < 0.5f) ? L2_PWR_IMMUNE : L2_PWR_FREEZE;
+
+    int pr, pc;
+    WorldToGrid(l2_player.x, l2_player.y, pr, pc);
+    const int NEAR_RADIUS = 5;
+
+    struct Candidate { int r, c; };
+    Candidate candidates[256];
+    int candidateCount = 0;
+
+    for (int radius = 1; radius <= NEAR_RADIUS; ++radius)
     {
-        int r = L2RandInt(0, GRID_ROWS - 1);                                        // -ths
-        int c = L2RandInt(0, GRID_COLS - 1);                                        // -ths
-        if (level[r][c] == 0)                                                     // -ths
+        for (int dr = -radius; dr <= radius; ++dr)
         {
-            float x, y; GridToWorldCenter(r, c, x, y);                               // -ths
-            l2_powerup.x = x; l2_powerup.y = y; l2_powerup.size = 30.0f;             // -ths
-            l2_powerupActive = true;                                                 // -ths
-            return;                                                                  // -ths
+            for (int dc = -radius; dc <= radius; ++dc)
+            {
+                if (abs(dr) != radius && abs(dc) != radius) continue;
+
+                int r = pr + dr;
+                int c = pc + dc;
+                if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS) continue;
+                if (level[r][c] != 0) continue;
+                if (r == pr && c == pc) continue;
+
+                candidates[candidateCount].r = r;
+                candidates[candidateCount].c = c;
+                candidateCount++;
+            }
         }
     }
-    l2_powerupActive = false; // fallback -ths
-}
 
+    if (candidateCount > 0)
+    {
+        int idx = L2RandInt(0, candidateCount - 1);
+        int r = candidates[idx].r;
+        int c = candidates[idx].c;
+        float x, y;
+        GridToWorldCenter(r, c, x, y);
+        l2_powerup.x = x; l2_powerup.y = y;
+        l2_powerup.size = 30.0f;
+        l2_powerupActive = true;
+        return;
+    }
+
+    // Fallback: random walkable cell anywhere (avoid player)
+    for (int tries = 0; tries < 128; ++tries)
+    {
+        int r = L2RandInt(0, GRID_ROWS - 1);
+        int c = L2RandInt(0, GRID_COLS - 1);
+        if (level[r][c] == 0)
+        {
+            int pr2, pc2;
+            WorldToGrid(l2_player.x, l2_player.y, pr2, pc2);
+            if (r == pr2 && c == pc2) continue;
+
+            float x, y;
+            GridToWorldCenter(r, c, x, y);
+            l2_powerup.x = x; l2_powerup.y = y;
+            l2_powerup.size = 30.0f;
+            l2_powerupActive = true;
+            return;
+        }
+    }
+    l2_powerupActive = false;
+}
 // ----------------------------------------------------------------------------
 // L2SpawnTreasureBox
 // Places the treasure box at a random free cell at least 3 Manhattan cells
@@ -724,7 +775,6 @@ void Level2_Update()
     // ===== PER-FRAME POWER TIMERS ===== -ths
     L2TickInvFrames();     // -ths
     L2TickFreezeFrames();  // -ths
-
     // --- Win / Lose overlay input ---
     if (l2_showLose || l2_showWin)
     {
@@ -734,12 +784,10 @@ void Level2_Update()
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
             // Retry
-            if (IsAreaClicked(kL2BtnRetryX, kL2BtnRetryY, kL2BtnW, kL2BtnH, myS, myS))
+            if (IsAreaClicked(kL2BtnRetryX, kL2BtnRetryY, kL2BtnW, kL2BtnH, mxS, myS))
             {
-                // play button click -ths
                 if (AEAudioIsValidAudio(l2_sfxButton))
-                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0); // -ths
-
+                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
                 next = GS_LEVEL2;
                 l2_showLose = l2_showWin = false;
                 return;
@@ -747,30 +795,34 @@ void Level2_Update()
             // Exit
             if (IsAreaClicked(kL2BtnExitX, kL2BtnExitY, kL2BtnW, kL2BtnH, mxS, myS))
             {
-                // play button click -ths
                 if (AEAudioIsValidAudio(l2_sfxButton))
-                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0); // -ths
-
+                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
                 next = MAINMENUSTATE;
                 l2_showLose = l2_showWin = false;
                 return;
             }
         }
 
+        // --- Keyboard handling with confirmation ---
         if (AEInputCheckReleased(AEVK_R))
         {
-            next = GS_LEVEL2;
-            l2_showLose = l2_showWin = false;
+            if (AEAudioIsValidAudio(l2_sfxButton))
+                AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+            Confirmation_Level(GS_LEVEL2, GS_LEVEL2, "Are you sure you want to restart?");
+            next = CONFIRM;
+            l2_showLose = false;
             return;
         }
-        if (AEInputCheckReleased(AEVK_RETURN))
+        if (AEInputCheckReleased(AEVK_RETURN) || AEInputCheckReleased(AEVK_B))
         {
-            next = LEVELPAGE;
-            l2_showLose = l2_showWin = false;
+            if (AEAudioIsValidAudio(l2_sfxButton))
+                AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+            Confirmation_Level(GS_LEVEL2, LEVELPAGE, "Are you sure you want to go to Level Select?");
+            next = CONFIRM;
+            l2_showLose = false;
             return;
         }
-        if (AEInputCheckReleased(AEVK_ESCAPE) ||
-            0 == AESysDoesWindowExist())
+        if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
         {
             next = GS_QUIT;
             return;
@@ -783,25 +835,32 @@ void Level2_Update()
     // ADDED: PAUSE BUTTON CLICK DETECTION (top-right corner) -ths
     // =========================================================================
     {
-
-        // detect click inside pause rectangle -ths
+        s32 mxS, myS; TransformScreentoWorld(mxS, myS);
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            s32 mxS, myS;
-            TransformScreentoWorld(mxS, myS);
-
-            if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mxS, myS)) // top-right pause button -ths
+            if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mxS, myS))
             {
-                next = GS_PAUSE;   // go to PausePage -ths
+                if (AEAudioIsValidAudio(l2_sfxButton))
+                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+                l2_paused = !l2_paused;
                 return;
             }
         }
     }
     // =========================================================================
 
-    // --- Pause toggle ---
+   // --- Pause toggle ---
     if (AEInputCheckReleased(AEVK_P)) { l2_paused = !l2_paused; }
-    if (l2_paused) return;
+
+    if (l2_paused)
+    {
+        if (AEInputCheckReleased(AEVK_R))
+        {
+            next = GS_RESTART;
+            return;
+        }
+        return; // freeze game logic while paused
+    }
 
     // --- Player movement ---
     float testX = l2_player.x;

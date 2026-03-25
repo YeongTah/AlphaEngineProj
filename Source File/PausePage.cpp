@@ -6,13 +6,18 @@
 #include "leveleditor.hpp"  // for print_file + readfile
 #include "GridUtils.h"      // for world coordinate transforms
 #include <cstring>          // for strlen -ths
+#include "Confirmation.h"   // for Confirmation_Level() helper to show confirmation popups on important actions
+static AEAudio sfxButton;
+static AEAudioGroup pauseGroup;
 
 // ----------------------------------------------------------------------------
 // Load  -  create the shared mesh (still needed for the dim overlay rectangle)
 // ----------------------------------------------------------------------------
 void PausePage_Load()
 {
-    pMesh = CreateSquareMesh();   // create mesh for drawing the dim overlay
+    pMesh = CreateSquareMesh();
+    pauseGroup = AEAudioCreateGroup();
+    sfxButton = AEAudioLoadSound("Assets/audio/button.wav");
 }
 
 void PausePage_Initialize() {}
@@ -22,34 +27,54 @@ void PausePage_Initialize() {}
 // ----------------------------------------------------------------------------
 void PausePage_Update()
 {
-    // Resume on P
+    // Resume on P (no confirmation)
     if (AEInputCheckReleased(AEVK_P))
     {
-        next = previous; // resume last game state
+        next = previous;
+        return;
     }
 
-    // Go to levele selection page on B
+    // Restart level on R (with confirmation)
+    if (AEInputCheckReleased(AEVK_R))
+    {
+        if (AEAudioIsValidAudio(sfxButton))
+            AEAudioPlay(sfxButton, pauseGroup, 1.0f, 1.0f, 0);
+        Confirmation_Level(GS_PAUSE, GS_RESTART, "Are you sure you want to restart?");
+        next = CONFIRM;
+        return;
+    }
+
+    // Level Select on B (with confirmation)
     if (AEInputCheckReleased(AEVK_B))
     {
-        next = LEVELPAGE;
+        if (AEAudioIsValidAudio(sfxButton))
+            AEAudioPlay(sfxButton, pauseGroup, 1.0f, 1.0f, 0);
+        Confirmation_Level(GS_PAUSE, LEVELPAGE, "Are you sure you want to go to Level Select?");
+        next = CONFIRM;
+        return;
     }
 
-    // Quit on ESC
+    // Quit on ESC (with confirmation)
     if (AEInputCheckReleased(AEVK_ESCAPE))
-        next = GS_QUIT;
+    {
+        if (AEAudioIsValidAudio(sfxButton))
+            AEAudioPlay(sfxButton, pauseGroup, 1.0f, 1.0f, 0);
+        Confirmation_Level(GS_PAUSE, GS_QUIT, "Are you sure you want to quit the game?");
+        next = CONFIRM;
+        return;
+    }
 
-    // Save on F5
+    // Save on F5 (no confirmation)
     if (AEInputCheckReleased(AEVK_F5))
     {
-        print_file(); // save map
+        print_file();
     }
 
-    // Load on F9
+    // Load on F9 (no confirmation)
     if (AEInputCheckReleased(AEVK_F9))
     {
-        readfile();       // load map
-        // After loading, we could stay paused or resume; here we resume automatically.
-        next = previous;  // return to game after load
+        readfile();
+        next = previous;  // resume after load
     }
 }
 
@@ -84,26 +109,34 @@ void PausePage_Draw()
     const float lineScale = 1.0f;
     const float beigeR = 1.0f, beigeG = 0.95f, beigeB = 0.82f; // matches LosePage
 
+    // Resume
     const char* t1 = "Press P to Resume";
     AEGfxGetPrintSize(fontId, t1, lineScale, &w, &h);
     AEGfxPrint(fontId, t1, -0.5f * w, 0.02f, lineScale, beigeR, beigeG, beigeB, 1.0f);
 
+    // Level Select
     const char* t2 = "B to Level Select";
     AEGfxGetPrintSize(fontId, t2, lineScale, &w, &h);
     AEGfxPrint(fontId, t2, -0.5f * w, -0.08f, lineScale, beigeR, beigeG, beigeB, 1.0f);
 
-    const char* t3 = "ESC to Quit";
+    // Restart
+    const char* t3 = "[R] Restart Level";
     AEGfxGetPrintSize(fontId, t3, lineScale, &w, &h);
     AEGfxPrint(fontId, t3, -0.5f * w, -0.18f, lineScale, beigeR, beigeG, beigeB, 1.0f);
 
-    // --- Save / Load prompts (same style, placed below) ---
-    const char* t4 = "[F5] Save";
+    // Quit
+    const char* t4 = "ESC to Quit";
     AEGfxGetPrintSize(fontId, t4, lineScale, &w, &h);
     AEGfxPrint(fontId, t4, -0.5f * w, -0.28f, lineScale, beigeR, beigeG, beigeB, 1.0f);
 
-    const char* t5 = "[F9] Load";
+    // Save / Load prompts (same style, placed below)
+    const char* t5 = "[F5] Save";
     AEGfxGetPrintSize(fontId, t5, lineScale, &w, &h);
     AEGfxPrint(fontId, t5, -0.5f * w, -0.38f, lineScale, beigeR, beigeG, beigeB, 1.0f);
+
+    const char* t6 = "[F9] Load";
+    AEGfxGetPrintSize(fontId, t6, lineScale, &w, &h);
+    AEGfxPrint(fontId, t6, -0.5f * w, -0.48f, lineScale, beigeR, beigeG, beigeB, 1.0f);
 }
 
 void PausePage_Free() {}
@@ -118,4 +151,7 @@ void PausePage_Unload()
         AEGfxMeshFree(pMesh);
         pMesh = nullptr;
     }
+    if (AEAudioIsValidAudio(sfxButton))
+        AEAudioUnloadAudio(sfxButton);
+    AEAudioUnloadAudioGroup(pauseGroup);
 }
