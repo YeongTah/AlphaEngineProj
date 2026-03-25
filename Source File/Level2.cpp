@@ -46,6 +46,23 @@ static AEAudioGroup l2AudioGroup;  // -ths
 // ===== ADDED: forward declaration so SpawnRandomPowerup() can be called
 //              inside ResetLevel2() / Level2_Initialize() before its definition ===== -ths
 static void SpawnRandomPowerup(); // -ths
+static void L2SpawnTreasureBox(); // forward decl for use in Reset/Initialize
+
+// ========================== TREASURE BOX SYSTEM (Level 2) ==========================
+// Identical behaviour to Level 1: player touches the chest -> 50% coin, 50% mummy.
+// Box mummies are stored separately from the main enemies in l2_boxMummies[].
+// All names are prefixed l2_ to avoid conflicts with Level 1 globals.
+// -----------------------------------------------------------------------------------
+static Entity        l2_treasureBox;
+static bool          l2_treasureBoxActive = false;
+static AEGfxTexture* l2_treasureBoxTex = nullptr; // Assets/TreasureChest.png
+
+struct L2BoxMummy { float x, y, size; };
+static L2BoxMummy l2_boxMummies[8];
+static int        l2_boxMummyCount = 0;
+
+static char l2_popupMsg[64] = "";
+static int  l2_popupFrames = 0;
 
 // IsAreaClicked has no header declaration -- extern needed
 extern bool IsAreaClicked(float area_center_x, float area_center_y, float area_width, float area_height,
@@ -322,6 +339,14 @@ static void ResetLevel2()
     // ===== ADDED: reset frame-based freeze; respawn a power‑up ===== -ths
     l2Power.freezeFrames = 0; // -ths
     SpawnRandomPowerup();      // -ths
+
+    // Reset treasure box (one-time chest — re-spawn it for the new round)
+    l2_boxMummyCount = 0;
+    L2SpawnTreasureBox();
+
+    // Clear any lingering popup
+    l2_popupFrames = 0;
+    l2_popupMsg[0] = '\0';
 }
 
 // ===== ADDED: random power‑up data & helpers ========================================== -ths
@@ -355,6 +380,97 @@ static void SpawnRandomPowerup()                                    // -ths
         }
     }
     l2_powerupActive = false; // fallback -ths
+}
+
+// ----------------------------------------------------------------------------
+// L2SpawnTreasureBox
+// Places the treasure box at a random free cell at least 3 Manhattan cells
+// away from the player. Re-called after each box is opened.
+// ----------------------------------------------------------------------------
+static void L2SpawnTreasureBox()
+{
+    for (int tries = 0; tries < 256; ++tries)
+    {
+        int r = L2RandInt(0, GRID_ROWS - 1);
+        int c = L2RandInt(0, GRID_COLS - 1);
+        if (level[r][c] != 0) continue; // must be walkable
+
+        int pr, pc;
+        WorldToGrid(l2_player.x, l2_player.y, pr, pc);
+        if (abs(r - pr) + abs(c - pc) < 3) continue; // too close to player
+
+        float wx, wy;
+        GridToWorldCenter(r, c, wx, wy);
+        l2_treasureBox.x = wx;
+        l2_treasureBox.y = wy;
+        l2_treasureBox.size = l2_gridStep * 0.9f;
+        l2_treasureBoxActive = true;
+        printf("L2 TreasureBox spawned at grid (%d,%d) | world (%.1f,%.1f)\n", r, c, wx, wy);
+        return;
+    }
+    // Fallback: no distance constraint
+    for (int tries = 0; tries < 256; ++tries)
+    {
+        int r = L2RandInt(0, GRID_ROWS - 1);
+        int c = L2RandInt(0, GRID_COLS - 1);
+        if (level[r][c] != 0) continue;
+        float wx, wy;
+        GridToWorldCenter(r, c, wx, wy);
+        l2_treasureBox.x = wx;
+        l2_treasureBox.y = wy;
+        l2_treasureBox.size = l2_gridStep * 0.9f;
+        l2_treasureBoxActive = true;
+        printf("L2 TreasureBox spawned (fallback) at grid (%d,%d)\n", r, c);
+        return;
+    }
+    l2_treasureBoxActive = false;
+}
+
+// ----------------------------------------------------------------------------
+// L2OpenTreasureBox
+// Called when the player steps onto the treasure box.
+// 50% -> +1 coin.   50% -> spawns a new chasing box mummy near the chest.
+// The chest disappears permanently after opening (no re-spawn).
+// ----------------------------------------------------------------------------
+static void L2OpenTreasureBox()
+{
+    l2_treasureBoxActive = false; // chest is gone for good -- no re-spawn
+
+    if (AEAudioIsValidAudio(l2_sfxChest))
+        AEAudioPlay(l2_sfxChest, l2AudioGroup, 1.0f, 1.0f, 0);
+
+    bool spawnMummy = (AERandFloat() >= 0.5f);
+
+    if (!spawnMummy)
+    {
+        l2_coinCounter++;
+        printf("L2 Treasure Box: COIN! Total: %d\n", l2_coinCounter);
+        std::snprintf(l2_popupMsg, sizeof(l2_popupMsg), "Treasure: +1 Coin! (Total: %d)", l2_coinCounter);
+        l2_popupFrames = 180;
+    }
+    else
+    {
+        JumpScare_Trigger();
+        if (AEAudioIsValidAudio(l2_sfxJumpscare))
+            AEAudioPlay(l2_sfxJumpscare, l2AudioGroup, 1.0f, 1.0f, 0);
+
+        if (l2_boxMummyCount < (int)(sizeof(l2_boxMummies) / sizeof(l2_boxMummies[0])))
+        {
+            float sx, sy;
+            int br, bc;
+            WorldToGrid(l2_treasureBox.x, l2_treasureBox.y, br, bc);
+            int pr, pc;
+            WorldToGrid(l2_player.x, l2_player.y, pr, pc);
+            L2FindFreeSpawnCell(br, bc, sx, sy, pr, pc, 2);
+
+            L2BoxMummy& bm = l2_boxMummies[l2_boxMummyCount++];
+            bm.x = sx; bm.y = sy; bm.size = l2_gridStep;
+            printf("L2 Treasure Box: MUMMY spawned at (%.0f,%.0f)!\n", sx, sy);
+            std::snprintf(l2_popupMsg, sizeof(l2_popupMsg), "Treasure: A Mummy appeared!");
+            l2_popupFrames = 180;
+        }
+    }
+    // NOTE: L2SpawnTreasureBox() intentionally NOT called here -- chest appears once only.
 }
 
 // ===== ADDED: Scorpion texture handle (loaded in Level2_Load) ===== -ths
@@ -407,8 +523,15 @@ void Level2_Load()
     // ===== ADDED: load scorpion texture ===== -ths
     l2_ScorpionTex = AEGfxTextureLoad("Assets/Spider.png");          // -ths
 
+    // Load treasure box texture
+    l2_treasureBoxTex = AEGfxTextureLoad("Assets/TreasureChest.png");
+
     // Load jump scare texture
     JumpScare_Load();
+
+    // Init treasure box state (actual spawn happens in Initialize)
+    l2_boxMummyCount = 0;
+    l2_treasureBoxActive = false;
 
     pMesh = CreateSquareMesh();                                        // unit square mesh shared by sprites
 }
@@ -515,6 +638,10 @@ void Level2_Initialize()
 
         // ===== Spawn random power‑up ===== -ths
         SpawnRandomPowerup(); // -ths
+
+        // Spawn treasure box (one per round)
+        l2_boxMummyCount = 0;
+        L2SpawnTreasureBox();
 
         l2_nextX = l2_player.x;
         l2_nextY = l2_player.y;
@@ -716,6 +843,17 @@ void Level2_Update()
         l2_powerup.x = l2_powerup.y = 2000.0f;
     }
 
+    // Popup countdown
+    if (l2_popupFrames > 0) --l2_popupFrames;
+
+    // ===== TREASURE BOX TOUCH =====
+    if (l2_treasureBoxActive &&
+        fabsf(l2_player.x - l2_treasureBox.x) < 1.0f &&
+        fabsf(l2_player.y - l2_treasureBox.y) < 1.0f)
+    {
+        L2OpenTreasureBox();
+    }
+
     // --- Per-turn logic ---
     if (l2_playerMoved)
     {
@@ -816,6 +954,44 @@ void Level2_Update()
 
         L2TickPowers();
         l2_playerMoved = false;
+
+        // ====== BOX MUMMY AI: chase player every 2nd turn ======
+        if (l2_turnCounter % 2 == 0 && l2Power.freezeFrames <= 0)
+        {
+            for (int i = 0; i < l2_boxMummyCount; ++i)
+            {
+                L2BoxMummy& bm = l2_boxMummies[i];
+                float dxB = l2_player.x - bm.x;
+                float dyB = l2_player.y - bm.y;
+
+                if (fabsf(dxB) > 1.0f)
+                {
+                    float stepX = (dxB > 0) ? l2_gridStep : -l2_gridStep;
+                    float nx = bm.x + stepX, ny = bm.y;
+                    bool blocked = (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
+                        (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f) ||
+                        (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
+                    for (int j = 0; !blocked && j < l2_boxMummyCount; ++j)
+                        if (j != i && fabsf(l2_boxMummies[j].x - nx) < 1.0f && fabsf(l2_boxMummies[j].y - ny) < 1.0f)
+                            blocked = true;
+                    if (!blocked && canMove(nx, ny)) bm.x += stepX;
+                }
+
+                dyB = l2_player.y - bm.y;
+                if (fabsf(dyB) > 1.0f)
+                {
+                    float stepY = (dyB > 0) ? l2_gridStep : -l2_gridStep;
+                    float nx = bm.x, ny = bm.y + stepY;
+                    bool blocked = (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
+                        (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f) ||
+                        (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
+                    for (int j = 0; !blocked && j < l2_boxMummyCount; ++j)
+                        if (j != i && fabsf(l2_boxMummies[j].x - nx) < 1.0f && fabsf(l2_boxMummies[j].y - ny) < 1.0f)
+                            blocked = true;
+                    if (!blocked && canMove(nx, ny)) bm.y += stepY;
+                }
+            }
+        }
     }
 
     // ====== UPDATE JUMP SCARE ANIMATION =======
@@ -825,20 +1001,29 @@ void Level2_Update()
     static bool pendingGameOverReset = false;
 
     // ===== LOSE CHECK ===== -ths
-    if (l2_turnCounter > 0 && !L2IsInvincibleNow() &&
+    bool l2_caughtByMain = l2_turnCounter > 0 && !L2IsInvincibleNow() &&
         ((fabsf(l2_player.x - l2_mummy.x) < 1.0f && fabsf(l2_player.y - l2_mummy.y) < 1.0f) ||
             (fabsf(l2_player.x - l2_mummy2.x) < 1.0f && fabsf(l2_player.y - l2_mummy2.y) < 1.0f) ||
-            (fabsf(l2_player.x - l2_scorpion.x) < 1.0f && fabsf(l2_player.y - l2_scorpion.y) < 1.0f)))
-    {
+            (fabsf(l2_player.x - l2_scorpion.x) < 1.0f && fabsf(l2_player.y - l2_scorpion.y) < 1.0f));
 
+    bool l2_caughtByBox = false;
+    if (l2_turnCounter > 0 && !L2IsInvincibleNow())
+        for (int i = 0; i < l2_boxMummyCount; ++i)
+            if (fabsf(l2_player.x - l2_boxMummies[i].x) < 1.0f &&
+                fabsf(l2_player.y - l2_boxMummies[i].y) < 1.0f)
+            {
+                l2_caughtByBox = true; break;
+            }
+
+    if (l2_caughtByMain || l2_caughtByBox)
+    {
         if (!JumpScare_IsActive() && !pendingGameOverReset)
         {
             if (AEAudioIsValidAudio(l2_sfxJumpscare))
                 AEAudioPlay(l2_sfxJumpscare, l2AudioGroup, 1.0f, 1.0f, 0);
 
-            // Trigger jump scare immediately when caught
             JumpScare_Trigger();
-            pendingGameOverReset = true; // Mark that we need to reset after jump scare
+            pendingGameOverReset = true;
             std::cout << "CAUGHT! Playing jump scare...\n";
         }
     }
@@ -997,6 +1182,31 @@ void Level2_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
+    // --- Treasure Box ---
+    if (l2_treasureBoxActive)
+    {
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(l2_treasureBoxTex, 0, 0);
+        AEMtx33Scale(&scale, l2_treasureBox.size, l2_treasureBox.size);
+        AEMtx33Trans(&trans, l2_treasureBox.x, l2_treasureBox.y);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    }
+
+    // --- Box Mummies (reddish tint to distinguish from main mummies) ---
+    AEGfxSetColorToMultiply(1.0f, 0.3f, 0.3f, 1.0f);
+    AEGfxTextureSet(l2_mummy.pTex, 0, 0);
+    for (int i = 0; i < l2_boxMummyCount; ++i)
+    {
+        AEMtx33Scale(&scale, l2_boxMummies[i].size, l2_boxMummies[i].size);
+        AEMtx33Trans(&trans, l2_boxMummies[i].x, l2_boxMummies[i].y);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    }
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // reset tint
+
     // --- Jump Scare --- 
     JumpScare_Draw();
 
@@ -1012,6 +1222,20 @@ void Level2_Draw()
         char buf[64];
         std::snprintf(buf, sizeof(buf), "FREEZE  %.1fs", l2Power.freezeFrames / 60.0f); // ~60 FPS -ths
         AEGfxPrint(fontId, buf, -0.95f, 0.82f, 0.8f, 0.60f, 0.85f, 1.00f, 1.0f);        // cyan-ish -ths
+    }
+
+    // Coin counter HUD
+    {
+        char buf[64];
+        std::snprintf(buf, sizeof(buf), "Coins: %d", l2_coinCounter);
+        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 0.8f, 1.00f, 0.85f, 0.10f, 1.0f);
+    }
+
+    // Treasure box popup message
+    if (l2_popupFrames > 0)
+    {
+        float alpha = (l2_popupFrames < 60) ? l2_popupFrames / 60.0f : 1.0f;
+        AEGfxPrint(fontId, l2_popupMsg, -0.35f, 0.0f, 0.85f, 1.0f, 1.0f, 0.4f, alpha);
     }
 
     // ===== ADDED: Pause button (top-right) ===== -ths
@@ -1077,6 +1301,9 @@ void Level2_Unload()
     AEGfxTextureUnload(l2_ImmuneTex);   // -ths
     AEGfxTextureUnload(l2_FreezeTex);   // -ths
     AEGfxTextureUnload(l2_ScorpionTex); // -ths
+
+    // Unload treasure box texture
+    if (l2_treasureBoxTex) { AEGfxTextureUnload(l2_treasureBoxTex); l2_treasureBoxTex = nullptr; }
 
     // ===== Unload Jump Scare =====
     JumpScare_Unload();
