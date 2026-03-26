@@ -18,28 +18,34 @@ namespace
 
     InstructionsLine Instructions[] =
     {
-        {"INSTRUCTIONS", -0.18f,  0.75f, 1.55f},
-        {"Welcome to Mummy Game!", -0.25f,  0.61f, 1.10f},
-        {"By Intro Lab", -0.10f,  0.51f, 0.85f},
+        {"INSTRUCTIONS",           -0.17f,  0.76f, 1.55f},
+        {"Welcome to Mummy Game!", -0.23f,  0.61f, 1.00f},
+        {"By Intro Lab",           -0.08f,  0.52f, 0.78f},
 
-        {"Goal", -0.25f,  0.31f, 1.00f},
-        {"Collect all coins. Avoid enemies and mummies.",  -0.25f,  0.20f, 0.78f},
-        {"Survive to win.",  -0.25f,  0.11f, 0.78f},
-        //{"Survive to win.",  -0.20f, 0.02f, 0.78f},
+        {"GOAL",                    -0.05f,  0.31f, 0.98f},
+        {"Avoid enemies and mummies",-0.18f, 0.20f, 0.72f},
+        {"Use powerups to survive", -0.16f,  0.12f, 0.72f},
+        {"Reach the end to win",    -0.14f,  0.04f, 0.72f},
 
-        {"Features",  -0.25f, -0.10f, 1.00f},
-        {"Easy / Medium / Hard Levels",  -0.25f, -0.21f, 0.78f},
-        {"Level Editor to customise",  -0.25f, -0.30f, 0.74f},
+        {"[FEATURES]",                -0.10f, -0.10f, 0.98f},
+        {"Easy / Medium / Hard",    -0.16f, -0.20f, 0.72f},
+        {"Level Editor Mode",       -0.14f, -0.28f, 0.72f},
 
-        {"[Controls]",  -0.25f, -0.49f, 1.00f},
-        {"W A S D: Move",  -0.25f, -0.59f, 0.82f},
-        {"ESC / B: Menu",  -0.25f, -0.70f, 0.78f},
-        {"Q: Quit",  -0.25f, -0.79f, 0.78f},
+        {"[CONTROLS]",               -0.27f, -0.50f, 0.95f},
+        {"W A S D  - Move",        -0.27f, -0.60f, 0.72f},
+        {"B        - Back",        -0.27f, -0.68f, 0.72f},
+        {"ESC      - Quit",        -0.27f, -0.76f, 0.72f},
+
+        {"[POWERUPS]",                0.10f, -0.50f, 0.95f},
+        {"Freeze enemies",  0.18f, -0.60f, 0.64f},
+        {"Immunity",      0.18f, -0.70f, 0.64f},
     };
 
     int InstructionsCount = sizeof(Instructions) / sizeof(Instructions[0]);
     AEGfxTexture* wallimage = nullptr;
     AEGfxTexture* wasd = nullptr;
+    AEGfxTexture* pwr1 = nullptr;
+    AEGfxTexture* pwr2 = nullptr;
 
 
     // text = the string to display
@@ -59,6 +65,29 @@ namespace
 
         AEGfxPrint(fontId, strBuffer, x, y, scale, 1.0f, 1.0f, 1.0f, 1.0f); //white
     }
+
+    //function to help draw the poweruups
+    void DrawInstructionImage(AEGfxTexture* texture, float posX, float posY, float sizeX, float sizeY)
+    {
+        AEMtx33 scale, trans, transform;
+
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(texture, 0, 0);
+
+        AEMtx33Scale(&scale, sizeX, sizeY);
+        AEMtx33Trans(&trans, posX, posY);
+        AEMtx33Concat(&transform, &trans, &scale);
+
+        AEGfxSetTransform(transform.m);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -69,6 +98,8 @@ void Instructions_Load()
     std::cout << "Instructions:Load\n";
     wallimage = AEGfxTextureLoad("Assets/Bigwall.png"); // floor tile texture
     wasd = AEGfxTextureLoad("Assets/WASD.png"); // floor tile texture
+    pwr1 = AEGfxTextureLoad("Assets/Freeze.png"); // freeze
+    pwr2 = AEGfxTextureLoad("Assets/Immune.png"); // Immune
 
     pMesh = CreateSquareMesh();
 }
@@ -145,7 +176,7 @@ void Instructions_Draw()
 
     // position on screen
     // move x more right/left, y more up/down
-    AEMtx33Trans(&wasdTrans, 200.0f, -270.0f);
+    AEMtx33Trans(&wasdTrans, -360.0f, -270.0f);
 
     AEMtx33Concat(&wasdTransform, &wasdTrans, &wasdScale);
     AEGfxSetTransform(wasdTransform.m);
@@ -158,6 +189,10 @@ void Instructions_Draw()
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     //rendering mode to colour mode
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+
+    //adding the powerups--
+    DrawInstructionImage(pwr1, 90.0f, -255.0f, 42.0f, 42.0f); //jas
+    DrawInstructionImage(pwr2, 90.0f, -300.0f, 42.0f, 42.0f); //jas
 
     for (int i = 0; i < InstructionsCount; ++i)
     {
