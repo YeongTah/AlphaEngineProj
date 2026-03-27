@@ -21,6 +21,7 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 #include "Level3.h"
 #include "PausePage.h"   // added for GS_PAUSE -ths
 #include "LosePage.h" //added lose page jas
+#include "LevelInstruct.h" //added instructions - jas
 #include "Confirmation.h"
 #include "System.h"
 #include <iostream>
@@ -87,6 +88,14 @@ void GSM_Update()
         fpDraw = Intro_Draw;
         fpFree = Intro_Free;
         fpUnload = Intro_Unload;
+        break;
+    case LEVELINSTRUCTIONS: // For Intro screen
+        fpLoad = LevelInstruct_Load;
+        fpInitialize = LevelInstruct_Initialize;
+        fpUpdate = LevelInstruct_Update;
+        fpDraw = LevelInstruct_Draw;
+        fpFree = LevelInstruct_Free;
+        fpUnload = LevelInstruct_Unload;
         break;
 
     case MAINMENUSTATE: // For Main Menu

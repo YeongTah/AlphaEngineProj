@@ -19,6 +19,7 @@ enum GS_STATES
 {
 	INTROSTATE = -1,
 	MAINMENUSTATE = 0,
+	LEVELINSTRUCTIONS, //added instructions to each level - jas
 	LEVELPAGE,
 	GS_LEVEL1,
 	GS_LEVEL2,

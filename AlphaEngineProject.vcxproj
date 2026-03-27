@@ -24,6 +24,7 @@
     <ClCompile Include="Source File\Level2.cpp" />
     <ClCompile Include="Source File\Level3.cpp" />
     <ClCompile Include="Source File\leveleditor.cpp" />
+    <ClCompile Include="Source File\LevelInstruct.cpp" />
     <ClCompile Include="Source File\LevelPage.cpp" />
     <ClCompile Include="Source File\LosePage.cpp" />
     <ClCompile Include="Source File\Main.cpp" />
@@ -50,6 +51,7 @@
     <ClInclude Include="Source File\JumpScare.h" />
     <ClInclude Include="Source File\Level1.h" />
     <ClInclude Include="Source File\Level2.h" />
+    <ClInclude Include="Source File\LevelInstruct.h" />
     <ClInclude Include="Source File\LevelPage.h" />
     <ClInclude Include="Source File\LosePage.h" />
     <ClInclude Include="Source File\Main.h" />

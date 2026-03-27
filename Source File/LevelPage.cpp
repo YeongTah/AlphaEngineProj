@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "LevelPage.h"
 #include "main.h"
+#include "LevelInstruct.h"
 #include "gamestatemanager.h"
 #include <iostream>
 #include <fstream>
@@ -29,7 +30,7 @@ void LevelPage_Load()
 {
     std::cout << "LevelPage:Load\n";
 
-    backButton = AEGfxTextureLoad("Assets/Backbutton.png"); // back arrow texture
+    backButton = AEGfxTextureLoad("Assets/Back.png"); // back arrow texture
     wallimage = AEGfxTextureLoad("Assets/wall.png"); // floor tile texture
     pMesh = CreateSquareMesh();                        // unit square mesh
 }
@@ -79,7 +80,9 @@ void LevelPage_Update()
     if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(easy_x, select_y,
         200.0f, 400.0f, mouseX, mouseY))
     {
-        next = GS_LEVEL1;
+        LevelInstruct(1);
+        next = LEVELINSTRUCTIONS;
+        //next = GS_LEVEL1;
         std::cout << "lvl 1 Left click released\n";
     }
 
@@ -87,7 +90,9 @@ void LevelPage_Update()
     if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(medium_x, select_y,
         200.0f, 400.0f, mouseX, mouseY))
     {
-        next = GS_LEVEL2;
+        LevelInstruct(2);
+        next = LEVELINSTRUCTIONS;
+        //next = GS_LEVEL2;
         std::cout << "lvl 2 Left click released\n";
     }
 
@@ -95,7 +100,9 @@ void LevelPage_Update()
     if (AEInputCheckReleased(AEVK_LBUTTON) && IsAreaClicked(hard_x, select_y,
         200.0f, 400.0f, mouseX, mouseY))
     {
-        next = GS_LEVEL3;
+        LevelInstruct(3);
+        next = LEVELINSTRUCTIONS;
+        //next = GS_LEVEL3;
         std::cout << "lvl 3 Left click released\n";
     }
 
