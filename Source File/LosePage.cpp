@@ -7,6 +7,7 @@
 #include "GameStateManager.h"
 #include "Main.h"
 #include "leveleditor.hpp" // for CreateSquareMesh and pMesh
+#include "Confirmation.h" //added confirmation for the lose
 
 // ----------------------------------------------------------------------------
 // LosePage_Load
@@ -29,11 +30,27 @@ void LosePage_Initialize() {}
 // ----------------------------------------------------------------------------
 void LosePage_Update()
 {
-    if (AEInputCheckReleased(AEVK_RETURN)) next = LEVELPAGE;
-    if (AEInputCheckReleased(AEVK_R)) { next = previous; } // previous = the level that triggered the lose
-    if (AEInputCheckReleased(AEVK_B)) next = LEVELPAGE;
+    if (AEInputCheckReleased(AEVK_RETURN)) {
+        Confirmation_Level(GS_LOSE, LEVELPAGE, "Are you sure you want to go to Level Select?");
+        next = CONFIRM;
+        return;
+    }
+
+    if (AEInputCheckReleased(AEVK_R)) {
+        Confirmation_Level(GS_LOSE, previous, "Are you sure you want to restart the level?");
+        next = CONFIRM;
+        return;
+    }
+
+    if (AEInputCheckReleased(AEVK_B)) {
+        Confirmation_Level(GS_LOSE, LEVELPAGE, "Are you sure you want to go to Level Select?");
+        next = CONFIRM;
+        return;
+    }
+
     if (AEInputCheckReleased(AEVK_ESCAPE) ||
-        0 == AESysDoesWindowExist()) next = GS_QUIT;
+        0 == AESysDoesWindowExist())
+        next = GS_QUIT;
 }
 
 // ----------------------------------------------------------------------------
@@ -48,21 +65,22 @@ void LosePage_Update()
 // ----------------------------------------------------------------------------
 void LosePage_Draw()
 {
-    AEGfxSetBackgroundColor(0.18f, 0.05f, 0.05f);
+    // Match LosePage background color (dark red)
+    AEGfxSetBackgroundColor(0.25f, 0.07f, 0.07f);
 
-    // Draw full-screen red tint rectangle over the game world
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(0.5f, 0.0f, 0.0f, 1.0f); // dark red fill
-    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+    //// Draw full-screen red tint rectangle over the game world - not needed anymore for the confirmation
+    //AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    //AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    //AEGfxSetTransparency(1.0f);
+    //AEGfxSetColorToMultiply(0.5f, 0.0f, 0.0f, 1.0f); // dark red fill
+    //AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-    AEMtx33 scale, trans, mat;
-    AEMtx33Scale(&scale, 1600.0f, 900.0f); // full screen
-    AEMtx33Trans(&trans, 0.0f, 0.0f);
-    AEMtx33Concat(&mat, &trans, &scale);
-    AEGfxSetTransform(mat.m);
-    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    //AEMtx33 scale, trans, mat;
+    //AEMtx33Scale(&scale, 1600.0f, 900.0f); // full screen
+    //AEMtx33Trans(&trans, 0.0f, 0.0f);
+    //AEMtx33Concat(&mat, &trans, &scale);
+    //AEGfxSetTransform(mat.m);
+    //AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
     // ============================
     // Centered text helpers

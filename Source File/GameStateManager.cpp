@@ -20,6 +20,7 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 #include "Level2.h"
 #include "Level3.h"
 #include "PausePage.h"   // added for GS_PAUSE -ths
+#include "LosePage.h" //added lose page jas
 #include "Confirmation.h"
 #include "System.h"
 #include <iostream>
@@ -167,6 +168,14 @@ void GSM_Update()
         fpDraw = WinPage_Draw;
         fpFree = WinPage_Free;
         fpUnload = WinPage_Unload;
+        break;
+    case GS_LOSE:
+        fpLoad = LosePage_Load;
+        fpInitialize = LosePage_Initialize;
+        fpUpdate = LosePage_Update;
+        fpDraw = LosePage_Draw;
+        fpFree = LosePage_Free;
+        fpUnload = LosePage_Unload;
         break;
 
         // ============================================================================
