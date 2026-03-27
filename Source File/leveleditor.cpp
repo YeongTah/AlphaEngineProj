@@ -57,7 +57,7 @@ namespace
         BTN_WALL,   // Paint wall (NON_WALKABLE) tiles
         BTN_ERASE,  // Erase tiles back to 0 (walkable)
         BTN_SAVE,   // Save current level[][] to the active .txt file
-        BTN_LOAD,   // Reload level[][] from the active .txt file
+        //BTN_LOAD,   // Reload level[][] from the active .txt file
         BTN_LOCK,   // Toggle tile painting on/off (lock mode)
         BTN_L1,     // Switch editor to level1.txt
         BTN_L2,     // Switch editor to level2.txt
@@ -79,8 +79,8 @@ namespace
         {650.0f,  180.0f, 220.0f, 50.0f, 0.95f, 0.85f, 0.45f, BTN_COIN},   // Coin button - bright gold
         {650.0f,  120.0f, 220.0f, 50.0f, 0.75f, 0.75f, 0.75f, BTN_ERASE},  // Erase button - light grey
         {650.0f,   60.0f, 220.0f, 50.0f, 0.55f, 0.85f, 0.55f, BTN_SAVE},   // Save button - bright yellow
-        {650.0f,    0.0f, 220.0f, 50.0f, 0.55f, 0.70f, 0.95f, BTN_LOAD},   // Load button - bright cyan
-        {650.0f,  -60.0f, 220.0f, 50.0f, 0.80f, 0.65f, 0.95f, BTN_LOCK},   // Lock button - bright purple
+        {650.0f,    0.0f, 220.0f, 50.0f, 0.55f, 0.70f, 0.95f, BTN_LOCK},   // Load button - bright cyan
+        //{650.0f,  -60.0f, 220.0f, 50.0f, 0.80f, 0.65f, 0.95f, BTN_LOCK},   // Lock button - bright purple
         {575.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L1},     // Level 1 selector - green
         {650.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L2},      // Level 2 selector - blue
         {725.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L3},     // Level 3 selector - orange
@@ -247,7 +247,7 @@ namespace
             case BTN_COIN:  gBrushValue = COIN;         return true;
             case BTN_ERASE: gBrushValue = 0;            return true;
             case BTN_SAVE:  print_file();               return true;
-            case BTN_LOAD:  readfile();                 return true;
+            //case BTN_LOAD:  readfile();                 return true;
             case BTN_LOCK:  gLocked = !gLocked;         return true;
             case BTN_L1:    SetActiveLevel(1, true);    return true;
             case BTN_L2:    SetActiveLevel(2, true);    return true;
@@ -301,16 +301,16 @@ namespace
             AEGfxPrint(fontId, "COIN", (gButtons[1].pos_x * HalfW) - 0.05f, (gButtons[1].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
             AEGfxPrint(fontId, "ERASE", (gButtons[2].pos_x * HalfW) - 0.06f, (gButtons[2].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
             AEGfxPrint(fontId, "SAVE", (gButtons[3].pos_x * HalfW) - 0.05f, (gButtons[3].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
-            AEGfxPrint(fontId, "LOAD", (gButtons[4].pos_x * HalfW) - 0.05f, (gButtons[4].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            //AEGfxPrint(fontId, "LOAD", (gButtons[4].pos_x * HalfW) - 0.05f, (gButtons[4].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
 
             if (gLocked)
-                AEGfxPrint(fontId, "LOCKED", (gButtons[5].pos_x * HalfW) - 0.085f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+                AEGfxPrint(fontId, "LOCKED", (gButtons[4].pos_x * HalfW) - 0.07f, (gButtons[4].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
             else
-                AEGfxPrint(fontId, "EDIT", (gButtons[5].pos_x * HalfW) - 0.055f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+                AEGfxPrint(fontId, "EDIT", (gButtons[4].pos_x * HalfW) - 0.05f, (gButtons[4].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
 
-            AEGfxPrint(fontId, "L1", (gButtons[6].pos_x * HalfW) - 0.02f, (gButtons[6].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
-            AEGfxPrint(fontId, "L2", (gButtons[7].pos_x * HalfW) - 0.02f, (gButtons[7].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
-            AEGfxPrint(fontId, "L3", (gButtons[8].pos_x * HalfW) - 0.02f, (gButtons[8].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L1", (gButtons[5].pos_x * HalfW) - 0.02f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L2", (gButtons[6].pos_x * HalfW) - 0.02f, (gButtons[6].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L3", (gButtons[7].pos_x * HalfW) - 0.02f, (gButtons[7].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
         }
     }
 } // end anonymous namespace
