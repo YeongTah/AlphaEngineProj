@@ -192,7 +192,7 @@ void MainMenu_Draw()
         if (i == 0 || i == 1 || i == 2 || i == 3)
             AEGfxSetColorToAdd(0.21f, 0.11f, 0.12f, 1.0f);
         else
-            AEGfxSetColorToAdd(0.37f, 0.14f, 0.14f, 1.0f);
+            AEGfxSetColorToAdd(0.21f, 0.11f, 0.12f, 1.0f);
 
         AEGfxSetTransform(buttons[i].m);
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
@@ -203,7 +203,7 @@ void MainMenu_Draw()
     AEGfxPrint(fontId, "INSTRUCTIONS", -0.13f, -0.08f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
     AEGfxPrint(fontId, "CREDITS", -0.081f, -0.36f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
     AEGfxPrint(fontId, "EXIT", -0.045f, -0.63f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxPrint(fontId, "Creator", 0.8f, -0.84f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxPrint(fontId, "Creator", 0.785f, -0.84f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 //----------------------------------------------------------------------------
