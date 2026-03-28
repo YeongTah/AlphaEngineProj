@@ -753,7 +753,7 @@ void Level1_Initialize()
         FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
         coin.x = px;
         coin.y = py;
-        coin.size = 30.0f;
+        coin.size = GRID_TILE_SIZE * 0.8f;  // match tile-based coin draw size and editor
         coin.r = 1.0f;
         coin.g = 0.5f;
         coin.b = 0.0f; // orange tint
@@ -1241,13 +1241,13 @@ void Level1_Draw()
 
     AEMtx33 transform, scale, trans;
 
-    // --- Draw floor texture on walkable tiles ---
+    // --- Draw floor texture on walkable tiles AND coin tiles ---
     AEGfxTextureSet(gFloorTex, 0, 0);
     for (int row = 0; row < GRID_ROWS; row++)
     {
         for (int col = 0; col < GRID_COLS; col++)
         {
-            if (level[row][col] == 0)
+            if (level[row][col] == 0 || level[row][col] == 4) // floor + coin cells both get floor drawn first
             {
                 float x, y;
                 GridToWorldCenter(row, col, x, y);
@@ -1289,7 +1289,7 @@ void Level1_Draw()
             {
                 float x, y;
                 GridToWorldCenter(row, col, x, y);
-                AEMtx33Scale(&scale, GRID_TILE_SIZE * 0.8f, GRID_TILE_SIZE * 0.8f); // slightly smaller -ths
+                AEMtx33Scale(&scale, coin.size, coin.size); // use coin.size to stay in sync with editor and legacy coin -ths
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
                 AEGfxSetTransform(transform.m);

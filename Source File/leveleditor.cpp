@@ -247,7 +247,7 @@ namespace
             case BTN_COIN:  gBrushValue = COIN;         return true;
             case BTN_ERASE: gBrushValue = 0;            return true;
             case BTN_SAVE:  print_file();               return true;
-            //case BTN_LOAD:  readfile();                 return true;
+                //case BTN_LOAD:  readfile();                 return true;
             case BTN_LOCK:  gLocked = !gLocked;         return true;
             case BTN_L1:    SetActiveLevel(1, true);    return true;
             case BTN_L2:    SetActiveLevel(2, true);    return true;
@@ -406,7 +406,8 @@ void readfile()
 // ----------------------------------------------------------------------------
 void generateLevel(void)
 {
-    CoinTex = AEGfxTextureLoad("Assets/Coin.png");
+    if (CoinTex == nullptr)
+        CoinTex = AEGfxTextureLoad("Assets/Coin.png");
 
     if (AEInputCheckTriggered(AEVK_LBUTTON))
     {
@@ -458,20 +459,19 @@ void generateLevel(void)
             {
                 AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-                AEGfxSetTransparency(1.0f);
-
-                // use your coin texture here
+                // AEGfxSetTransparency is intentionally omitted -- calling it forces
+                // the quad to full opacity and overrides the PNG's alpha channel,
+                // which causes a black background around the coin sprite.
                 AEGfxTextureSet(CoinTex, 0, 0);
-
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
                 AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-                AEMtx33 scale, translate, transform;
-                AEMtx33Scale(&scale, GRID_TILE_SIZE * 0.8f, GRID_TILE_SIZE * 0.8f);
-                AEMtx33Trans(&translate, x, y);
-                AEMtx33Concat(&transform, &translate, &scale);
+                AEMtx33 coinScale, coinTrans, coinTransform;
+                AEMtx33Scale(&coinScale, GRID_TILE_SIZE * 0.8f, GRID_TILE_SIZE * 0.8f);
+                AEMtx33Trans(&coinTrans, x, y);
+                AEMtx33Concat(&coinTransform, &coinTrans, &coinScale);
 
-                AEGfxSetTransform(transform.m);
+                AEGfxSetTransform(coinTransform.m);
                 AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
             }
         }
