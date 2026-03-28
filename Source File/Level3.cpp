@@ -519,7 +519,7 @@ void Level3_Initialize()
         L3FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
         l3_coin.x = px;
         l3_coin.y = py;
-        l3_coin.size = 30.0f;
+        l3_coin.size = GRID_TILE_SIZE * 0.8f;
         l3_coin.r = 1.0f;
         l3_coin.g = 0.5f;
         l3_coin.b = 0.0f;
@@ -862,7 +862,9 @@ void Level3_Draw()
 
     AEMtx33 transform, scale, trans;
 
-    // --- Floor tiles (value == 0) ---
+    // --- Floor tiles (value == 0 and value == 4) ---
+    // Coin tiles (4) also need a floor drawn under them so the coin PNG's
+    // transparent pixels show floor instead of black.
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
@@ -871,11 +873,26 @@ void Level3_Draw()
 
     for (int row = 0; row < GRID_ROWS; row++)
         for (int col = 0; col < GRID_COLS; col++)
-            if (level[row][col] == 0)
+            if (level[row][col] == 0 || level[row][col] == 4)
             {
                 float x, y;
                 GridToWorldCenter(row, col, x, y);
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
+                AEMtx33Trans(&trans, x, y);
+                AEMtx33Concat(&transform, &trans, &scale);
+                AEGfxSetTransform(transform.m);
+                AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+            }
+
+    // --- Coin tiles (value == 4) drawn on top of floor ---
+    AEGfxTextureSet(l3_coin.pTex, 0, 0);
+    for (int row = 0; row < GRID_ROWS; row++)
+        for (int col = 0; col < GRID_COLS; col++)
+            if (level[row][col] == 4)
+            {
+                float x, y;
+                GridToWorldCenter(row, col, x, y);
+                AEMtx33Scale(&scale, GRID_TILE_SIZE * 0.8f, GRID_TILE_SIZE * 0.8f);
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
                 AEGfxSetTransform(transform.m);
