@@ -2,6 +2,7 @@
 #include "MainMenu.h"
 #include "gamestatemanager.h"
 #include "Main.h"
+#include "Level1.h"
 #include <iostream>
 #include <fstream>
 
@@ -199,11 +200,38 @@ void MainMenu_Draw()
     }
 
     // Button text (unchanged)
-    AEGfxPrint(fontId, "PLAY", -0.05f, 0.20f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxPrint(fontId, "INSTRUCTIONS", -0.13f, -0.08f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxPrint(fontId, "CREDITS", -0.081f, -0.36f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxPrint(fontId, "EXIT", -0.045f, -0.63f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxPrint(fontId, "Creator", 0.785f, -0.84f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
+    const float titleScale = 1.2f;
+
+    float w = 0.0f, h = 0.0f;
+
+    // Play
+    const char* t0 = "PLAY";
+    AEGfxGetPrintSize(fontId, t0, titleScale, &w, &h);
+    float x0 = -0.5f * w;
+    AEGfxPrint(fontId, t0, x0, 0.2f, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    // INSTRUCTIONS
+    const char* t1 = "INSTRUCTIONS";
+    AEGfxGetPrintSize(fontId, t1, titleScale, &w, &h);
+    float x1 = -0.5f * w;
+    AEGfxPrint(fontId, t1, x1, -0.08f, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    // CREDITS
+    const char* t2 = "CREDITS";
+    AEGfxGetPrintSize(fontId, t2, titleScale, &w, &h);
+    float x2 = -0.5f * w;
+    AEGfxPrint(fontId, t2, x2, -0.36f, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    // EXIT
+    const char* t3 = "EXIT";
+    AEGfxGetPrintSize(fontId, t3, titleScale, &w, &h);
+    float x3 = -0.5f * w;
+    AEGfxPrint(fontId, t3, x3, -0.63f, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    // CREATOR
+    const char* t4 = "Creator";
+    AEGfxGetPrintSize(fontId, t4, titleScale, &w, &h);
+    AEGfxPrint(fontId, t4, 0.785f, -0.84f, titleScale-0.4f, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 //----------------------------------------------------------------------------

@@ -167,8 +167,16 @@ void Intro_Draw()
         AEGfxPrint(fontId, title, -0.5f * w, 0.0f, scaleTitle, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    // Draw skip instruction at bottom
-    AEGfxPrint(fontId, "Press SPACE or click to skip", -0.35f, -0.85f, 0.6f, 0.8f, 0.8f, 0.8f, 1.0f);
+    // Draw skip instruction at top
+
+    const float titleScale = 0.8f;
+
+    float w = 0.0f, h = 0.0f;
+
+    const char* t0 = "Press SPACE or click to skip";
+    AEGfxGetPrintSize(fontId, t0, titleScale, &w, &h);
+    float x0 = -0.5f * w;
+    AEGfxPrint(fontId, t0, x0, 0.9f, titleScale, 1.0f, 1.0f, 1.0f, 0.5f);
 }
 
 //----------------------------------------------------------------------------

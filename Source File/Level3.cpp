@@ -775,10 +775,6 @@ void Level3_Update()
             PlayerTouchesMummy(l3_mummy3, l3_player.x, l3_player.y)))
     {
 
-        // Play gameover -ths
-        if (AEAudioIsValidAudio(l3_sfxGameOver))
-            AEAudioPlay(l3_sfxGameOver, l3AudioGroup, 1.0f, 1.0f, 0); // -ths
-
         if (!JumpScare_IsActive() && !pendingGameOverReset)
         {
             // Play jumpscare -ths
@@ -790,10 +786,6 @@ void Level3_Update()
             pendingGameOverReset = true; // Mark that we need to reset after jump scare
             std::cout << "CAUGHT! Playing jump scare...\n";
         }
-
-        ResetLevel3();
-        printf("L3: Caught by a Mummy!\n");
-        l3_showLose = true;
     }
 
     // ========= LEVEL RESET FOR LOSE CONDITION =========

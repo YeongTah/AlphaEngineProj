@@ -374,7 +374,7 @@ static inline float ToNDCY(float worldY) { return worldY / ((float)AEGfxGetWindo
 // string of 'text' around 'centerWorldX' when printed at 'scale'.
 // Used to center-align labels on overlay buttons.
 // ----------------------------------------------------------------------------
-static float CenteredTextX(float centerWorldX, const char* text, float scale)
+float CenteredTextX(float centerWorldX, const char* text, float scale)
 {
     const float ndcPerChar = 0.0165f * scale; // empirically tuned for Roboto@32 -ths
     float halfText = 0.5f * ndcPerChar * (float)std::strlen(text);
