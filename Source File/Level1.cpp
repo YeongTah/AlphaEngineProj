@@ -1241,13 +1241,13 @@ void Level1_Draw()
 
     AEMtx33 transform, scale, trans;
 
-    // --- Draw floor texture on walkable tiles AND coin tiles ---
+    // --- Draw floor texture on walkable tiles ---
     AEGfxTextureSet(gFloorTex, 0, 0);
     for (int row = 0; row < GRID_ROWS; row++)
     {
         for (int col = 0; col < GRID_COLS; col++)
         {
-            if (level[row][col] == 0 || level[row][col] == 4) // floor + coin cells both get floor drawn first
+            if (level[row][col] == 0)
             {
                 float x, y;
                 GridToWorldCenter(row, col, x, y);
@@ -1401,7 +1401,11 @@ void Level1_Draw()
     if (gPopupFrames > 0)
     {
         float alpha = (gPopupFrames < 60) ? gPopupFrames / 60.0f : 1.0f;
-        AEGfxPrint(fontId, gPopupMsg, -0.35f, 0.0f, 0.85f, 1.0f, 1.0f, 0.4f, alpha);
+        float popupScale = 0.85f;
+        float pw, ph;
+        AEGfxGetPrintSize(fontId, gPopupMsg, popupScale, &pw, &ph);
+        float centeredX = -pw * 0.5f; // NDC center (0) minus half the text width
+        AEGfxPrint(fontId, gPopupMsg, centeredX, 0.0f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
     }
 
     // ====================================================================
