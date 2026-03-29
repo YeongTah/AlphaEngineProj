@@ -262,6 +262,87 @@ static void TickFramePowers()
 // ===================== ADDED: TickFreezeFrames (real-time freeze) ===================== -ths
 static void TickFreezeFrames() { if (gPower.freezeFrames > 0) --gPower.freezeFrames; } // -ths
 
+// ----------------------------------------------------------------------------
+// BFSNextStep
+// Uses Breadth-First Search (uniform-cost search on an unweighted grid) to find
+// the shortest walkable path from (fromX, fromY) to (toX, toY), then returns
+// the world-space position of the FIRST step along that path via (outX, outY).
+//
+// Returns true  -- a path was found; outX/outY hold the next step position.
+// Returns false -- no path exists (target unreachable); caller should not move.
+//
+// The search treats any cell where canMove() is true as passable.
+// Grid size is bounded by GRID_ROWS x GRID_COLS (18x32 = 576 cells max).
+// ----------------------------------------------------------------------------
+static bool BFSNextStep(float fromX, float fromY, float toX, float toY,
+    float& outX, float& outY)
+{
+    int sr, sc, tr, tc;
+    WorldToGrid(fromX, fromY, sr, sc);
+    WorldToGrid(toX, toY, tr, tc);
+
+    if (sr == tr && sc == tc) return false; // already on the target cell
+
+    // parent array: stores the cell we came from for each visited cell
+    // encoded as row*GRID_COLS+col; -1 = unvisited
+    static int parent[18 * 32];
+    for (int i = 0; i < GRID_ROWS * GRID_COLS; ++i) parent[i] = -1;
+
+    // Simple BFS queue (max 576 cells)
+    static int queue[18 * 32];
+    int head = 0, tail = 0;
+
+    int startIdx = sr * GRID_COLS + sc;
+    parent[startIdx] = startIdx; // mark start as visited (parent = self)
+    queue[tail++] = startIdx;
+
+    static const int dRow[4] = { -1,  1,  0, 0 };
+    static const int dCol[4] = { 0,  0, -1, 1 };
+
+    bool found = false;
+    while (head < tail)
+    {
+        int cur = queue[head++];
+        int cr = cur / GRID_COLS;
+        int cc = cur % GRID_COLS;
+
+        if (cr == tr && cc == tc) { found = true; break; }
+
+        for (int d = 0; d < 4; ++d)
+        {
+            int nr = cr + dRow[d];
+            int nc = cc + dCol[d];
+            if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLS) continue;
+            int nIdx = nr * GRID_COLS + nc;
+            if (parent[nIdx] != -1) continue; // already visited
+
+            // Use canMove() with the world-center of the neighbour cell
+            float wx, wy;
+            GridToWorldCenter(nr, nc, wx, wy);
+            if (!canMove(wx, wy)) continue;
+
+            parent[nIdx] = cur;
+            queue[tail++] = nIdx;
+        }
+    }
+
+    if (!found) return false;
+
+    // Trace back from target to find the first step after start
+    int cur = tr * GRID_COLS + tc;
+    while (true)
+    {
+        int prev = parent[cur];
+        if (prev == startIdx) break; // cur is the first step
+        cur = prev;
+    }
+
+    int firstR = cur / GRID_COLS;
+    int firstC = cur % GRID_COLS;
+    GridToWorldCenter(firstR, firstC, outX, outY);
+    return true;
+}
+
 // ===================== ADDED: Random Power-Up Entity & helpers ===================== -ths
 enum PowerupType { PWR_IMMUNE = 0, PWR_FREEZE = 1 }; // -ths
 static Entity gPowerup;                // power-up pickup on the map -ths
@@ -981,78 +1062,50 @@ void Level1_Update()
         // Enemy freeze stop -ths
         if (turnCounter % 2 == 0 && gPower.freezeFrames <= 0)
         {
-            float diffX = player.x - mummy.x;
-            float diffY = player.y - mummy.y;
-
-            if (fabsf(diffX) > 1.0f) {
-                float stepX = (diffX > 0) ? gridStep : -gridStep;
-                float nx = mummy.x + stepX, ny = mummy.y;
-                // Don't move onto a cell occupied by a box mummy
+            // ---- Main mummy: BFS toward player ----
+            float bfsX, bfsY;
+            if (BFSNextStep(mummy.x, mummy.y, player.x, player.y, bfsX, bfsY))
+            {
+                // Occupancy check: don't stack on a box mummy
                 bool blocked = false;
                 for (int i = 0; i < gBoxMummyCount; ++i)
-                    if (fabsf(gBoxMummies[i].x - nx) < 1.0f && fabsf(gBoxMummies[i].y - ny) < 1.0f)
+                    if (fabsf(gBoxMummies[i].x - bfsX) < 1.0f && fabsf(gBoxMummies[i].y - bfsY) < 1.0f)
                     {
                         blocked = true; break;
                     }
-                if (!blocked && canMove(nx, ny))
-                    mummy.x += stepX;
-            }
-
-            diffY = player.y - mummy.y;
-            if (fabsf(diffY) > 1.0f) {
-                float stepY = (diffY > 0) ? gridStep : -gridStep;
-                float nx = mummy.x, ny = mummy.y + stepY;
-                // Don't move onto a cell occupied by a box mummy
-                bool blocked = false;
-                for (int i = 0; i < gBoxMummyCount; ++i)
-                    if (fabsf(gBoxMummies[i].x - nx) < 1.0f && fabsf(gBoxMummies[i].y - ny) < 1.0f)
-                    {
-                        blocked = true; break;
-                    }
-                if (!blocked && canMove(nx, ny))
-                    mummy.y += stepY;
+                if (!blocked)
+                {
+                    mummy.x = bfsX;
+                    mummy.y = bfsY;
+                }
             }
         }
 
         TickPowers();
         playerMoved = false;
 
-        // ====== BOX MUMMY AI: chase player every 2nd turn ======
+        // ====== BOX MUMMY AI: BFS toward player every 2nd turn ======
         if (turnCounter % 2 == 0 && gPower.freezeFrames <= 0)
         {
             for (int i = 0; i < gBoxMummyCount; ++i)
             {
                 BoxMummy& bm = gBoxMummies[i];
-                float dxB = player.x - bm.x;
-                float dyB = player.y - bm.y;
-                if (fabsf(dxB) > 1.0f)
+                float bfsX, bfsY;
+                if (BFSNextStep(bm.x, bm.y, player.x, player.y, bfsX, bfsY))
                 {
-                    float stepX = (dxB > 0) ? gridStep : -gridStep;
-                    float nx = bm.x + stepX, ny = bm.y;
-                    // Don't move onto the main mummy's cell or another box mummy's cell
-                    bool blocked = (fabsf(mummy.x - nx) < 1.0f && fabsf(mummy.y - ny) < 1.0f);
+                    // Occupancy: don't stack on main mummy or another box mummy
+                    bool blocked = (fabsf(mummy.x - bfsX) < 1.0f && fabsf(mummy.y - bfsY) < 1.0f);
                     if (!blocked)
                         for (int j = 0; j < gBoxMummyCount; ++j)
-                            if (j != i && fabsf(gBoxMummies[j].x - nx) < 1.0f && fabsf(gBoxMummies[j].y - ny) < 1.0f)
+                            if (j != i && fabsf(gBoxMummies[j].x - bfsX) < 1.0f && fabsf(gBoxMummies[j].y - bfsY) < 1.0f)
                             {
                                 blocked = true; break;
                             }
-                    if (!blocked && canMove(nx, ny)) bm.x += stepX;
-                }
-                dyB = player.y - bm.y;
-                if (fabsf(dyB) > 1.0f)
-                {
-                    float stepY = (dyB > 0) ? gridStep : -gridStep;
-                    float nx = bm.x, ny = bm.y + stepY;
-                    // Don't move onto the main mummy's cell or another box mummy's cell
-                    bool blocked = (fabsf(mummy.x - nx) < 1.0f && fabsf(mummy.y - ny) < 1.0f);
                     if (!blocked)
-                        for (int j = 0; j < gBoxMummyCount; ++j)
-                            if (j != i && fabsf(gBoxMummies[j].x - nx) < 1.0f && fabsf(gBoxMummies[j].y - ny) < 1.0f)
-                            {
-                                blocked = true; break;
-                            }
-                    if (!blocked && canMove(nx, ny)) bm.y += stepY;
+                    {
+                        bm.x = bfsX;
+                        bm.y = bfsY;
+                    }
                 }
             }
         }
