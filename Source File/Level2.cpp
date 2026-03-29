@@ -682,7 +682,7 @@ void Level2_Initialize()
         L2FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
         l2_coin.x = px;
         l2_coin.y = py;
-        l2_coin.size = GRID_TILE_SIZE * 0.8f;
+        l2_coin.size = 30.0f;
         l2_coin.r = 1.0f;
         l2_coin.g = 0.5f;
         l2_coin.b = 0.0f;
@@ -1146,9 +1146,7 @@ void Level2_Draw()
 
     AEMtx33 transform, scale, trans;
 
-    // --- Floor tiles (value == 0 and value == 4) ---
-    // Coin tiles (4) also need a floor drawn under them so the coin PNG's
-    // transparent pixels show floor instead of black.
+    // --- Floor tiles (value == 0) ---
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
@@ -1156,24 +1154,10 @@ void Level2_Draw()
     AEGfxTextureSet(l2_FloorTex, 0, 0);
     for (int row = 0; row < GRID_ROWS; row++)
         for (int col = 0; col < GRID_COLS; col++)
-            if (level[row][col] == 0 || level[row][col] == 4)
+            if (level[row][col] == 0)
             {
                 float x, y; GridToWorldCenter(row, col, x, y);
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
-                AEMtx33Trans(&trans, x, y);
-                AEMtx33Concat(&transform, &trans, &scale);
-                AEGfxSetTransform(transform.m);
-                AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-            }
-
-    // --- Coin tiles (value == 4) drawn on top of floor ---
-    AEGfxTextureSet(l2_coin.pTex, 0, 0);
-    for (int row = 0; row < GRID_ROWS; row++)
-        for (int col = 0; col < GRID_COLS; col++)
-            if (level[row][col] == 4)
-            {
-                float x, y; GridToWorldCenter(row, col, x, y);
-                AEMtx33Scale(&scale, GRID_TILE_SIZE * 0.8f, GRID_TILE_SIZE * 0.8f);
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
                 AEGfxSetTransform(transform.m);
@@ -1310,7 +1294,11 @@ void Level2_Draw()
     if (l2_popupFrames > 0)
     {
         float alpha = (l2_popupFrames < 60) ? l2_popupFrames / 60.0f : 1.0f;
-        AEGfxPrint(fontId, l2_popupMsg, -0.35f, 0.0f, 0.85f, 1.0f, 1.0f, 0.4f, alpha);
+        float popupScale = 0.85f;
+        float pw, ph;
+        AEGfxGetPrintSize(fontId, l2_popupMsg, popupScale, &pw, &ph);
+        float centeredX = -pw * 0.5f;
+        AEGfxPrint(fontId, l2_popupMsg, centeredX, 0.0f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
     }
 
     // ===== ADDED: Pause button (top-right) ===== -ths

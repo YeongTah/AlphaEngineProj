@@ -47,6 +47,21 @@ static AEAudioGroup l3AudioGroup;  // -ths
 // ===== ADDED: forward declaration so SpawnRandomPowerup() can be called
 //              inside ResetLevel3() / Level3_Initialize() before its definition ===== -ths
 static void SpawnRandomPowerup(); // -ths
+static void L3SpawnTreasureBox(); // forward decl for use in ResetLevel3 / Initialize
+static int  L3RandInt(int mn, int mx); // forward decl for use in L3SpawnTreasureBox
+
+// ========================== TREASURE BOX SYSTEM (LEVEL 3) ==========================
+static Entity           l3_treasureBox;
+static bool             l3_treasureBoxActive = false;
+static AEGfxTexture* l3_treasureBoxTex = nullptr;
+
+struct L3BoxMummy { float x, y, size; };
+static L3BoxMummy l3_boxMummies[8];
+static int        l3_boxMummyCount = 0;
+
+static char l3_popupMsg[64] = "";
+static int  l3_popupFrames = 0;
+// ==================================================================================
 
 // IsAreaClicked has no header declaration
 extern bool IsAreaClicked(float area_center_x, float area_center_y, float area_width, float area_height,
@@ -215,6 +230,84 @@ static bool PlayerTouchesMummy(const Entity& mummy, float playerX, float playerY
 }
 
 // ----------------------------------------------------------------------------
+// L3SpawnTreasureBox
+// ----------------------------------------------------------------------------
+static void L3SpawnTreasureBox()
+{
+    for (int tries = 0; tries < 256; ++tries)
+    {
+        int r = L3RandInt(0, GRID_ROWS - 1);
+        int c = L3RandInt(0, GRID_COLS - 1);
+        if (level[r][c] != 0) continue;
+        int pr, pc;
+        WorldToGrid(l3_player.x, l3_player.y, pr, pc);
+        if (abs(r - pr) + abs(c - pc) < 3) continue;
+        float wx, wy;
+        GridToWorldCenter(r, c, wx, wy);
+        l3_treasureBox.x = wx;
+        l3_treasureBox.y = wy;
+        l3_treasureBox.size = l3_gridStep * 0.9f;
+        l3_treasureBoxActive = true;
+        return;
+    }
+    // Fallback: no distance constraint
+    for (int tries = 0; tries < 256; ++tries)
+    {
+        int r = L3RandInt(0, GRID_ROWS - 1);
+        int c = L3RandInt(0, GRID_COLS - 1);
+        if (level[r][c] != 0) continue;
+        float wx, wy;
+        GridToWorldCenter(r, c, wx, wy);
+        l3_treasureBox.x = wx;
+        l3_treasureBox.y = wy;
+        l3_treasureBox.size = l3_gridStep * 0.9f;
+        l3_treasureBoxActive = true;
+        return;
+    }
+    l3_treasureBoxActive = false;
+}
+
+// ----------------------------------------------------------------------------
+// L3OpenTreasureBox
+// 50% +1 coin, 50% spawn a chasing box mummy. Re-places the box after opening.
+// ----------------------------------------------------------------------------
+static void L3OpenTreasureBox()
+{
+    l3_treasureBoxActive = false; // chest disappears immediately on contact
+
+    if (AEAudioIsValidAudio(l3_sfxChest))
+        AEAudioPlay(l3_sfxChest, l3AudioGroup, 1.0f, 1.0f, 0);
+
+    bool spawnMummy = (AERandFloat() >= 0.5f);
+    if (!spawnMummy)
+    {
+        l3_coinCounter++;
+        std::snprintf(l3_popupMsg, sizeof(l3_popupMsg), "Treasure: +1 Coin! (Total: %d)", l3_coinCounter);
+        l3_popupFrames = 180;
+    }
+    else
+    {
+        JumpScare_Trigger();
+        if (AEAudioIsValidAudio(l3_sfxJumpscare))
+            AEAudioPlay(l3_sfxJumpscare, l3AudioGroup, 1.0f, 1.0f, 0);
+
+        if (l3_boxMummyCount < (int)(sizeof(l3_boxMummies) / sizeof(l3_boxMummies[0])))
+        {
+            float sx, sy;
+            int br, bc, pr, pc;
+            WorldToGrid(l3_treasureBox.x, l3_treasureBox.y, br, bc);
+            WorldToGrid(l3_player.x, l3_player.y, pr, pc);
+            L3FindFreeSpawnCell(br, bc, sx, sy, pr, pc, 2);
+            L3BoxMummy& m = l3_boxMummies[l3_boxMummyCount++];
+            m.x = sx; m.y = sy; m.size = l3_gridStep;
+            std::snprintf(l3_popupMsg, sizeof(l3_popupMsg), "Treasure: A Mummy appeared!");
+            l3_popupFrames = 180;
+        }
+    }
+    // Chest stays inactive -- no re-spawn. A new one is placed on next reset.
+}
+
+// ----------------------------------------------------------------------------
 // ResetLevel3
 // Repositions all Level 3 entities without reloading textures or the tile map.
 // Called when any mummy catches the player (in-level reset, not full reload).
@@ -255,6 +348,12 @@ static void ResetLevel3()
     // ===== ADDED: reset frame-based freeze; respawn power‑up ===== -ths
     l3Power.freezeFrames = 0; // -ths
     SpawnRandomPowerup();      // -ths
+
+    // Reset treasure chest
+    l3_boxMummyCount = 0;
+    L3SpawnTreasureBox();
+    l3_popupFrames = 0;
+    l3_popupMsg[0] = '\0';
 }
 
 // ===== ADDED: random power‑up data & helpers ========================================== -ths
@@ -385,6 +484,8 @@ void Level3_Load()
     // ===== ADDED: load power‑up textures ===== -ths
     l3_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png");   // -ths
     l3_FreezeTex = AEGfxTextureLoad("Assets/Freeze.png");   // -ths
+
+    l3_treasureBoxTex = AEGfxTextureLoad("Assets/TreasureChest.png");
 
     // Shared mesh for all sprites
     pMesh = CreateSquareMesh();
@@ -519,13 +620,18 @@ void Level3_Initialize()
         L3FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
         l3_coin.x = px;
         l3_coin.y = py;
-        l3_coin.size = GRID_TILE_SIZE * 0.8f;
+        l3_coin.size = 30.0f;
         l3_coin.r = 1.0f;
         l3_coin.g = 0.5f;
         l3_coin.b = 0.0f;
 
         // ===== Spawn random power‑up ===== -ths
         SpawnRandomPowerup(); // -ths
+
+        // ===== Spawn treasure box =====
+        l3_boxMummyCount = 0;
+        l3_treasureBoxActive = false;
+        L3SpawnTreasureBox();
 
         l3_nextX = l3_player.x;
         l3_nextY = l3_player.y;
@@ -558,6 +664,7 @@ void Level3_Update()
     // ===== PER-FRAME IMMUNITY/FREEZE TICKERS ===== -ths
     L3TickInvFrames();     // -ths
     L3TickFreezeFrames();  // -ths
+    if (l3_popupFrames > 0) --l3_popupFrames;
 
     // ======================================================================
 // WIN / LOSE OVERLAY INPUT
@@ -757,6 +864,35 @@ void Level3_Update()
 
         L3TickPowers();
         l3_playerMoved = false;
+
+        // ====== TREASURE BOX TOUCH ======
+        if (l3_treasureBoxActive &&
+            fabsf(l3_player.x - l3_treasureBox.x) < 1.0f &&
+            fabsf(l3_player.y - l3_treasureBox.y) < 1.0f)
+        {
+            L3OpenTreasureBox();
+        }
+
+        // ====== BOX MUMMY AI: chase player every 2nd turn ======
+        if (l3_turnCounter % 2 == 0 && l3Power.freezeFrames <= 0)
+        {
+            for (int i = 0; i < l3_boxMummyCount; ++i)
+            {
+                L3BoxMummy& bm = l3_boxMummies[i];
+                float dxB = l3_player.x - bm.x;
+                if (fabsf(dxB) > 1.0f)
+                {
+                    float stepX = (dxB > 0) ? l3_gridStep : -l3_gridStep;
+                    if (canMove(bm.x + stepX, bm.y)) bm.x += stepX;
+                }
+                float dyB = l3_player.y - bm.y;
+                if (fabsf(dyB) > 1.0f)
+                {
+                    float stepY = (dyB > 0) ? l3_gridStep : -l3_gridStep;
+                    if (canMove(bm.x, bm.y + stepY)) bm.y += stepY;
+                }
+            }
+        }
     }
 
     // ====== UPDATE JUMP SCARE ANIMATION =======
@@ -766,7 +902,7 @@ void Level3_Update()
     static bool pendingGameOverReset = false;
 
     // ======================================================================
-    // LOSE CONDITION (THREE MUMMIES)
+    // LOSE CONDITION (THREE MUMMIES + BOX MUMMIES)
     // ======================================================================
     if (l3_turnCounter > 0 &&
         !L3IsInvincibleNow() &&
@@ -785,6 +921,25 @@ void Level3_Update()
             JumpScare_Trigger();
             pendingGameOverReset = true; // Mark that we need to reset after jump scare
             std::cout << "CAUGHT! Playing jump scare...\n";
+        }
+    }
+
+    // ====== BOX MUMMY CATCH ======
+    if (l3_turnCounter > 0 && !L3IsInvincibleNow())
+    {
+        for (int i = 0; i < l3_boxMummyCount; ++i)
+        {
+            if (fabsf(l3_player.x - l3_boxMummies[i].x) < 1.0f &&
+                fabsf(l3_player.y - l3_boxMummies[i].y) < 1.0f)
+            {
+                if (!JumpScare_IsActive() && !pendingGameOverReset)
+                {
+                    if (AEAudioIsValidAudio(l3_sfxJumpscare))
+                        AEAudioPlay(l3_sfxJumpscare, l3AudioGroup, 1.0f, 1.0f, 0);
+                    JumpScare_Trigger();
+                    pendingGameOverReset = true;
+                }
+            }
         }
     }
 
@@ -862,9 +1017,7 @@ void Level3_Draw()
 
     AEMtx33 transform, scale, trans;
 
-    // --- Floor tiles (value == 0 and value == 4) ---
-    // Coin tiles (4) also need a floor drawn under them so the coin PNG's
-    // transparent pixels show floor instead of black.
+    // --- Floor tiles (value == 0) ---
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
@@ -873,26 +1026,11 @@ void Level3_Draw()
 
     for (int row = 0; row < GRID_ROWS; row++)
         for (int col = 0; col < GRID_COLS; col++)
-            if (level[row][col] == 0 || level[row][col] == 4)
+            if (level[row][col] == 0)
             {
                 float x, y;
                 GridToWorldCenter(row, col, x, y);
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
-                AEMtx33Trans(&trans, x, y);
-                AEMtx33Concat(&transform, &trans, &scale);
-                AEGfxSetTransform(transform.m);
-                AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-            }
-
-    // --- Coin tiles (value == 4) drawn on top of floor ---
-    AEGfxTextureSet(l3_coin.pTex, 0, 0);
-    for (int row = 0; row < GRID_ROWS; row++)
-        for (int col = 0; col < GRID_COLS; col++)
-            if (level[row][col] == 4)
-            {
-                float x, y;
-                GridToWorldCenter(row, col, x, y);
-                AEMtx33Scale(&scale, GRID_TILE_SIZE * 0.8f, GRID_TILE_SIZE * 0.8f);
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
                 AEGfxSetTransform(transform.m);
@@ -984,6 +1122,33 @@ void Level3_Draw()
     // --- Jump Scare --- 
     JumpScare_Draw();
 
+    // --- Treasure Box ---
+    if (l3_treasureBoxActive)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(l3_treasureBoxTex, 0, 0);
+        AEMtx33Scale(&scale, l3_treasureBox.size, l3_treasureBox.size);
+        AEMtx33Trans(&trans, l3_treasureBox.x, l3_treasureBox.y);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    }
+
+    // --- Box Mummies (red-tinted) ---
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetColorToMultiply(1.0f, 0.3f, 0.3f, 1.0f);
+    AEGfxTextureSet(l3_mummy1.pTex, 0, 0);
+    for (int i = 0; i < l3_boxMummyCount; ++i)
+    {
+        AEMtx33Scale(&scale, l3_boxMummies[i].size, l3_boxMummies[i].size);
+        AEMtx33Trans(&trans, l3_boxMummies[i].x, l3_boxMummies[i].y);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    }
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+
     // ===== HUD for active power-ups ===== -ths
     if (l3Power.invFrames > 0)
     {
@@ -996,6 +1161,24 @@ void Level3_Draw()
         char buf[64];
         std::snprintf(buf, sizeof(buf), "FREEZE  %.1fs", l3Power.freezeFrames / 60.0f);
         AEGfxPrint(fontId, buf, -0.95f, 0.82f, 0.8f, 0.60f, 0.85f, 1.00f, 1.0f);
+    }
+
+    // ====== Coin counter HUD ======
+    {
+        char buf[64];
+        std::snprintf(buf, sizeof(buf), "Coins: %d", l3_coinCounter);
+        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 0.8f, 1.00f, 0.85f, 0.10f, 1.0f);
+    }
+
+    // ====== Treasure box popup -- centered ======
+    if (l3_popupFrames > 0)
+    {
+        float alpha = (l3_popupFrames < 60) ? l3_popupFrames / 60.0f : 1.0f;
+        float popupScale = 0.85f;
+        float pw, ph;
+        AEGfxGetPrintSize(fontId, l3_popupMsg, popupScale, &pw, &ph);
+        float centeredX = -pw * 0.5f;
+        AEGfxPrint(fontId, l3_popupMsg, centeredX, 0.0f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
     }
 
     // ===== ADDED: Pause button (top-right) ===== -ths
@@ -1062,6 +1245,8 @@ void Level3_Unload()
     // ===== ADDED: unload power-up textures ===== -ths
     AEGfxTextureUnload(l3_ImmuneTex);   // -ths
     AEGfxTextureUnload(l3_FreezeTex);   // -ths
+
+    if (l3_treasureBoxTex) { AEGfxTextureUnload(l3_treasureBoxTex); l3_treasureBoxTex = nullptr; }
 
     // ===== Unload Jump Scare =====
     JumpScare_Unload();

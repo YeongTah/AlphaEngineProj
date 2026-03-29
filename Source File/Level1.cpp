@@ -1158,13 +1158,22 @@ void Level1_Update()
     if (fabsf(player.x - exitPortal.x) < 1.0f &&
         fabsf(player.y - exitPortal.y) < 1.0f)
     {
-        // Play exit-door audio -ths
-        if (AEAudioIsValidAudio(sfxExitDoor))
-            AEAudioPlay(sfxExitDoor, level1Group, 1.0f, 1.0f, 0); // -ths
+        if (coinCounter >= 1)
+        {
+            // Play exit-door audio -ths
+            if (AEAudioIsValidAudio(sfxExitDoor))
+                AEAudioPlay(sfxExitDoor, level1Group, 1.0f, 1.0f, 0); // -ths
 
-        printf("You Escaped the Maze!\n");
-        level1_counter = 0;
-        next = GS_WIN;
+            printf("You Escaped the Maze!\n");
+            level1_counter = 0;
+            next = GS_WIN;
+        }
+        else
+        {
+            // Player hasn't collected a coin yet -- show reminder
+            std::snprintf(gPopupMsg, sizeof(gPopupMsg), "Collect a coin first!");
+            gPopupFrames = 120;
+        }
     }
 
     // --- Legacy coin entity collect ---
@@ -1401,11 +1410,7 @@ void Level1_Draw()
     if (gPopupFrames > 0)
     {
         float alpha = (gPopupFrames < 60) ? gPopupFrames / 60.0f : 1.0f;
-        float popupScale = 0.85f;
-        float pw, ph;
-        AEGfxGetPrintSize(fontId, gPopupMsg, popupScale, &pw, &ph);
-        float centeredX = -pw * 0.5f; // NDC center (0) minus half the text width
-        AEGfxPrint(fontId, gPopupMsg, centeredX, 0.0f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
+        AEGfxPrint(fontId, gPopupMsg, -0.35f, 0.0f, 0.85f, 1.0f, 1.0f, 0.4f, alpha);
     }
 
     // ====================================================================
