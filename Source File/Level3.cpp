@@ -818,7 +818,7 @@ void Level3_Update()
         }
 
         // Mummy movement every 2nd turn, unless frozen
-        if (l3_turnCounter % 2 == 0 && l3Power.freezeFrames <= 0)
+        if (l3Power.freezeFrames <= 0)
         {
             // ---- BFS: find the next step on the shortest path from (startR,startC)
             // to (goalR,goalC), avoiding wall tiles (value == 1).
@@ -916,8 +916,8 @@ void Level3_Update()
             L3OpenTreasureBox();
         }
 
-        // ====== BOX MUMMY AI: BFS chase player every 2nd turn ======
-        if (l3_turnCounter % 2 == 0 && l3Power.freezeFrames <= 0)
+        // ====== BOX MUMMY AI: BFS chase player every turn ======
+        if (l3Power.freezeFrames <= 0)
         {
             int playerR2, playerC2;
             WorldToGrid(l3_player.x, l3_player.y, playerR2, playerC2);
@@ -1063,15 +1063,24 @@ void Level3_Update()
     if (fabsf(l3_player.x - l3_exitPortal.x) < 1.0f &&
         fabsf(l3_player.y - l3_exitPortal.y) < 1.0f)
     {
-        // Exit audio -ths
-        if (AEAudioIsValidAudio(l3_sfxExitDoor))
-            AEAudioPlay(l3_sfxExitDoor, l3AudioGroup, 1.0f, 1.0f, 0);   // -ths
+        if (l3_coinCounter >= 1)
+        {
+            // Exit audio -ths
+            if (AEAudioIsValidAudio(l3_sfxExitDoor))
+                AEAudioPlay(l3_sfxExitDoor, l3AudioGroup, 1.0f, 1.0f, 0);   // -ths
 
-        printf("L3: You Escaped!\n");
+            printf("L3: You Escaped!\n");
 
-        gLastLevelPlayed = 3;   // so WinPage restarts Level 3 -ths
+            gLastLevelPlayed = 3;   // so WinPage restarts Level 3 -ths
 
-        next = GS_WIN;
+            next = GS_WIN;
+        }
+        else
+        {
+            // Player hasn't collected a coin yet -- show reminder
+            std::snprintf(l3_popupMsg, sizeof(l3_popupMsg), "Collect a coin first!");
+            l3_popupFrames = 120;
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -1267,7 +1276,7 @@ void Level3_Draw()
     {
         char buf[64];
         std::snprintf(buf, sizeof(buf), "IMMUNE  %.1fs", l3Power.invFrames / 60.0f);
-        AEGfxPrint(fontId, buf, -0.95f, 0.90f, 0.8f, 0.90f, 0.90f, 0.20f, 1.0f);
+        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 0.8f, 0.90f, 0.90f, 0.20f, 1.0f);
     }
     if (l3Power.freezeFrames > 0)
     {
@@ -1280,7 +1289,16 @@ void Level3_Draw()
     {
         char buf[64];
         std::snprintf(buf, sizeof(buf), "Coins: %d", l3_coinCounter);
-        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 0.8f, 1.00f, 0.85f, 0.10f, 1.0f);
+        AEGfxPrint(fontId, buf, -0.95f, 0.90f, 0.8f, 1.00f, 0.85f, 0.10f, 1.0f);
+    }
+
+    // ====== Hint: collect a coin before escaping (shown until first coin collected) ======
+    if (l3_coinCounter == 0)
+    {
+        const char* hint = "Coins to escape: 0/1";
+        float hw, hh;
+        AEGfxGetPrintSize(fontId, hint, 0.7f, &hw, &hh);
+        AEGfxPrint(fontId, hint, -hw * 0.5f, 0.90f, 0.7f, 1.0f, 0.3f, 0.3f, 1.0f); // red, top-center
     }
 
     // ====== Treasure box popup -- centered ======
@@ -1291,7 +1309,7 @@ void Level3_Draw()
         float pw, ph;
         AEGfxGetPrintSize(fontId, l3_popupMsg, popupScale, &pw, &ph);
         float centeredX = -pw * 0.5f;
-        AEGfxPrint(fontId, l3_popupMsg, centeredX, 0.7f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
+        AEGfxPrint(fontId, l3_popupMsg, centeredX, 0.4f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
     }
 
     // ===== ADDED: Pause button (top-right) ===== -ths

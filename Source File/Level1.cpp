@@ -1478,7 +1478,7 @@ void Level1_Draw()
     {
         char buf[64];
         std::snprintf(buf, sizeof(buf), "IMMUNE  %.1fs", gPower.invFrames / 60.0f); // -ths
-        AEGfxPrint(fontId, buf, -0.95f, 0.90f, 0.8f, 0.90f, 0.90f, 0.20f, 1.0f);     // -ths
+        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 0.8f, 0.90f, 0.90f, 0.20f, 1.0f);     // -ths
     }
     if (gPower.freezeFrames > 0)
     {
@@ -1491,7 +1491,16 @@ void Level1_Draw()
     {
         char buf[64];
         std::snprintf(buf, sizeof(buf), "Coins: %d", coinCounter);
-        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 0.8f, 1.00f, 0.85f, 0.10f, 1.0f); // golden yellow
+        AEGfxPrint(fontId, buf, -0.95f, 0.90f, 0.8f, 1.00f, 0.85f, 0.10f, 1.0f); // golden yellow
+    }
+
+    // ====== Hint: collect a coin before escaping (shown until first coin collected) ======
+    if (coinCounter == 0)
+    {
+        const char* hint = "Coins to escape: 0/1";
+        float hw, hh;
+        AEGfxGetPrintSize(fontId, hint, 0.7f, &hw, &hh);
+        AEGfxPrint(fontId, hint, -hw * 0.5f, 0.90f, 0.7f, 1.0f, 0.3f, 0.3f, 1.0f); // red, top-center
     }
 
     // ====== Treasure box popup message -- centered, fades out after ~3 seconds ======
@@ -1502,7 +1511,7 @@ void Level1_Draw()
         float pw, ph;
         AEGfxGetPrintSize(fontId, gPopupMsg, popupScale, &pw, &ph);
         float centeredX = -pw * 0.5f;
-        AEGfxPrint(fontId, gPopupMsg, centeredX, 0.7f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
+        AEGfxPrint(fontId, gPopupMsg, centeredX, 0.4f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
     }
 
     // ====================================================================
