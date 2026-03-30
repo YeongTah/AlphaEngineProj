@@ -827,27 +827,37 @@ void Level1_Update()
         next = GS_QUIT;
     }
 
-    // --- Win / Lose overlay input handling ---
+
+    // ==================== WIN / LOSE OVERLAY HANDLING ==================== // -ths
     if (gShowLose || gShowWin)
     {
         s32 mxS, myS; TransformScreentoWorld(mxS, myS);
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            if (IsAreaClicked(kBtnRetryX, kBtnRetryY, kBtnW, kBtnH, mxS, myS))
+            // Level Select button (0,60) 280x70 -ths
+            if (IsAreaClicked(0.0f, 60.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                next = LEVELPAGE;
+                gShowLose = gShowWin = false;
+                return;
+            }
+            // Restart button (0,-20) 280x70 -ths
+            if (IsAreaClicked(0.0f, -20.0f, 280.0f, 70.0f, mxS, myS))
             {
                 next = GS_LEVEL1;
                 gShowLose = gShowWin = false;
                 return;
             }
-            if (IsAreaClicked(kBtnExitX, kBtnExitY, kBtnW, kBtnH, mxS, myS))
+            // Quit button (0,-100) 280x70 -ths
+            if (IsAreaClicked(0.0f, -100.0f, 280.0f, 70.0f, mxS, myS))
             {
-                next = MAINMENUSTATE;
+                next = GS_QUIT;
                 gShowLose = gShowWin = false;
                 return;
             }
         }
 
-        // --- Keyboard handling with confirmation ---
+        // Keyboard handling with confirmation (unchanged) -ths
         if (AEInputCheckReleased(AEVK_R))
         {
             if (AEAudioIsValidAudio(sfxButton))
@@ -871,38 +881,70 @@ void Level1_Update()
             next = GS_QUIT;
             return;
         }
-        return;
+        return; // freeze game logic
     }
     // =========================================================================
     // ADDED: PAUSE BUTTON CLICK DETECTION (top-right corner) -ths
     // =========================================================================
-    // --- PAUSE BUTTON CLICK DETECTION (top-right corner) ---
+    // --- Pause overlay handling ---
     {
         s32 mxS, myS; TransformScreentoWorld(mxS, myS);
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
             if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mxS, myS))
             {
-                // Play button click sound
-                if (AEAudioIsValidAudio(sfxButton))
+                // Play click sound (use level‑specific sfxButton)
+                if (AEAudioIsValidAudio(sfxButton))   // for Level1 use sfxButton, for Level2 use l2_sfxButton, etc.
                     AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
-                gPaused = !gPaused;
+                gPaused = true;                       // toggle pause overlay
                 return;
             }
         }
     }
-    // =========================================================================
-
-
-   // --- Pause toggle via keyboard ---
-    if (AEInputCheckReleased(AEVK_P)) { gPaused = !gPaused; }
-
-    // --- Restart while paused ---
     if (gPaused)
     {
+        // Mouse clicks on pause overlay buttons -ths
+        s32 mxS, myS; TransformScreentoWorld(mxS, myS);
+        if (AEInputCheckReleased(AEVK_LBUTTON))
+        {
+            // Resume button (0,80) 280x70 -ths
+            if (IsAreaClicked(0.0f, 80.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(sfxButton))
+                    AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
+                gPaused = false;
+                return;
+            }
+            // Restart button (0,0) 280x70 -ths
+            if (IsAreaClicked(0.0f, 0.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(sfxButton))
+                    AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
+                next = GS_RESTART;   // was GS_LEVEL1; changed -ths
+                return;
+            }
+            // Level Select button (0,-80) 280x70 -ths
+            if (IsAreaClicked(0.0f, -80.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(sfxButton))
+                    AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
+                next = LEVELPAGE;
+                return;
+            }
+            // Quit button (0,-160) 280x70 -ths
+            if (IsAreaClicked(0.0f, -160.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(sfxButton))
+                    AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
+                next = GS_QUIT;
+                return;
+            }
+        }
+
+        // Keyboard shortcuts
         if (AEInputCheckReleased(AEVK_R))
         {
-            next = GS_RESTART;   // triggers a full level restart
+            next = GS_RESTART;   // was GS_RESTART (already correct) -ths
             return;
         }
         return; // freeze game logic while paused
@@ -1280,7 +1322,7 @@ void Level1_Update()
 // ============================================================================
 static void DrawPauseButton()
 {
-    // Draw the button background rectangle -ths
+    // Draw the button background rectangle
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_NONE);
     AEGfxSetTransparency(1.0f);
@@ -1294,7 +1336,7 @@ static void DrawPauseButton()
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
     // ---- Center the "PAUSE" text inside the button ----
-    const float textScale = 0.8f;
+    const float textScale = 0.65f;        // <-- changed from 0.8f
     const char* text = "PAUSE";
 
     // Get text dimensions in NDC

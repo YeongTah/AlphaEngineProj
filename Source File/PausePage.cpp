@@ -3,15 +3,44 @@
 #include "PausePage.h"
 #include "GameStateManager.h"
 #include "Main.h"
-#include "leveleditor.hpp"  // for print_file + readfile
-#include "GridUtils.h"      // for world coordinate transforms
-#include <cstring>          // for strlen -ths
-#include "Confirmation.h"   // for Confirmation_Level() helper to show confirmation popups on important actions
+#include "leveleditor.hpp"
+#include "GridUtils.h"
+#include <cstring>
+#include "Confirmation.h"
+
 static AEAudio sfxButton;
 static AEAudioGroup pauseGroup;
 
-// ----------------------------------------------------------------------------
-// Load  -  create the shared mesh (still needed for the dim overlay rectangle)
+// Local helper to draw a solid rectangle
+static void DrawRect(float centre_x, float centre_y, float width, float height,
+    float r, float g, float b)
+{
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_NONE);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(r, g, b, 1.0f);
+    AEGfxSetColorToAdd(0.f, 0.f, 0.f, 0.f);
+    AEMtx33 Scale, Transform, ConTrans;
+    AEMtx33Scale(&Scale, width, height);
+    AEMtx33Trans(&Transform, centre_x, centre_y);
+    AEMtx33Concat(&ConTrans, &Transform, &Scale);
+    AEGfxSetTransform(ConTrans.m);
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+}
+
+// Button definitions
+static struct {
+    float x, y, w, h;
+    const char* text;
+    int action; // 0=Resume, 1=Restart, 2=LevelSelect, 3=Quit
+} pauseButtons[] = {
+    {    0.0f,  80.0f, 280.0f, 70.0f, "Resume", 0 },
+    {    0.0f,   0.0f, 280.0f, 70.0f, "Restart", 1 },
+    {    0.0f, -80.0f, 280.0f, 70.0f, "Level Select", 2 },
+    {    0.0f,-160.0f, 280.0f, 70.0f, "Quit", 3 }
+};
+static const int pauseBtnCount = sizeof(pauseButtons) / sizeof(pauseButtons[0]);
+
 // ----------------------------------------------------------------------------
 void PausePage_Load()
 {
@@ -22,19 +51,16 @@ void PausePage_Load()
 
 void PausePage_Initialize() {}
 
-// ----------------------------------------------------------------------------
-// Update - handle input while paused
-// ----------------------------------------------------------------------------
 void PausePage_Update()
 {
-    // Resume on P (no confirmation)
+    // Keyboard shortcuts
     if (AEInputCheckReleased(AEVK_P))
     {
-        next = previous;
+        next = previous; // resume
         return;
     }
 
-    // Restart level on R (with confirmation)
+    // Restart: show confirmation
     if (AEInputCheckReleased(AEVK_R))
     {
         if (AEAudioIsValidAudio(sfxButton))
@@ -44,7 +70,6 @@ void PausePage_Update()
         return;
     }
 
-    // Level Select on B (with confirmation)
     if (AEInputCheckReleased(AEVK_B))
     {
         if (AEAudioIsValidAudio(sfxButton))
@@ -54,7 +79,6 @@ void PausePage_Update()
         return;
     }
 
-    // Quit on ESC (with confirmation)
     if (AEInputCheckReleased(AEVK_ESCAPE))
     {
         if (AEAudioIsValidAudio(sfxButton))
@@ -64,23 +88,55 @@ void PausePage_Update()
         return;
     }
 
-    // Save on F5 (no confirmation)
+    // Save/Load with keyboard (no confirmation)
     if (AEInputCheckReleased(AEVK_F5))
     {
         print_file();
     }
-
-    // Load on F9 (no confirmation)
     if (AEInputCheckReleased(AEVK_F9))
     {
         readfile();
-        next = previous;  // resume after load
+        next = previous; // resume after load
+        return;
+    }
+
+    // --- Mouse click detection ---
+    s32 mouseX, mouseY;
+    TransformScreentoWorld(mouseX, mouseY);
+    if (AEInputCheckReleased(AEVK_LBUTTON))
+    {
+        for (int i = 0; i < pauseBtnCount; ++i)
+        {
+            if (IsAreaClicked(pauseButtons[i].x, pauseButtons[i].y,
+                pauseButtons[i].w, pauseButtons[i].h, mouseX, mouseY))
+            {
+                if (AEAudioIsValidAudio(sfxButton))
+                    AEAudioPlay(sfxButton, pauseGroup, 1.0f, 1.0f, 0);
+
+                switch (pauseButtons[i].action)
+                {
+                case 0: // Resume
+                    next = previous;
+                    break;
+                case 1: // Restart
+                    Confirmation_Level(GS_PAUSE, GS_RESTART, "Are you sure you want to restart?");
+                    next = CONFIRM;
+                    break;
+                case 2: // Level Select
+                    Confirmation_Level(GS_PAUSE, LEVELPAGE, "Are you sure you want to go to Level Select?");
+                    next = CONFIRM;
+                    break;
+                case 3: // Quit
+                    Confirmation_Level(GS_PAUSE, GS_QUIT, "Are you sure you want to quit the game?");
+                    next = CONFIRM;
+                    break;
+                }
+                return;
+            }
+        }
     }
 }
 
-// ----------------------------------------------------------------------------
-// Draw - render the pause overlay with text instructions only
-// ----------------------------------------------------------------------------
 void PausePage_Draw()
 {
     // Dim the background
@@ -98,52 +154,43 @@ void PausePage_Draw()
     AEGfxSetTransform(mat.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // --- Title "PAUSED" ---
+    // Title "PAUSED"
     const char* title = "PAUSED";
     float w, h;
     const float titleScale = 2.0f;
     AEGfxGetPrintSize(fontId, title, titleScale, &w, &h);
-    AEGfxPrint(fontId, title, -0.5f * w, 0.20f, titleScale, 1, 1, 1, 1); // white
+    AEGfxPrint(fontId, title, -0.5f * w, 0.50f, titleScale, 1, 1, 1, 1);
 
-    // --- Instruction lines (centered, beige color) ---
-    const float lineScale = 1.0f;
-    const float beigeR = 1.0f, beigeG = 0.95f, beigeB = 0.82f; // matches LosePage
+    // Draw buttons
+    for (int i = 0; i < pauseBtnCount; ++i)
+    {
+        DrawRect(pauseButtons[i].x, pauseButtons[i].y,
+            pauseButtons[i].w, pauseButtons[i].h,
+            0.4f, 0.4f, 0.4f); // dark gray
 
-    // Resume
-    const char* t1 = "Press P to Resume";
-    AEGfxGetPrintSize(fontId, t1, lineScale, &w, &h);
-    AEGfxPrint(fontId, t1, -0.5f * w, 0.02f, lineScale, beigeR, beigeG, beigeB, 1.0f);
+        // Center text inside button
+        float btnCenterNDCX = pauseButtons[i].x / 800.0f;
+        float btnCenterNDCY = pauseButtons[i].y / 450.0f;
 
-    // Level Select
-    const char* t2 = "B to Level Select";
-    AEGfxGetPrintSize(fontId, t2, lineScale, &w, &h);
-    AEGfxPrint(fontId, t2, -0.5f * w, -0.08f, lineScale, beigeR, beigeG, beigeB, 1.0f);
+        float textW, textH;
+        const float textScale = 0.9f;
+        AEGfxGetPrintSize(fontId, pauseButtons[i].text, textScale, &textW, &textH);
+        float leftX = btnCenterNDCX - textW * 0.5f;
+        float baselineY = btnCenterNDCY + textH * 0.5f;
+        AEGfxPrint(fontId, pauseButtons[i].text, leftX, baselineY, textScale,
+            1.0f, 1.0f, 1.0f, 1.0f);
+    }
 
-    // Restart
-    const char* t3 = "[R] Restart Level";
-    AEGfxGetPrintSize(fontId, t3, lineScale, &w, &h);
-    AEGfxPrint(fontId, t3, -0.5f * w, -0.18f, lineScale, beigeR, beigeG, beigeB, 1.0f);
-
-    // Quit
-    const char* t4 = "ESC to Quit";
-    AEGfxGetPrintSize(fontId, t4, lineScale, &w, &h);
-    AEGfxPrint(fontId, t4, -0.5f * w, -0.28f, lineScale, beigeR, beigeG, beigeB, 1.0f);
-
-    // Save / Load prompts (same style, placed below)
-    const char* t5 = "[F5] Save";
-    AEGfxGetPrintSize(fontId, t5, lineScale, &w, &h);
-    AEGfxPrint(fontId, t5, -0.5f * w, -0.38f, lineScale, beigeR, beigeG, beigeB, 1.0f);
-
-    const char* t6 = "[F9] Load";
-    AEGfxGetPrintSize(fontId, t6, lineScale, &w, &h);
-    AEGfxPrint(fontId, t6, -0.5f * w, -0.48f, lineScale, beigeR, beigeG, beigeB, 1.0f);
+    // Keyboard shortcuts footer
+    const float helpScale = 0.65f;
+    const char* help1 = "Keyboard: [P] Resume | [R] Restart | [B] Level Select | [ESC] Quit";
+    float helpW, helpH;
+    AEGfxGetPrintSize(fontId, help1, helpScale, &helpW, &helpH);
+    AEGfxPrint(fontId, help1, -0.5f * helpW, -0.85f, helpScale, 0.8f, 0.8f, 0.8f, 1.0f);
 }
 
 void PausePage_Free() {}
 
-// ----------------------------------------------------------------------------
-// Unload  -  free the shared mesh
-// ----------------------------------------------------------------------------
 void PausePage_Unload()
 {
     if (pMesh)

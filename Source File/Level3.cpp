@@ -89,14 +89,6 @@ static bool l3_paused = false;  // P key toggles; freezes game logic when true
 static bool l3_showWin = false; // Shown when player reaches exit portal
 static bool l3_showLose = false;// Shown when any mummy catches the player
 
-// ---- Retry/Exit button positions for Win/Lose overlays ----
-static const float kL3BtnRetryX = -200.0f;
-static const float kL3BtnRetryY = -130.0f;
-static const float kL3BtnExitX = 200.0f;
-static const float kL3BtnExitY = -130.0f;
-static const float kL3BtnW = 280.0f;
-static const float kL3BtnH = 90.0f;
-
 // ---- Powerup state for Level 3 (mirrors Level 1/2 structure) ----
 static struct L3PowerState {
     bool speed = false; int speedTurns = 0;
@@ -667,7 +659,7 @@ void Level3_Update()
     if (l3_popupFrames > 0) --l3_popupFrames;
 
     // ======================================================================
-// WIN / LOSE OVERLAY INPUT
+// WIN / LOSE OVERLAY INPUT (corrected button coordinates) -ths
 // ======================================================================
     if (l3_showLose || l3_showWin)
     {
@@ -676,22 +668,31 @@ void Level3_Update()
 
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            // Retry button
-            if (IsAreaClicked(kL3BtnRetryX, kL3BtnRetryY, kL3BtnW, kL3BtnH, mxS, myS))
+            // Level Select button (0,60) 280x70 -ths
+            if (IsAreaClicked(0.0f, 60.0f, 280.0f, 70.0f, mxS, myS))
             {
                 if (AEAudioIsValidAudio(l3_sfxButton))
                     AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
                 l3_showLose = l3_showWin = false;
-                next = GS_LEVEL3;
+                next = LEVELPAGE;
                 return;
             }
-            // Exit button
-            if (IsAreaClicked(kL3BtnExitX, kL3BtnExitY, kL3BtnW, kL3BtnH, mxS, myS))
+            // Restart button (0,-20) 280x70 -ths
+            if (IsAreaClicked(0.0f, -20.0f, 280.0f, 70.0f, mxS, myS))
             {
                 if (AEAudioIsValidAudio(l3_sfxButton))
                     AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
                 l3_showLose = l3_showWin = false;
-                next = MAINMENUSTATE;
+                next = GS_LEVEL3;   // restart current level
+                return;
+            }
+            // Quit button (0,-100) 280x70 -ths
+            if (IsAreaClicked(0.0f, -100.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(l3_sfxButton))
+                    AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
+                l3_showLose = l3_showWin = false;
+                next = GS_QUIT;
                 return;
             }
         }
@@ -745,11 +746,50 @@ void Level3_Update()
     // --- Pause toggle ---
     if (AEInputCheckReleased(AEVK_P)) { l3_paused = !l3_paused; }
 
+    // ===== Pause overlay mouse click handling ===== -ths
     if (l3_paused)
     {
+        s32 mxS, myS; TransformScreentoWorld(mxS, myS);
+        if (AEInputCheckReleased(AEVK_LBUTTON))
+        {
+            // Resume button (0,80) 280x70 -ths
+            if (IsAreaClicked(0.0f, 80.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(l3_sfxButton))
+                    AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
+                l3_paused = false;
+                return;
+            }
+            // Restart button (0,0) 280x70 -ths
+            if (IsAreaClicked(0.0f, 0.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(l3_sfxButton))
+                    AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
+                next = GS_RESTART;   // changed to GS_RESTART -ths
+                return;
+            }
+            // Level Select button (0,-80) 280x70 -ths
+            if (IsAreaClicked(0.0f, -80.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(l3_sfxButton))
+                    AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
+                next = LEVELPAGE;
+                return;
+            }
+            // Quit button (0,-160) 280x70 -ths
+            if (IsAreaClicked(0.0f, -160.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(l3_sfxButton))
+                    AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
+                next = GS_QUIT;
+                return;
+            }
+        }
+
+        // Keyboard shortcuts (R to restart) -ths
         if (AEInputCheckReleased(AEVK_R))
         {
-            next = GS_RESTART;
+            next = GS_RESTART;   // changed to GS_RESTART -ths
             return;
         }
         return; // freeze game logic while paused

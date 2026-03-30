@@ -1,129 +1,177 @@
 // LosePage.cpp
-// Shown when the player is caught by a mummy.
-// Displayed as an overlay from within Level1/2/3_Draw() (not a separate GSM state).
-// Also reachable as a standalone GSM state (GS_LOSE) if needed in the future.
 #include "pch.h"
 #include "LosePage.h"
 #include "GameStateManager.h"
 #include "Main.h"
-#include "leveleditor.hpp" // for CreateSquareMesh and pMesh
-#include "Confirmation.h" //added confirmation for the lose
+#include "leveleditor.hpp"
+#include "Confirmation.h"
+
+static AEAudio sfxButton;
+static AEAudioGroup loseGroup;
+
+static void DrawRect(float centre_x, float centre_y, float width, float height,
+    float r, float g, float b)
+{
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_NONE);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(r, g, b, 1.0f);
+    AEGfxSetColorToAdd(0.f, 0.f, 0.f, 0.f);
+    AEMtx33 Scale, Transform, ConTrans;
+    AEMtx33Scale(&Scale, width, height);
+    AEMtx33Trans(&Transform, centre_x, centre_y);
+    AEMtx33Concat(&ConTrans, &Transform, &Scale);
+    AEGfxSetTransform(ConTrans.m);
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+}
+
+static struct {
+    float x, y, w, h;
+    const char* text;
+    int action; // 0=LevelSelect, 1=Restart, 2=Quit
+} loseButtons[] = {
+    {    0.0f,  60.0f, 280.0f, 70.0f, "Level Select", 0 },
+    {    0.0f, -20.0f, 280.0f, 70.0f, "Restart", 1 },
+    {    0.0f,-100.0f, 280.0f, 70.0f, "Quit", 2 }
+};
+static const int loseBtnCount = sizeof(loseButtons) / sizeof(loseButtons[0]);
 
 // ----------------------------------------------------------------------------
-// LosePage_Load
-// Creates the shared square mesh used to draw the red background overlay.
-// ----------------------------------------------------------------------------
-void LosePage_Load() { pMesh = CreateSquareMesh(); }
+void LosePage_Load()
+{
+    pMesh = CreateSquareMesh();
+    loseGroup = AEAudioCreateGroup();
+    sfxButton = AEAudioLoadSound("Assets/audio/button.wav");
+}
 
-// LosePage_Initialize -- no state to set up.
 void LosePage_Initialize() {}
 
-// ----------------------------------------------------------------------------
-// LosePage_Update
-// Handles player input while the Lose screen is showing.
-//
-// ENTER : go to Level Select page (LEVELPAGE)
-// R     : restart the level that was lost (next = previous, which holds
-//         the losing level's state ID, set by the level before transitioning)
-// B     : go to Level Select page (direct)
-// Q / close window : quit the game
-// ----------------------------------------------------------------------------
 void LosePage_Update()
 {
-    if (AEInputCheckReleased(AEVK_RETURN)) {
+    // Keyboard fallback
+    if (AEInputCheckReleased(AEVK_RETURN))
+    {
+        if (AEAudioIsValidAudio(sfxButton))
+            AEAudioPlay(sfxButton, loseGroup, 1.0f, 1.0f, 0);
         Confirmation_Level(GS_LOSE, LEVELPAGE, "Are you sure you want to go to Level Select?");
         next = CONFIRM;
         return;
     }
 
-    if (AEInputCheckReleased(AEVK_R)) {
+    if (AEInputCheckReleased(AEVK_R))
+    {
+        if (AEAudioIsValidAudio(sfxButton))
+            AEAudioPlay(sfxButton, loseGroup, 1.0f, 1.0f, 0);
         Confirmation_Level(GS_LOSE, previous, "Are you sure you want to restart the level?");
         next = CONFIRM;
         return;
     }
 
-    if (AEInputCheckReleased(AEVK_B)) {
+    if (AEInputCheckReleased(AEVK_B))
+    {
+        if (AEAudioIsValidAudio(sfxButton))
+            AEAudioPlay(sfxButton, loseGroup, 1.0f, 1.0f, 0);
         Confirmation_Level(GS_LOSE, LEVELPAGE, "Are you sure you want to go to Level Select?");
         next = CONFIRM;
         return;
     }
 
-    if (AEInputCheckReleased(AEVK_ESCAPE) ||
-        0 == AESysDoesWindowExist())
-        next = GS_QUIT;
+    if (AEInputCheckReleased(AEVK_ESCAPE))
+    {
+        Confirmation_Level(GS_LOSE, GS_QUIT, "Are you sure you want to quit the game?");
+        next = CONFIRM;
+        return;
+    }
+    if (0 == AESysDoesWindowExist())
+    {
+        next = GS_QUIT;   // immediate quit if window is already closed
+        return;
+    }
+
+    // --- Mouse click detection with audio ---
+    s32 mouseX, mouseY;
+    TransformScreentoWorld(mouseX, mouseY);
+    if (AEInputCheckReleased(AEVK_LBUTTON))
+    {
+        for (int i = 0; i < loseBtnCount; ++i)
+        {
+            if (IsAreaClicked(loseButtons[i].x, loseButtons[i].y,
+                loseButtons[i].w, loseButtons[i].h, mouseX, mouseY))
+            {
+                if (AEAudioIsValidAudio(sfxButton))
+                    AEAudioPlay(sfxButton, loseGroup, 1.0f, 1.0f, 0);
+
+                switch (loseButtons[i].action)
+                {
+                case 0: // Level Select
+                    Confirmation_Level(GS_LOSE, LEVELPAGE, "Are you sure you want to go to Level Select?");
+                    next = CONFIRM;
+                    break;
+                case 1: // Restart
+                    Confirmation_Level(GS_LOSE, previous, "Are you sure you want to restart the level?");
+                    next = CONFIRM;
+                    break;
+                case 2: // Quit
+                    Confirmation_Level(GS_LOSE, GS_QUIT, "Are you sure you want to quit the game?");
+                    next = CONFIRM;
+                    break;
+                }
+                return;
+            }
+        }
+    }
 }
 
-// ----------------------------------------------------------------------------
-// LosePage_Draw
-// Renders the Lose overlay:
-// 1. Dark red background color.
-// 2. Full-screen semi-transparent red rectangle (1600x900) to cover the game.
-// 3. "CAUGHT BY THE MUMMY!" title text (large, white, centered).
-// 4. Instruction text showing ENTER / R / B / Q key bindings (smaller, white).
-// Called directly from Level1/2/3_Draw() when the lose flag is active,
-// so no separate GSM state transition is needed for the overlay use case.
-// ----------------------------------------------------------------------------
 void LosePage_Draw()
 {
-    // Match LosePage background color (dark red)
+    // Background color (dark red)
     AEGfxSetBackgroundColor(0.25f, 0.07f, 0.07f);
 
-    //// Draw full-screen red tint rectangle over the game world - not needed anymore for the confirmation
-    //AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    //AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    //AEGfxSetTransparency(1.0f);
-    //AEGfxSetColorToMultiply(0.5f, 0.0f, 0.0f, 1.0f); // dark red fill
-    //AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-
-    //AEMtx33 scale, trans, mat;
-    //AEMtx33Scale(&scale, 1600.0f, 900.0f); // full screen
-    //AEMtx33Trans(&trans, 0.0f, 0.0f);
-    //AEMtx33Concat(&mat, &trans, &scale);
-    //AEGfxSetTransform(mat.m);
-    //AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-
-    // ============================
-    // Centered text helpers
-    // ============================
-    const float titleScale = 1.8f;
-    const float itemScale = 0.75f;
-
-    float w = 0.0f, h = 0.0f;
-
     // Title
-    const char* t0 = "CAUGHT BY THE MUMMY!";
-    AEGfxGetPrintSize(fontId, t0, titleScale, &w, &h);
-    float x0 = -0.5f * w;
-    AEGfxPrint(fontId, t0, x0, 0.12f, titleScale, 0.65f, 0.12f, 0.12f, 1.0f);
+    const char* title = "CAUGHT BY THE MUMMY!";
+    float w, h;
+    const float titleScale = 1.8f;
+    AEGfxGetPrintSize(fontId, title, titleScale, &w, &h);
+    AEGfxPrint(fontId, title, -0.5f * w, 0.45f, titleScale, 0.65f, 0.12f, 0.12f, 1.0f);
 
-    // Options
-    const char* t1 = "[ENTER] Level Select";
-    AEGfxGetPrintSize(fontId, t1, itemScale, &w, &h);
-    float x1 = -0.5f * w;
-    AEGfxPrint(fontId, t1, x1, -0.02f, itemScale, 1.0f, 0.95f, 0.82f, 1.0f);
+    // Draw buttons
+    for (int i = 0; i < loseBtnCount; ++i)
+    {
+        DrawRect(loseButtons[i].x, loseButtons[i].y,
+            loseButtons[i].w, loseButtons[i].h,
+            0.5f, 0.5f, 0.5f);
 
-    const char* t2 = "[R] Restart";
-    AEGfxGetPrintSize(fontId, t2, itemScale, &w, &h);
-    float x2 = -0.5f * w;
-    AEGfxPrint(fontId, t2, x2, -0.11f, itemScale, 1.0f, 0.95f, 0.82f, 1.0f);
+        float btnCenterNDCX = loseButtons[i].x / 800.0f;
+        float btnCenterNDCY = loseButtons[i].y / 450.0f;
 
-    const char* t3 = "[B] Level Select";
-    AEGfxGetPrintSize(fontId, t3, itemScale, &w, &h);
-    float x3 = -0.5f * w;
-    AEGfxPrint(fontId, t3, x3, -0.20f, itemScale, 1.0f, 0.95f, 0.82f, 1.0f);
+        float textW, textH;
+        const float textScale = 0.9f;
+        AEGfxGetPrintSize(fontId, loseButtons[i].text, textScale, &textW, &textH);
+        float leftX = btnCenterNDCX - textW * 0.5f;
+        float baselineY = btnCenterNDCY + textH * 0.5f;
+        AEGfxPrint(fontId, loseButtons[i].text, leftX, baselineY, textScale,
+            1.0f, 1.0f, 1.0f, 1.0f);
+    }
 
-    const char* t4 = "[ESCAPE] Quit";
-    AEGfxGetPrintSize(fontId, t4, itemScale, &w, &h);
-    float x4 = -0.5f * w;
-    AEGfxPrint(fontId, t4, x4, -0.29f, itemScale, 1.0f, 0.95f, 0.82f, 1.0f);
+    // Keyboard shortcuts footer
+    const float helpScale = 0.65f;
+    const char* help = "Keyboard: [ENTER] Level Select | [R] Restart | [B] Level Select | [ESC] Quit";
+    float helpW, helpH;
+    AEGfxGetPrintSize(fontId, help, helpScale, &helpW, &helpH);
+    AEGfxPrint(fontId, help, -0.5f * helpW, -0.85f, helpScale, 0.8f, 0.8f, 0.8f, 1.0f);
 }
 
-// LosePage_Free -- nothing to clean up.
 void LosePage_Free() {}
 
-// ----------------------------------------------------------------------------
-// LosePage_Unload
-// Frees the shared mesh (only when LosePage is used as a standalone GSM state).
-// When used as an overlay inside a level, the level's own Unload handles pMesh.
-// ----------------------------------------------------------------------------
-void LosePage_Unload() { if (pMesh) { AEGfxMeshFree(pMesh); pMesh = nullptr; } }
+void LosePage_Unload()
+{
+    if (AEAudioIsValidAudio(sfxButton))
+        AEAudioUnloadAudio(sfxButton);
+    AEAudioUnloadAudioGroup(loseGroup);
+
+    if (pMesh)
+    {
+        AEGfxMeshFree(pMesh);
+        pMesh = nullptr;
+    }
+}

@@ -708,7 +708,7 @@ void Level2_Initialize()
 
 static void DrawPauseButton()
 {
-    // Draw the button background rectangle -ths
+    // Draw the button background rectangle
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_NONE);
     AEGfxSetTransparency(1.0f);
@@ -722,7 +722,7 @@ static void DrawPauseButton()
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
     // ---- Center the "PAUSE" text inside the button ----
-    const float textScale = 0.8f;
+    const float textScale = 0.65f;        // <-- changed from 0.8f
     const char* text = "PAUSE";
 
     // Get text dimensions in NDC
@@ -783,27 +783,30 @@ void Level2_Update()
 
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            // Retry
-            if (IsAreaClicked(kL2BtnRetryX, kL2BtnRetryY, kL2BtnW, kL2BtnH, mxS, myS))
+            // Level Select button (0,60) 280x70 -ths
+            if (IsAreaClicked(0.0f, 60.0f, 280.0f, 70.0f, mxS, myS))
             {
-                if (AEAudioIsValidAudio(l2_sfxButton))
-                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+                next = LEVELPAGE;
+                l2_showLose = l2_showWin = false;
+                return;
+            }
+            // Restart button (0,-20) 280x70 -ths
+            if (IsAreaClicked(0.0f, -20.0f, 280.0f, 70.0f, mxS, myS))
+            {
                 next = GS_LEVEL2;
                 l2_showLose = l2_showWin = false;
                 return;
             }
-            // Exit
-            if (IsAreaClicked(kL2BtnExitX, kL2BtnExitY, kL2BtnW, kL2BtnH, mxS, myS))
+            // Quit button (0,-100) 280x70 -ths
+            if (IsAreaClicked(0.0f, -100.0f, 280.0f, 70.0f, mxS, myS))
             {
-                if (AEAudioIsValidAudio(l2_sfxButton))
-                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
-                next = MAINMENUSTATE;
+                next = GS_QUIT;
                 l2_showLose = l2_showWin = false;
                 return;
             }
         }
 
-        // --- Keyboard handling with confirmation ---
+        // Keyboard handling with confirmation (unchanged) -ths
         if (AEInputCheckReleased(AEVK_R))
         {
             if (AEAudioIsValidAudio(l2_sfxButton))
@@ -827,7 +830,6 @@ void Level2_Update()
             next = GS_QUIT;
             return;
         }
-
         return;
     }
 
@@ -849,11 +851,50 @@ void Level2_Update()
     }
     // =========================================================================
 
-   // --- Pause toggle ---
+       // --- Pause toggle ---
     if (AEInputCheckReleased(AEVK_P)) { l2_paused = !l2_paused; }
 
     if (l2_paused)
     {
+        // Mouse clicks on pause overlay buttons -ths
+        s32 mxS, myS; TransformScreentoWorld(mxS, myS);
+        if (AEInputCheckReleased(AEVK_LBUTTON))
+        {
+            // Resume button (0,80) 280x70 -ths
+            if (IsAreaClicked(0.0f, 80.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(l2_sfxButton))
+                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+                l2_paused = false;
+                return;
+            }
+            // Restart button (0,0) 280x70 -ths
+            if (IsAreaClicked(0.0f, 0.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(l2_sfxButton))
+                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+                next = GS_RESTART;   // use GS_RESTART to reload level -ths
+                return;
+            }
+            // Level Select button (0,-80) 280x70 -ths
+            if (IsAreaClicked(0.0f, -80.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(l2_sfxButton))
+                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+                next = LEVELPAGE;
+                return;
+            }
+            // Quit button (0,-160) 280x70 -ths
+            if (IsAreaClicked(0.0f, -160.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(l2_sfxButton))
+                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+                next = GS_QUIT;
+                return;
+            }
+        }
+
+        // Keyboard shortcuts (R to restart) -ths
         if (AEInputCheckReleased(AEVK_R))
         {
             next = GS_RESTART;

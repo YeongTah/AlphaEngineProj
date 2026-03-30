@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Confirmation.h"
 #include "GameStateManager.h"
 #include "MouseCoor.h"
