@@ -1498,7 +1498,11 @@ void Level1_Draw()
     if (gPopupFrames > 0)
     {
         float alpha = (gPopupFrames < 60) ? gPopupFrames / 60.0f : 1.0f;
-        AEGfxPrint(fontId, gPopupMsg, -0.35f, 0.0f, 0.85f, 1.0f, 1.0f, 0.4f, alpha);
+        float popupScale = 0.85f;
+        float pw, ph;
+        AEGfxGetPrintSize(fontId, gPopupMsg, popupScale, &pw, &ph);
+        float centeredX = -pw * 0.5f;
+        AEGfxPrint(fontId, gPopupMsg, centeredX, 0.7f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
     }
 
     // ====================================================================

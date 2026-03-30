@@ -1378,7 +1378,7 @@ void Level2_Draw()
         float pw, ph;
         AEGfxGetPrintSize(fontId, l2_popupMsg, popupScale, &pw, &ph);
         float centeredX = -pw * 0.5f;
-        AEGfxPrint(fontId, l2_popupMsg, centeredX, 0.0f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
+        AEGfxPrint(fontId, l2_popupMsg, centeredX, 0.7f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
     }
 
     // ===== ADDED: Pause button (top-right) ===== -ths
