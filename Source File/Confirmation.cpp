@@ -13,6 +13,44 @@ static int  gNextState = 0;
 static char gConfirmMessage[128] = "Are you sure?";
 static bool gConfirmationActive = false;
 
+//Drawing Rectangle for buttons-------------
+static void DrawRect(float centre_x, float centre_y, float width, float height, float r, float g, float b)
+{
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_NONE);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(r, g, b, 1.0f);
+    AEGfxSetColorToAdd(0.f, 0.f, 0.f, 0.f);
+
+    AEMtx33 Scale, Transform, ConTrans;
+    AEMtx33Scale(&Scale, width, height);
+    AEMtx33Trans(&Transform, centre_x, centre_y);
+    AEMtx33Concat(&ConTrans, &Transform, &Scale);
+
+    AEGfxSetTransform(ConTrans.m);
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+}
+
+enum ConfirmAction
+{
+    YES = 0,NO
+};
+
+static struct
+{
+    float x, y, w, h;
+    const char* text;
+    int action;
+} 
+
+confirmButtons[] =
+{
+    { -120.0f, -40.0f, 180.0f, 60.0f, "Yes", YES },
+    {  120.0f, -40.0f, 180.0f, 60.0f, "No",  NO  }
+};
+
+static const int confirmBtnCount = sizeof(confirmButtons) / sizeof(confirmButtons[0]);
+
 //----------------------------------------------------------------------------
 // Loads pMesh
 //----------------------------------------------------------------------------
@@ -49,20 +87,29 @@ void Confirmation_Update()
     if (!gConfirmationActive)
         return;
 
-    // YES : go to target state
-    if (AEInputCheckReleased(AEVK_Y)) //go to the next state
-    {
-        next = gNextState;
-        gConfirmationActive = false;
-        return;
-    }
+    int mouseX, mouseY;
+    TransformScreentoWorld(mouseX, mouseY);
 
-    // NO: go back to original state
-    if (AEInputCheckReleased(AEVK_N)) //stay in the same state
+    if (AEInputCheckReleased(AEVK_LBUTTON))
     {
-        next = gCurrentState;
-        gConfirmationActive = false;
-        return;
+        for (int i = 0; i < confirmBtnCount; ++i)
+        {
+            if (IsAreaClicked(confirmButtons[i].x, confirmButtons[i].y, confirmButtons[i].w, confirmButtons[i].h, mouseX, mouseY)) {
+                switch (confirmButtons[i].action)
+                {
+                case YES:
+                    next = gNextState;
+                    gConfirmationActive = false;
+                    return;
+
+                case NO:
+                    next = gCurrentState;
+                    gConfirmationActive = false;
+                    return;
+                }
+                return;
+            }
+        }
     }
 }
 
@@ -74,49 +121,38 @@ void Confirmation_Draw()
     if (!gConfirmationActive || !pMesh)
         return;
 
-    // Dark background
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(0.55f);
+    //AEGfxSetBackgroundColor(0.1f, 0.1f, 0.1f);
 
-    AEMtx33 bgScale, bgTrans, bgMat;
-    AEMtx33Scale(&bgScale, 1600.0f, 900.0f);
-    AEMtx33Trans(&bgTrans, 0.0f, 0.0f);
-    AEMtx33Concat(&bgMat, &bgTrans, &bgScale);
-
-    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 0.55f);
-    AEGfxSetTransform(bgMat.m);
-    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-
-    // White popup box
-    AEMtx33 boxScale, boxTrans, boxMat;
-    AEMtx33Scale(&boxScale, 700.0f, 260.0f);
-    AEMtx33Trans(&boxTrans, 0.0f, 0.0f);
-    AEMtx33Concat(&boxMat, &boxTrans, &boxScale);
-
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxSetTransform(boxMat.m);
-    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-
+    DrawRect(0.0f, 0.0f, 700.0f, 250.0f, 1.0f, 1.0f, 1.0f); //white box
 
     float w, h;
-
-    const float msgScale = 0.85f;
+    const float msgScale = 0.9f;
     AEGfxGetPrintSize(fontId, gConfirmMessage, msgScale, &w, &h);
-    AEGfxPrint(fontId, gConfirmMessage, -0.5f * w, 0.08f, msgScale,0.0f, 0.0f, 0.0f, 1.0f);
+    AEGfxPrint(fontId, gConfirmMessage, -0.5f * w, 0.10f, msgScale, 0.0f, 0.0f, 0.0f, 1.0f);
 
-    const char* yesText = "[Y] Yes";
-    const char* noText = "[N] No";
-    const float btnScale = 0.8f;
+    for (int i = 0; i < confirmBtnCount; ++i)
+    {
+        if (confirmButtons[i].action == YES) {
+            DrawRect(confirmButtons[i].x, confirmButtons[i].y,confirmButtons[i].w, confirmButtons[i].h, 0.2f, 0.7f, 0.2f);
+        }
+        else {
+            DrawRect(confirmButtons[i].x, confirmButtons[i].y, confirmButtons[i].w, confirmButtons[i].h, 0.8f, 0.2f, 0.2f);
+        }
 
-    AEGfxGetPrintSize(fontId, yesText, btnScale, &w, &h);
-    AEGfxPrint(fontId, yesText, -0.20f - 0.5f * w, -0.10f, btnScale, 0.0f, 0.55f, 0.0f, 1.0f);
+        float btnCenterNDCX = confirmButtons[i].x / 800.0f;
+        float btnCenterNDCY = confirmButtons[i].y / 450.0f;
 
-    AEGfxGetPrintSize(fontId, noText, btnScale, &w, &h);
-    AEGfxPrint(fontId, noText, 0.20f - 0.5f * w, -0.10f, btnScale, 0.75f, 0.0f, 0.0f, 1.0f);
+        float textW, textH;
+        const float textScale = 0.8f;
+        AEGfxGetPrintSize(fontId, confirmButtons[i].text, textScale, &textW, &textH);
+
+        float leftX = btnCenterNDCX - textW * 0.5f;
+        float baseY = btnCenterNDCY + textH * 0.5f;
+
+        AEGfxPrint(fontId, confirmButtons[i].text, leftX, baseY, textScale,
+            1.0f, 1.0f, 1.0f, 1.0f);
+    }
 }
-
 //----------------------------------------------------------------------------
 // Cleans up dynamic resources while keeping static data 
 //----------------------------------------------------------------------------
