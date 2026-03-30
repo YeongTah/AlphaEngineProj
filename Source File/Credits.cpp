@@ -90,6 +90,9 @@ namespace
     float CreditSpacing = 0.12f;
     float AutoScrollSpeed = 0.0025f;
     float ManualScrollSpeed = 0.01f;
+    float topLimit = 0.75f;
+    float bottomLimit = -0.8f;
+
 
     AEGfxTexture* wallimage = nullptr; //jas added
 
@@ -130,7 +133,7 @@ void Credit_Initialize()
     std::cout << "Credit:Initialize\n";
 
     //starting Y pos
-    CreditOffsetY = 0.5f;
+    //CreditOffsetY = 0.5f;
 }
 
 //----------------------------------------------------------------------------
@@ -155,28 +158,28 @@ void Credit_Update()
     }
 
     // UP key is pressed
-    if (AEInputCheckCurr(AEVK_UP))
+    if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP))
     {
         CreditOffsetY += ManualScrollSpeed;
     }
     // DOWN key is pressed
-    else if (AEInputCheckCurr(AEVK_DOWN))
+    else if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
     {
         CreditOffsetY -= ManualScrollSpeed;
     }
-    //scrolls 
+    // auto scroll upward
     else
     {
         CreditOffsetY += AutoScrollSpeed;
     }
 
-    //calculate the total height of all credit lines
-    float totalHeight = static_cast<float>(CreditCount) * CreditSpacing;
+    // last line position
+    float lastLineY = CreditOffsetY - static_cast<float>(CreditCount - 1) * CreditSpacing;
 
-    //resets
-    if (CreditOffsetY < -totalHeight)
+    // loop credits back to bottom after the entire list leaves the top
+    if (lastLineY > topLimit)
     {
-        CreditOffsetY = 1.0f;
+        CreditOffsetY = bottomLimit;
     }
 }
 
@@ -220,7 +223,7 @@ void Credit_Draw()
     {
         float y = CreditOffsetY - static_cast<float>(i) * CreditSpacing;
 
-        if (y < -1.3f || y > 1.3f) continue;
+        if (y < bottomLimit || y > topLimit) continue; //to adjust the text not to go over red border
 
         DrawCreditText(Credits[i].text, -0.35f, y, Credits[i].scale);
     }
@@ -242,5 +245,15 @@ void Credit_Free()
 void Credit_Unload()
 {
     std::cout << "Credit:Unload\n";
-    AEGfxTextureUnload(wallimage);
+    if (wallimage)
+    {
+        AEGfxTextureUnload(wallimage);
+        wallimage = nullptr;
+    }
+
+    if (pMesh)
+    {
+        AEGfxMeshFree(pMesh);
+        pMesh = nullptr;
+    }
 }
