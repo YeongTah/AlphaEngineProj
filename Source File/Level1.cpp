@@ -262,87 +262,6 @@ static void TickFramePowers()
 // ===================== ADDED: TickFreezeFrames (real-time freeze) ===================== -ths
 static void TickFreezeFrames() { if (gPower.freezeFrames > 0) --gPower.freezeFrames; } // -ths
 
-// ----------------------------------------------------------------------------
-// BFSNextStep
-// Uses Breadth-First Search (uniform-cost search on an unweighted grid) to find
-// the shortest walkable path from (fromX, fromY) to (toX, toY), then returns
-// the world-space position of the FIRST step along that path via (outX, outY).
-//
-// Returns true  -- a path was found; outX/outY hold the next step position.
-// Returns false -- no path exists (target unreachable); caller should not move.
-//
-// The search treats any cell where canMove() is true as passable.
-// Grid size is bounded by GRID_ROWS x GRID_COLS (18x32 = 576 cells max).
-// ----------------------------------------------------------------------------
-static bool BFSNextStep(float fromX, float fromY, float toX, float toY,
-    float& outX, float& outY)
-{
-    int sr, sc, tr, tc;
-    WorldToGrid(fromX, fromY, sr, sc);
-    WorldToGrid(toX, toY, tr, tc);
-
-    if (sr == tr && sc == tc) return false; // already on the target cell
-
-    // parent array: stores the cell we came from for each visited cell
-    // encoded as row*GRID_COLS+col; -1 = unvisited
-    static int parent[18 * 32];
-    for (int i = 0; i < GRID_ROWS * GRID_COLS; ++i) parent[i] = -1;
-
-    // Simple BFS queue (max 576 cells)
-    static int queue[18 * 32];
-    int head = 0, tail = 0;
-
-    int startIdx = sr * GRID_COLS + sc;
-    parent[startIdx] = startIdx; // mark start as visited (parent = self)
-    queue[tail++] = startIdx;
-
-    static const int dRow[4] = { -1,  1,  0, 0 };
-    static const int dCol[4] = { 0,  0, -1, 1 };
-
-    bool found = false;
-    while (head < tail)
-    {
-        int cur = queue[head++];
-        int cr = cur / GRID_COLS;
-        int cc = cur % GRID_COLS;
-
-        if (cr == tr && cc == tc) { found = true; break; }
-
-        for (int d = 0; d < 4; ++d)
-        {
-            int nr = cr + dRow[d];
-            int nc = cc + dCol[d];
-            if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLS) continue;
-            int nIdx = nr * GRID_COLS + nc;
-            if (parent[nIdx] != -1) continue; // already visited
-
-            // Use canMove() with the world-center of the neighbour cell
-            float wx, wy;
-            GridToWorldCenter(nr, nc, wx, wy);
-            if (!canMove(wx, wy)) continue;
-
-            parent[nIdx] = cur;
-            queue[tail++] = nIdx;
-        }
-    }
-
-    if (!found) return false;
-
-    // Trace back from target to find the first step after start
-    int cur = tr * GRID_COLS + tc;
-    while (true)
-    {
-        int prev = parent[cur];
-        if (prev == startIdx) break; // cur is the first step
-        cur = prev;
-    }
-
-    int firstR = cur / GRID_COLS;
-    int firstC = cur % GRID_COLS;
-    GridToWorldCenter(firstR, firstC, outX, outY);
-    return true;
-}
-
 // ===================== ADDED: Random Power-Up Entity & helpers ===================== -ths
 enum PowerupType { PWR_IMMUNE = 0, PWR_FREEZE = 1 }; // -ths
 static Entity gPowerup;                // power-up pickup on the map -ths
@@ -1060,23 +979,89 @@ void Level1_Update()
         }
 
         // Enemy freeze stop -ths
-        if (turnCounter % 2 == 0 && gPower.freezeFrames <= 0)
+        if (turnCounter != 0 && gPower.freezeFrames <= 0)
         {
-            // ---- Main mummy: BFS toward player ----
-            float bfsX, bfsY;
-            if (BFSNextStep(mummy.x, mummy.y, player.x, player.y, bfsX, bfsY))
+            // ---- BFS: find the next step toward the player ----
+            // Returns the grid coords of the first step on the shortest path
+            // from (startR,startC) to (goalR,goalC), avoiding NON_WALKABLE cells.
+            // If no path exists the mummy stays put.
+            auto BFSNextStep = [&](int startR, int startC, int goalR, int goalC,
+                int outR[], int outC[]) -> bool
+                {
+                    if (startR == goalR && startC == goalC) return false;
+
+                    // visited + parent arrays on the stack (18x32 = 576 cells)
+                    bool visited[GRID_ROWS][GRID_COLS] = {};
+                    int  parentR[GRID_ROWS][GRID_COLS];
+                    int  parentC[GRID_ROWS][GRID_COLS];
+                    for (int i = 0; i < GRID_ROWS; ++i)
+                        for (int j = 0; j < GRID_COLS; ++j)
+                        {
+                            parentR[i][j] = -1; parentC[i][j] = -1;
+                        }
+
+                    // Simple queue using a fixed array
+                    int qR[GRID_ROWS * GRID_COLS] = {}, qC[GRID_ROWS * GRID_COLS] = {};
+                    int head = 0, tail = 0;
+
+                    visited[startR][startC] = true;
+                    qR[tail] = startR; qC[tail] = startC; ++tail;
+
+                    const int dr[] = { -1, 1, 0, 0 };
+                    const int dc[] = { 0, 0,-1, 1 };
+
+                    bool found = false;
+                    while (head < tail && !found)
+                    {
+                        int cr = qR[head], cc = qC[head]; ++head;
+                        for (int d = 0; d < 4; ++d)
+                        {
+                            int nr = cr + dr[d], nc = cc + dc[d];
+                            if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLS) continue;
+                            if (visited[nr][nc]) continue;
+                            if (level[nr][nc] == 1) continue;
+                            visited[nr][nc] = true;
+                            parentR[nr][nc] = cr;
+                            parentC[nr][nc] = cc;
+                            qR[tail] = nr; qC[tail] = nc; ++tail;
+                            if (nr == goalR && nc == goalC) { found = true; break; }
+                        }
+                    }
+
+                    if (!found) return false;
+
+                    // Trace back to find first step from start
+                    int tr = goalR, tc = goalC;
+                    while (parentR[tr][tc] != startR || parentC[tr][tc] != startC)
+                    {
+                        int pr2 = parentR[tr][tc], pc2 = parentC[tr][tc];
+                        tr = pr2; tc = pc2;
+                    }
+                    outR[0] = tr; outC[0] = tc;
+                    return true;
+                };
+
+            // Move main mummy one BFS step toward player
+            int mummyR, mummyC, playerR, playerC;
+            WorldToGrid(mummy.x, mummy.y, mummyR, mummyC);
+            WorldToGrid(player.x, player.y, playerR, playerC);
+
+            int nextR[1], nextC[1];
+            if (BFSNextStep(mummyR, mummyC, playerR, playerC, nextR, nextC))
             {
-                // Occupancy check: don't stack on a box mummy
+                // Check the target cell is not occupied by a box mummy
+                float nx, ny;
+                GridToWorldCenter(nextR[0], nextC[0], nx, ny);
                 bool blocked = false;
                 for (int i = 0; i < gBoxMummyCount; ++i)
-                    if (fabsf(gBoxMummies[i].x - bfsX) < 1.0f && fabsf(gBoxMummies[i].y - bfsY) < 1.0f)
+                    if (fabsf(gBoxMummies[i].x - nx) < 1.0f && fabsf(gBoxMummies[i].y - ny) < 1.0f)
                     {
                         blocked = true; break;
                     }
                 if (!blocked)
                 {
-                    mummy.x = bfsX;
-                    mummy.y = bfsY;
+                    mummy.x = nx;
+                    mummy.y = ny;
                 }
             }
         }
@@ -1084,28 +1069,78 @@ void Level1_Update()
         TickPowers();
         playerMoved = false;
 
-        // ====== BOX MUMMY AI: BFS toward player every 2nd turn ======
+        // ====== BOX MUMMY AI: BFS chase player every 2nd turn ======
         if (turnCounter % 2 == 0 && gPower.freezeFrames <= 0)
         {
             for (int i = 0; i < gBoxMummyCount; ++i)
             {
                 BoxMummy& bm = gBoxMummies[i];
-                float bfsX, bfsY;
-                if (BFSNextStep(bm.x, bm.y, player.x, player.y, bfsX, bfsY))
-                {
-                    // Occupancy: don't stack on main mummy or another box mummy
-                    bool blocked = (fabsf(mummy.x - bfsX) < 1.0f && fabsf(mummy.y - bfsY) < 1.0f);
-                    if (!blocked)
-                        for (int j = 0; j < gBoxMummyCount; ++j)
-                            if (j != i && fabsf(gBoxMummies[j].x - bfsX) < 1.0f && fabsf(gBoxMummies[j].y - bfsY) < 1.0f)
-                            {
-                                blocked = true; break;
-                            }
-                    if (!blocked)
+
+                int bmR, bmC, playerR2, playerC2;
+                WorldToGrid(bm.x, bm.y, bmR, bmC);
+                WorldToGrid(player.x, player.y, playerR2, playerC2);
+
+                // BFS for this box mummy
+                bool visited2[GRID_ROWS][GRID_COLS] = {};
+                int  parentR2[GRID_ROWS][GRID_COLS], parentC2[GRID_ROWS][GRID_COLS];
+                for (int a = 0; a < GRID_ROWS; ++a)
+                    for (int b = 0; b < GRID_COLS; ++b)
                     {
-                        bm.x = bfsX;
-                        bm.y = bfsY;
+                        parentR2[a][b] = -1; parentC2[a][b] = -1;
                     }
+
+                int qR2[GRID_ROWS * GRID_COLS] = {}, qC2[GRID_ROWS * GRID_COLS] = {};
+                int head2 = 0, tail2 = 0;
+                visited2[bmR][bmC] = true;
+                qR2[tail2] = bmR; qC2[tail2] = bmC; ++tail2;
+
+                const int dr2[] = { -1, 1, 0, 0 };
+                const int dc2[] = { 0, 0,-1, 1 };
+                bool found2 = false;
+
+                while (head2 < tail2 && !found2)
+                {
+                    int cr = qR2[head2], cc = qC2[head2]; ++head2;
+                    for (int d = 0; d < 4; ++d)
+                    {
+                        int nr = cr + dr2[d], nc = cc + dc2[d];
+                        if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLS) continue;
+                        if (visited2[nr][nc]) continue;
+                        if (level[nr][nc] == 1) continue;
+                        visited2[nr][nc] = true;
+                        parentR2[nr][nc] = cr;
+                        parentC2[nr][nc] = cc;
+                        qR2[tail2] = nr; qC2[tail2] = nc; ++tail2;
+                        if (nr == playerR2 && nc == playerC2) { found2 = true; break; }
+                    }
+                }
+
+                if (!found2) continue;
+
+                // Trace back to first step
+                int tr = playerR2, tc = playerC2;
+                while (parentR2[tr][tc] != bmR || parentC2[tr][tc] != bmC)
+                {
+                    int pr2 = parentR2[tr][tc], pc2 = parentC2[tr][tc];
+                    tr = pr2; tc = pc2;
+                }
+
+                float nx, ny;
+                GridToWorldCenter(tr, tc, nx, ny);
+
+                // Don't move onto main mummy or another box mummy
+                bool blocked = (fabsf(mummy.x - nx) < 1.0f && fabsf(mummy.y - ny) < 1.0f);
+                if (!blocked)
+                    for (int j = 0; j < gBoxMummyCount; ++j)
+                        if (j != i && fabsf(gBoxMummies[j].x - nx) < 1.0f && fabsf(gBoxMummies[j].y - ny) < 1.0f)
+                        {
+                            blocked = true; break;
+                        }
+
+                if (!blocked)
+                {
+                    bm.x = nx;
+                    bm.y = ny;
                 }
             }
         }
@@ -1309,7 +1344,7 @@ void Level1_Draw()
     {
         for (int col = 0; col < GRID_COLS; col++)
         {
-            if (level[row][col] == 0)
+            if (level[row][col] == 0 || level[row][col] == 4)
             {
                 float x, y;
                 GridToWorldCenter(row, col, x, y);

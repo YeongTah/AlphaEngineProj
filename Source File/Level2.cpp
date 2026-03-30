@@ -682,7 +682,7 @@ void Level2_Initialize()
         L2FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
         l2_coin.x = px;
         l2_coin.y = py;
-        l2_coin.size = 30.0f;
+        l2_coin.size = GRID_TILE_SIZE * 0.8f;
         l2_coin.r = 1.0f;
         l2_coin.g = 0.5f;
         l2_coin.b = 0.0f;
@@ -931,124 +931,190 @@ void Level2_Update()
         // Mummy & Scorpion movement (frozen if freezeFrames > 0)
         if (l2_turnCounter % 2 == 0 && l2Power.freezeFrames <= 0)
         {
-            // Helper lambda: returns true if (nx, ny) is already occupied by another enemy
-            // Enemies: l2_mummy, l2_mummy2, l2_scorpion
-            auto enemyOccupies = [](float nx, float ny, float skipX, float skipY) -> bool {
-                // Check each of the three enemies, skipping the one that is moving (skipX/skipY)
-                float ex[] = { l2_mummy.x,  l2_mummy2.x,  l2_scorpion.x };
-                float ey[] = { l2_mummy.y,  l2_mummy2.y,  l2_scorpion.y };
-                for (int k = 0; k < 3; ++k)
-                    if (!(fabsf(ex[k] - skipX) < 1.0f && fabsf(ey[k] - skipY) < 1.0f))
-                        if (fabsf(ex[k] - nx) < 1.0f && fabsf(ey[k] - ny) < 1.0f)
-                            return true;
-                return false;
+            // ---- BFS: find the next step on the shortest path from (startR,startC)
+            // to (goalR,goalC), avoiding wall tiles (value == 1).
+            // Writes the first-step grid coords into outR[0]/outC[0].
+            // Returns false if already at goal or no path exists.
+            auto L2BFSNextStep = [&](int startR, int startC, int goalR, int goalC,
+                int outR[], int outC[]) -> bool
+                {
+                    if (startR == goalR && startC == goalC) return false;
+
+                    bool visited[GRID_ROWS][GRID_COLS] = {};
+                    int  parentR[GRID_ROWS][GRID_COLS];
+                    int  parentC[GRID_ROWS][GRID_COLS];
+                    for (int i = 0; i < GRID_ROWS; ++i)
+                        for (int j = 0; j < GRID_COLS; ++j)
+                        {
+                            parentR[i][j] = -1; parentC[i][j] = -1;
+                        }
+
+                    int qR[GRID_ROWS * GRID_COLS] = {}, qC[GRID_ROWS * GRID_COLS] = {};
+                    int head = 0, tail = 0;
+                    visited[startR][startC] = true;
+                    qR[tail] = startR; qC[tail] = startC; ++tail;
+
+                    const int dr[] = { -1, 1, 0, 0 };
+                    const int dc[] = { 0, 0,-1, 1 };
+                    bool found = false;
+
+                    while (head < tail && !found)
+                    {
+                        int cr = qR[head], cc = qC[head]; ++head;
+                        for (int d = 0; d < 4; ++d)
+                        {
+                            int nr = cr + dr[d], nc = cc + dc[d];
+                            if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLS) continue;
+                            if (visited[nr][nc]) continue;
+                            if (level[nr][nc] == 1) continue;
+                            visited[nr][nc] = true;
+                            parentR[nr][nc] = cr;
+                            parentC[nr][nc] = cc;
+                            qR[tail] = nr; qC[tail] = nc; ++tail;
+                            if (nr == goalR && nc == goalC) { found = true; break; }
+                        }
+                    }
+
+                    if (!found) return false;
+
+                    // Trace back to find the first step from start
+                    int tr = goalR, tc = goalC;
+                    while (parentR[tr][tc] != startR || parentC[tr][tc] != startC)
+                    {
+                        int pr2 = parentR[tr][tc], pc2 = parentC[tr][tc];
+                        tr = pr2; tc = pc2;
+                    }
+                    outR[0] = tr; outC[0] = tc;
+                    return true;
                 };
 
-            // ========== MUMMY 1 MOVEMENT ========== -ths
-            float diffX = l2_player.x - l2_mummy.x;
-            float diffY = l2_player.y - l2_mummy.y;
+            // World-space coords of the player for BFS goal
+            int playerR, playerC;
+            WorldToGrid(l2_player.x, l2_player.y, playerR, playerC);
 
-            // horizontal first
-            if (fabsf(diffX) > 1.0f)
+            // ========== MUMMY 1 BFS MOVEMENT ==========
             {
-                float stepX = (diffX > 0) ? l2_gridStep : -l2_gridStep;
-                float nx = l2_mummy.x + stepX, ny = l2_mummy.y;
-                if (!enemyOccupies(nx, ny, l2_mummy.x, l2_mummy.y) && canMove(nx, ny))
-                    l2_mummy.x += stepX;
-            }
-            // vertical second
-            diffY = l2_player.y - l2_mummy.y;
-            if (fabsf(diffY) > 1.0f)
-            {
-                float stepY = (diffY > 0) ? l2_gridStep : -l2_gridStep;
-                float nx = l2_mummy.x, ny = l2_mummy.y + stepY;
-                if (!enemyOccupies(nx, ny, l2_mummy.x, l2_mummy.y) && canMove(nx, ny))
-                    l2_mummy.y += stepY;
+                int mR, mC, nR[1], nC[1];
+                WorldToGrid(l2_mummy.x, l2_mummy.y, mR, mC);
+                if (L2BFSNextStep(mR, mC, playerR, playerC, nR, nC))
+                {
+                    float nx, ny;
+                    GridToWorldCenter(nR[0], nC[0], nx, ny);
+                    // Ensure target cell is not occupied by another main enemy or scorpion
+                    bool blocked =
+                        (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f) ||
+                        (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
+                    if (!blocked) { l2_mummy.x = nx; l2_mummy.y = ny; }
+                }
             }
 
-
-            // ========== MUMMY 2 MOVEMENT ========== -ths
-            float diff2X = l2_player.x - l2_mummy2.x;
-            float diff2Y = l2_player.y - l2_mummy2.y;
-
-            if (fabsf(diff2X) > 1.0f)
+            // ========== MUMMY 2 BFS MOVEMENT ==========
             {
-                float stepX = (diff2X > 0) ? l2_gridStep : -l2_gridStep;
-                float nx = l2_mummy2.x + stepX, ny = l2_mummy2.y;
-                if (!enemyOccupies(nx, ny, l2_mummy2.x, l2_mummy2.y) && canMove(nx, ny))
-                    l2_mummy2.x += stepX;
-            }
-            diff2Y = l2_player.y - l2_mummy2.y;
-            if (fabsf(diff2Y) > 1.0f)
-            {
-                float stepY = (diff2Y > 0) ? l2_gridStep : -l2_gridStep;
-                float nx = l2_mummy2.x, ny = l2_mummy2.y + stepY;
-                if (!enemyOccupies(nx, ny, l2_mummy2.x, l2_mummy2.y) && canMove(nx, ny))
-                    l2_mummy2.y += stepY;
+                int mR, mC, nR[1], nC[1];
+                WorldToGrid(l2_mummy2.x, l2_mummy2.y, mR, mC);
+                if (L2BFSNextStep(mR, mC, playerR, playerC, nR, nC))
+                {
+                    float nx, ny;
+                    GridToWorldCenter(nR[0], nC[0], nx, ny);
+                    bool blocked =
+                        (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
+                        (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
+                    if (!blocked) { l2_mummy2.x = nx; l2_mummy2.y = ny; }
+                }
             }
 
-
-            // ========== SCORPION MOVEMENT ========== -ths
-            float diffSX = l2_player.x - l2_scorpion.x;
-            float diffSY = l2_player.y - l2_scorpion.y;
-
-            // horizontal first
-            if (fabsf(diffSX) > 1.0f)
+            // ========== SCORPION BFS MOVEMENT ==========
             {
-                float stepX = (diffSX > 0) ? l2_gridStep : -l2_gridStep;
-                float nx = l2_scorpion.x + stepX, ny = l2_scorpion.y;
-                if (!enemyOccupies(nx, ny, l2_scorpion.x, l2_scorpion.y) && canMove(nx, ny))
-                    l2_scorpion.x += stepX;
-            }
-            // vertical second
-            diffSY = l2_player.y - l2_scorpion.y;
-            if (fabsf(diffSY) > 1.0f)
-            {
-                float stepY = (diffSY > 0) ? l2_gridStep : -l2_gridStep;
-                float nx = l2_scorpion.x, ny = l2_scorpion.y + stepY;
-                if (!enemyOccupies(nx, ny, l2_scorpion.x, l2_scorpion.y) && canMove(nx, ny))
-                    l2_scorpion.y += stepY;
+                int mR, mC, nR[1], nC[1];
+                WorldToGrid(l2_scorpion.x, l2_scorpion.y, mR, mC);
+                if (L2BFSNextStep(mR, mC, playerR, playerC, nR, nC))
+                {
+                    float nx, ny;
+                    GridToWorldCenter(nR[0], nC[0], nx, ny);
+                    bool blocked =
+                        (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
+                        (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f);
+                    if (!blocked) { l2_scorpion.x = nx; l2_scorpion.y = ny; }
+                }
             }
         }
 
         L2TickPowers();
         l2_playerMoved = false;
 
-        // ====== BOX MUMMY AI: chase player every 2nd turn ======
+        // ====== BOX MUMMY AI: BFS chase player every 2nd turn ======
         if (l2_turnCounter % 2 == 0 && l2Power.freezeFrames <= 0)
         {
+            int playerR2, playerC2;
+            WorldToGrid(l2_player.x, l2_player.y, playerR2, playerC2);
+
             for (int i = 0; i < l2_boxMummyCount; ++i)
             {
                 L2BoxMummy& bm = l2_boxMummies[i];
-                float dxB = l2_player.x - bm.x;
-                float dyB = l2_player.y - bm.y;
 
-                if (fabsf(dxB) > 1.0f)
+                int bmR, bmC;
+                WorldToGrid(bm.x, bm.y, bmR, bmC);
+
+                // BFS for this box mummy
+                bool visited2[GRID_ROWS][GRID_COLS] = {};
+                int  parentR2[GRID_ROWS][GRID_COLS], parentC2[GRID_ROWS][GRID_COLS];
+                for (int a = 0; a < GRID_ROWS; ++a)
+                    for (int b = 0; b < GRID_COLS; ++b)
+                    {
+                        parentR2[a][b] = -1; parentC2[a][b] = -1;
+                    }
+
+                int qR2[GRID_ROWS * GRID_COLS] = {}, qC2[GRID_ROWS * GRID_COLS] = {};
+                int head2 = 0, tail2 = 0;
+                visited2[bmR][bmC] = true;
+                qR2[tail2] = bmR; qC2[tail2] = bmC; ++tail2;
+
+                const int dr2[] = { -1, 1, 0, 0 };
+                const int dc2[] = { 0, 0,-1, 1 };
+                bool found2 = false;
+
+                while (head2 < tail2 && !found2)
                 {
-                    float stepX = (dxB > 0) ? l2_gridStep : -l2_gridStep;
-                    float nx = bm.x + stepX, ny = bm.y;
-                    bool blocked = (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
-                        (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f) ||
-                        (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
-                    for (int j = 0; !blocked && j < l2_boxMummyCount; ++j)
-                        if (j != i && fabsf(l2_boxMummies[j].x - nx) < 1.0f && fabsf(l2_boxMummies[j].y - ny) < 1.0f)
-                            blocked = true;
-                    if (!blocked && canMove(nx, ny)) bm.x += stepX;
+                    int cr = qR2[head2], cc = qC2[head2]; ++head2;
+                    for (int d = 0; d < 4; ++d)
+                    {
+                        int nr = cr + dr2[d], nc = cc + dc2[d];
+                        if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLS) continue;
+                        if (visited2[nr][nc]) continue;
+                        if (level[nr][nc] == 1) continue;
+                        visited2[nr][nc] = true;
+                        parentR2[nr][nc] = cr;
+                        parentC2[nr][nc] = cc;
+                        qR2[tail2] = nr; qC2[tail2] = nc; ++tail2;
+                        if (nr == playerR2 && nc == playerC2) { found2 = true; break; }
+                    }
                 }
 
-                dyB = l2_player.y - bm.y;
-                if (fabsf(dyB) > 1.0f)
+                if (!found2) continue;
+
+                // Trace back to first step
+                int tr = playerR2, tc = playerC2;
+                while (parentR2[tr][tc] != bmR || parentC2[tr][tc] != bmC)
                 {
-                    float stepY = (dyB > 0) ? l2_gridStep : -l2_gridStep;
-                    float nx = bm.x, ny = bm.y + stepY;
-                    bool blocked = (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
-                        (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f) ||
-                        (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
-                    for (int j = 0; !blocked && j < l2_boxMummyCount; ++j)
-                        if (j != i && fabsf(l2_boxMummies[j].x - nx) < 1.0f && fabsf(l2_boxMummies[j].y - ny) < 1.0f)
-                            blocked = true;
-                    if (!blocked && canMove(nx, ny)) bm.y += stepY;
+                    int pr2 = parentR2[tr][tc], pc2 = parentC2[tr][tc];
+                    tr = pr2; tc = pc2;
                 }
+
+                float nx, ny;
+                GridToWorldCenter(tr, tc, nx, ny);
+
+                // Block if occupied by a main enemy or another box mummy
+                bool blocked =
+                    (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
+                    (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f) ||
+                    (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
+                for (int j = 0; !blocked && j < l2_boxMummyCount; ++j)
+                    if (j != i &&
+                        fabsf(l2_boxMummies[j].x - nx) < 1.0f &&
+                        fabsf(l2_boxMummies[j].y - ny) < 1.0f)
+                        blocked = true;
+
+                if (!blocked) { bm.x = nx; bm.y = ny; }
             }
         }
     }
@@ -1146,7 +1212,7 @@ void Level2_Draw()
 
     AEMtx33 transform, scale, trans;
 
-    // --- Floor tiles (value == 0) ---
+    // --- Floor tiles (value == 0 and value == 4) ---
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
@@ -1154,10 +1220,24 @@ void Level2_Draw()
     AEGfxTextureSet(l2_FloorTex, 0, 0);
     for (int row = 0; row < GRID_ROWS; row++)
         for (int col = 0; col < GRID_COLS; col++)
-            if (level[row][col] == 0)
+            if (level[row][col] == 0 || level[row][col] == 4)
             {
                 float x, y; GridToWorldCenter(row, col, x, y);
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
+                AEMtx33Trans(&trans, x, y);
+                AEMtx33Concat(&transform, &trans, &scale);
+                AEGfxSetTransform(transform.m);
+                AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+            }
+
+    // --- Coin tiles (value == 4) ---
+    AEGfxTextureSet(l2_coin.pTex, 0, 0);
+    for (int row = 0; row < GRID_ROWS; row++)
+        for (int col = 0; col < GRID_COLS; col++)
+            if (level[row][col] == 4)
+            {
+                float x, y; GridToWorldCenter(row, col, x, y);
+                AEMtx33Scale(&scale, l2_coin.size, l2_coin.size);
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
                 AEGfxSetTransform(transform.m);

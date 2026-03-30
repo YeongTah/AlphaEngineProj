@@ -620,7 +620,7 @@ void Level3_Initialize()
         L3FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
         l3_coin.x = px;
         l3_coin.y = py;
-        l3_coin.size = 30.0f;
+        l3_coin.size = GRID_TILE_SIZE * 0.8f;
         l3_coin.r = 1.0f;
         l3_coin.g = 0.5f;
         l3_coin.b = 0.0f;
@@ -820,44 +820,87 @@ void Level3_Update()
         // Mummy movement every 2nd turn, unless frozen
         if (l3_turnCounter % 2 == 0 && l3Power.freezeFrames <= 0)
         {
-            // Before moving each mummy, check that its target cell is not already
-            // occupied by one of the other two mummies. This prevents them from
-            // stacking on the same tile and appearing as a single merged enemy.
+            // ---- BFS: find the next step on the shortest path from (startR,startC)
+            // to (goalR,goalC), avoiding wall tiles (value == 1).
+            // Writes the first-step grid coords into outR[0]/outC[0].
+            // Returns false if already at goal or no path exists.
+            auto L3BFSNextStep = [&](int startR, int startC, int goalR, int goalC,
+                int outR[], int outC[]) -> bool
+                {
+                    if (startR == goalR && startC == goalC) return false;
+
+                    bool visited[GRID_ROWS][GRID_COLS] = {};
+                    int  parentR[GRID_ROWS][GRID_COLS];
+                    int  parentC[GRID_ROWS][GRID_COLS];
+                    for (int i = 0; i < GRID_ROWS; ++i)
+                        for (int j = 0; j < GRID_COLS; ++j)
+                        {
+                            parentR[i][j] = -1; parentC[i][j] = -1;
+                        }
+
+                    int qR[GRID_ROWS * GRID_COLS] = {}, qC[GRID_ROWS * GRID_COLS] = {};
+                    int head = 0, tail = 0;
+                    visited[startR][startC] = true;
+                    qR[tail] = startR; qC[tail] = startC; ++tail;
+
+                    const int dr[] = { -1, 1, 0, 0 };
+                    const int dc[] = { 0, 0,-1, 1 };
+                    bool found = false;
+
+                    while (head < tail && !found)
+                    {
+                        int cr = qR[head], cc = qC[head]; ++head;
+                        for (int d = 0; d < 4; ++d)
+                        {
+                            int nr = cr + dr[d], nc = cc + dc[d];
+                            if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLS) continue;
+                            if (visited[nr][nc]) continue;
+                            if (level[nr][nc] == 1) continue;
+                            visited[nr][nc] = true;
+                            parentR[nr][nc] = cr;
+                            parentC[nr][nc] = cc;
+                            qR[tail] = nr; qC[tail] = nc; ++tail;
+                            if (nr == goalR && nc == goalC) { found = true; break; }
+                        }
+                    }
+
+                    if (!found) return false;
+
+                    // Trace back to find the first step from start
+                    int tr = goalR, tc = goalC;
+                    while (parentR[tr][tc] != startR || parentC[tr][tc] != startC)
+                    {
+                        int pr2 = parentR[tr][tc], pc2 = parentC[tr][tc];
+                        tr = pr2; tc = pc2;
+                    }
+                    outR[0] = tr; outC[0] = tc;
+                    return true;
+                };
+
+            // Player grid position (BFS goal for all three mummies)
+            int playerR, playerC;
+            WorldToGrid(l3_player.x, l3_player.y, playerR, playerC);
+
             Entity* mummies[3] = { &l3_mummy1, &l3_mummy2, &l3_mummy3 };
 
             for (int i = 0; i < 3; ++i)
             {
                 Entity& m = *mummies[i];
-                float diffX = l3_player.x - m.x;
-                float diffY = l3_player.y - m.y;
+                int mR, mC, nR[1], nC[1];
+                WorldToGrid(m.x, m.y, mR, mC);
 
-                // Horizontal step
-                if (fabsf(diffX) > 1.0f)
+                if (L3BFSNextStep(mR, mC, playerR, playerC, nR, nC))
                 {
-                    float stepX = (diffX > 0) ? l3_gridStep : -l3_gridStep;
-                    float nx = m.x + stepX, ny = m.y;
+                    float nx, ny;
+                    GridToWorldCenter(nR[0], nC[0], nx, ny);
+                    // Prevent two mummies from stacking on the same tile
                     bool blocked = false;
                     for (int j = 0; j < 3; ++j)
                         if (j != i && fabsf(mummies[j]->x - nx) < 1.0f && fabsf(mummies[j]->y - ny) < 1.0f)
                         {
                             blocked = true; break;
                         }
-                    if (!blocked && canMove(nx, ny)) m.x += stepX;
-                }
-
-                // Vertical step (re-evaluate diffY after potential horizontal move)
-                diffY = l3_player.y - m.y;
-                if (fabsf(diffY) > 1.0f)
-                {
-                    float stepY = (diffY > 0) ? l3_gridStep : -l3_gridStep;
-                    float nx = m.x, ny = m.y + stepY;
-                    bool blocked = false;
-                    for (int j = 0; j < 3; ++j)
-                        if (j != i && fabsf(mummies[j]->x - nx) < 1.0f && fabsf(mummies[j]->y - ny) < 1.0f)
-                        {
-                            blocked = true; break;
-                        }
-                    if (!blocked && canMove(nx, ny)) m.y += stepY;
+                    if (!blocked) { m.x = nx; m.y = ny; }
                 }
             }
         }
@@ -873,24 +916,79 @@ void Level3_Update()
             L3OpenTreasureBox();
         }
 
-        // ====== BOX MUMMY AI: chase player every 2nd turn ======
+        // ====== BOX MUMMY AI: BFS chase player every 2nd turn ======
         if (l3_turnCounter % 2 == 0 && l3Power.freezeFrames <= 0)
         {
+            int playerR2, playerC2;
+            WorldToGrid(l3_player.x, l3_player.y, playerR2, playerC2);
+
             for (int i = 0; i < l3_boxMummyCount; ++i)
             {
                 L3BoxMummy& bm = l3_boxMummies[i];
-                float dxB = l3_player.x - bm.x;
-                if (fabsf(dxB) > 1.0f)
+
+                int bmR, bmC;
+                WorldToGrid(bm.x, bm.y, bmR, bmC);
+
+                // BFS for this box mummy
+                bool visited2[GRID_ROWS][GRID_COLS] = {};
+                int  parentR2[GRID_ROWS][GRID_COLS], parentC2[GRID_ROWS][GRID_COLS];
+                for (int a = 0; a < GRID_ROWS; ++a)
+                    for (int b = 0; b < GRID_COLS; ++b)
+                    {
+                        parentR2[a][b] = -1; parentC2[a][b] = -1;
+                    }
+
+                int qR2[GRID_ROWS * GRID_COLS] = {}, qC2[GRID_ROWS * GRID_COLS] = {};
+                int head2 = 0, tail2 = 0;
+                visited2[bmR][bmC] = true;
+                qR2[tail2] = bmR; qC2[tail2] = bmC; ++tail2;
+
+                const int dr2[] = { -1, 1, 0, 0 };
+                const int dc2[] = { 0, 0,-1, 1 };
+                bool found2 = false;
+
+                while (head2 < tail2 && !found2)
                 {
-                    float stepX = (dxB > 0) ? l3_gridStep : -l3_gridStep;
-                    if (canMove(bm.x + stepX, bm.y)) bm.x += stepX;
+                    int cr = qR2[head2], cc = qC2[head2]; ++head2;
+                    for (int d = 0; d < 4; ++d)
+                    {
+                        int nr = cr + dr2[d], nc = cc + dc2[d];
+                        if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLS) continue;
+                        if (visited2[nr][nc]) continue;
+                        if (level[nr][nc] == 1) continue;
+                        visited2[nr][nc] = true;
+                        parentR2[nr][nc] = cr;
+                        parentC2[nr][nc] = cc;
+                        qR2[tail2] = nr; qC2[tail2] = nc; ++tail2;
+                        if (nr == playerR2 && nc == playerC2) { found2 = true; break; }
+                    }
                 }
-                float dyB = l3_player.y - bm.y;
-                if (fabsf(dyB) > 1.0f)
+
+                if (!found2) continue;
+
+                // Trace back to first step
+                int tr = playerR2, tc = playerC2;
+                while (parentR2[tr][tc] != bmR || parentC2[tr][tc] != bmC)
                 {
-                    float stepY = (dyB > 0) ? l3_gridStep : -l3_gridStep;
-                    if (canMove(bm.x, bm.y + stepY)) bm.y += stepY;
+                    int pr2 = parentR2[tr][tc], pc2 = parentC2[tr][tc];
+                    tr = pr2; tc = pc2;
                 }
+
+                float nx, ny;
+                GridToWorldCenter(tr, tc, nx, ny);
+
+                // Block if occupied by a main mummy or another box mummy
+                bool blocked =
+                    (fabsf(l3_mummy1.x - nx) < 1.0f && fabsf(l3_mummy1.y - ny) < 1.0f) ||
+                    (fabsf(l3_mummy2.x - nx) < 1.0f && fabsf(l3_mummy2.y - ny) < 1.0f) ||
+                    (fabsf(l3_mummy3.x - nx) < 1.0f && fabsf(l3_mummy3.y - ny) < 1.0f);
+                for (int j = 0; !blocked && j < l3_boxMummyCount; ++j)
+                    if (j != i &&
+                        fabsf(l3_boxMummies[j].x - nx) < 1.0f &&
+                        fabsf(l3_boxMummies[j].y - ny) < 1.0f)
+                        blocked = true;
+
+                if (!blocked) { bm.x = nx; bm.y = ny; }
             }
         }
     }
@@ -1017,7 +1115,7 @@ void Level3_Draw()
 
     AEMtx33 transform, scale, trans;
 
-    // --- Floor tiles (value == 0) ---
+    // --- Floor tiles (value == 0 and value == 4) ---
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
@@ -1026,11 +1124,26 @@ void Level3_Draw()
 
     for (int row = 0; row < GRID_ROWS; row++)
         for (int col = 0; col < GRID_COLS; col++)
-            if (level[row][col] == 0)
+            if (level[row][col] == 0 || level[row][col] == 4)
             {
                 float x, y;
                 GridToWorldCenter(row, col, x, y);
                 AEMtx33Scale(&scale, GRID_TILE_SIZE, GRID_TILE_SIZE);
+                AEMtx33Trans(&trans, x, y);
+                AEMtx33Concat(&transform, &trans, &scale);
+                AEGfxSetTransform(transform.m);
+                AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+            }
+
+    // --- Coin tiles (value == 4) ---
+    AEGfxTextureSet(l3_coin.pTex, 0, 0);
+    for (int row = 0; row < GRID_ROWS; row++)
+        for (int col = 0; col < GRID_COLS; col++)
+            if (level[row][col] == 4)
+            {
+                float x, y;
+                GridToWorldCenter(row, col, x, y);
+                AEMtx33Scale(&scale, l3_coin.size, l3_coin.size);
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
                 AEGfxSetTransform(transform.m);
