@@ -89,7 +89,7 @@ void WinPage_Update()
     {
         if (AEAudioIsValidAudio(sfxButton))
             AEAudioPlay(sfxButton, winGroup, 1.0f, 1.0f, 0);
-        Confirmation_Level(GS_WIN, GS_QUIT, "Are you sure you want to quit the game?");
+        Confirmation_Level(GS_WIN, GS_QUIT, "Are you sure you want to quit?");
         next = CONFIRM;
         return;
     }
@@ -122,7 +122,8 @@ void WinPage_Update()
                 }
                 break;
                 case 2: // Quit
-                    next = GS_QUIT;
+                    Confirmation_Level(GS_WIN, GS_QUIT, "Are you sure you want to quit?");
+                    next = CONFIRM;
                     break;
                 }
                 return;

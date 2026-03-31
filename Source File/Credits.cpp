@@ -93,8 +93,10 @@ namespace
     float topLimit = 0.75f;
     float bottomLimit = -0.8f;
 
-
     AEGfxTexture* wallimage = nullptr; //jas added
+
+    // ADDED: back button texture (same as LevelPage)                   -ths
+    AEGfxTexture* backButtonTex = nullptr;                              // -ths
 
     // text = the string to display
     // x = horizontal print position
@@ -122,6 +124,8 @@ void Credit_Load()
 {
     std::cout << "Credit:Load\n";
     wallimage = AEGfxTextureLoad("Assets/Bigwall.png"); // floor tile texture
+    // ADDED: load back button texture                                 -ths
+    backButtonTex = AEGfxTextureLoad("Assets/Back.png");               // -ths
     pMesh = CreateSquareMesh();
 }
 
@@ -142,6 +146,22 @@ void Credit_Initialize()
 void Credit_Update()
 {
     std::cout << "Credit:Update\n";
+
+    // ==================================================================
+    // ADDED: Back button click detection (top-left corner)             -ths
+    // ==================================================================
+    {
+        s32 mouseX, mouseY;
+        TransformScreentoWorld(mouseX, mouseY);
+        static float back_x = -750.0f, back_y = 400.0f;                // -ths
+        static float back_w = 50.0f, back_h = 50.0f;                   // -ths
+        if (AEInputCheckReleased(AEVK_LBUTTON) &&
+            IsAreaClicked(back_x, back_y, back_w, back_h, mouseX, mouseY))
+        {
+            next = MAINMENUSTATE;
+            return;
+        }
+    }
 
     // Move back to main menu upon triggering "B"
     if (AEInputCheckReleased(AEVK_B))
@@ -193,24 +213,27 @@ void Credit_Draw()
     //adding of the main page image--
     AEMtx33 scale, trans, transform;
 
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    AEGfxTextureSet(wallimage, 0, 0);
+    if (wallimage)                                                      // -ths
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(wallimage, 0, 0);
 
-    // size
-    AEMtx33Scale(&scale, 1600.0f, 900.0f);
+        // size
+        AEMtx33Scale(&scale, 1600.0f, 900.0f);
 
-    //center of screen
-    AEMtx33Trans(&trans, 0.0f, 0.0f);
+        //center of screen
+        AEMtx33Trans(&trans, 0.0f, 0.0f);
 
-    AEMtx33Concat(&transform, &trans, &scale);
-    AEGfxSetTransform(transform.m);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
 
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES); // main menu image
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES); // main menu image
+    }
 
     // Draw text copyright
     AEGfxPrint(fontId, "All content © 2026 DigiPen Institute of Technology Singapore. All Rights Reserved.", -0.52f, -0.90f, 0.70f, 0.21f, 0.11f, 0.12f, 1.0f);
@@ -228,7 +251,21 @@ void Credit_Draw()
         DrawCreditText(Credits[i].text, -0.35f, y, Credits[i].scale);
     }
 
- 
+    // ==================================================================
+    // ADDED: Back button using texture (same as LevelPage)            -ths
+    // ==================================================================
+    if (backButtonTex)
+    {
+        static float back_x = -750.0f, back_y = 400.0f, back_w = 50.0f, back_h = 50.0f;
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(backButtonTex, 0, 0);
+        AEMtx33 scaleBtn, transBtn, matBtn;
+        AEMtx33Scale(&scaleBtn, back_w, back_h);
+        AEMtx33Trans(&transBtn, back_x, back_y);
+        AEMtx33Concat(&matBtn, &transBtn, &scaleBtn);
+        AEGfxSetTransform(matBtn.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -249,6 +286,12 @@ void Credit_Unload()
     {
         AEGfxTextureUnload(wallimage);
         wallimage = nullptr;
+    }
+    // ADDED: unload back button texture                               -ths
+    if (backButtonTex)
+    {
+        AEGfxTextureUnload(backButtonTex);
+        backButtonTex = nullptr;
     }
 
     if (pMesh)

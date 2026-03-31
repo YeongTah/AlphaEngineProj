@@ -83,6 +83,7 @@ void PausePage_Update()
     {
         if (AEAudioIsValidAudio(sfxButton))
             AEAudioPlay(sfxButton, pauseGroup, 1.0f, 1.0f, 0);
+        // Show confirmation before quitting
         Confirmation_Level(GS_PAUSE, GS_QUIT, "Are you sure you want to quit the game?");
         next = CONFIRM;
         return;
@@ -131,7 +132,7 @@ void PausePage_Update()
                     next = CONFIRM;
                     break;
                 }
-                return;
+                return; // Important: exit after handling click
             }
         }
     }

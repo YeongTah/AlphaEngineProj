@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Instructions.h"
 #include "main.h"
 #include "gamestatemanager.h"
@@ -37,8 +37,8 @@ namespace
         {"ESC      - Quit",        -0.27f, -0.76f, 0.72f},
 
         {"[POWERUPS]",                0.10f, -0.50f, 0.95f},
-        {"Freeze enemies",  0.18f, -0.60f, 0.64f},
-        {"Immunity",      0.18f, -0.70f, 0.64f},
+        {"Freeze enemies",          0.18f, -0.60f, 0.64f},   // index 15
+        {"Immunity",                0.18f, -0.70f, 0.64f}    // index 16
     };
 
     int InstructionsCount = sizeof(Instructions) / sizeof(Instructions[0]);
@@ -47,6 +47,8 @@ namespace
     AEGfxTexture* pwr1 = nullptr;
     AEGfxTexture* pwr2 = nullptr;
 
+    // ADDED: back button texture (same as LevelPage)                   -ths
+    AEGfxTexture* backButtonTex = nullptr;                              // -ths
 
     // text = the string to display
     // x = horizontal print position
@@ -66,9 +68,11 @@ namespace
         AEGfxPrint(fontId, strBuffer, x, y, scale, 1.0f, 1.0f, 1.0f, 1.0f); //white
     }
 
-    //function to help draw the poweruups
+    //function to help draw the poweruups (added null check)             -ths
     void DrawInstructionImage(AEGfxTexture* texture, float posX, float posY, float sizeX, float sizeY)
     {
+        if (!texture) return; // safety check                           -ths
+
         AEMtx33 scale, trans, transform;
 
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -101,6 +105,9 @@ void Instructions_Load()
     pwr1 = AEGfxTextureLoad("Assets/Freeze.png"); // freeze
     pwr2 = AEGfxTextureLoad("Assets/Immune.png"); // Immune
 
+    // ADDED: load back button texture                                 -ths
+    backButtonTex = AEGfxTextureLoad("Assets/Back.png");               // -ths
+
     pMesh = CreateSquareMesh();
 }
 
@@ -119,6 +126,22 @@ void Instructions_Initialize()
 void Instructions_Update()
 {
     std::cout << "Instructions:Update\n";
+
+    // ==================================================================
+    // ADDED: Back button click detection (top-left corner)             -ths
+    // ==================================================================
+    {
+        s32 mouseX, mouseY;
+        TransformScreentoWorld(mouseX, mouseY);
+        static float back_x = -750.0f, back_y = 400.0f;                // -ths
+        static float back_w = 50.0f, back_h = 50.0f;                   // -ths
+        if (AEInputCheckReleased(AEVK_LBUTTON) &&
+            IsAreaClicked(back_x, back_y, back_w, back_h, mouseX, mouseY))
+        {
+            next = MAINMENUSTATE;
+            return;
+        }
+    }
 
     // Move back to main menu upon triggering "B"
     if (AEInputCheckReleased(AEVK_B))
@@ -146,47 +169,54 @@ void Instructions_Draw()
     //adding of the main page image--
     AEMtx33 scale, trans, transform;
 
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    AEGfxTextureSet(wallimage, 0, 0);
+    // null check for wallimage                                        -ths
+    if (wallimage)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(wallimage, 0, 0);
 
-    // size
-    AEMtx33Scale(&scale, 1600.0f, 900.0f);
+        // size
+        AEMtx33Scale(&scale, 1600.0f, 900.0f);
 
-    //center of screen
-    AEMtx33Trans(&trans, 0.0f, 0.0f);
+        //center of screen
+        AEMtx33Trans(&trans, 0.0f, 0.0f);
 
-    AEMtx33Concat(&transform, &trans, &scale);
-    AEGfxSetTransform(transform.m);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
 
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES); // main menu image
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES); // main menu image
+    }
 
     //adding the wasd ----
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    AEGfxTextureSet(wasd, 0, 0);
+    if (wasd)                                                           // -ths
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(wasd, 0, 0);
 
-    AEMtx33 wasdScale, wasdTrans, wasdTransform;
+        AEMtx33 wasdScale, wasdTrans, wasdTransform;
 
-    // size of the WASD image
-    AEMtx33Scale(&wasdScale, 220.0f, 200.0f);
+        // size of the WASD image
+        AEMtx33Scale(&wasdScale, 220.0f, 200.0f);
 
-    // position on screen
-    // move x more right/left, y more up/down
-    AEMtx33Trans(&wasdTrans, -360.0f, -270.0f);
+        // position on screen
+        // move x more right/left, y more up/down
+        AEMtx33Trans(&wasdTrans, -360.0f, -270.0f);
 
-    AEMtx33Concat(&wasdTransform, &wasdTrans, &wasdScale);
-    AEGfxSetTransform(wasdTransform.m);
+        AEMtx33Concat(&wasdTransform, &wasdTrans, &wasdScale);
+        AEGfxSetTransform(wasdTransform.m);
 
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    }
     //rendering mode to colour mode
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 
@@ -198,6 +228,59 @@ void Instructions_Draw()
     {
         DrawInstructionsText(
             Instructions[i].text, Instructions[i].x, Instructions[i].y, Instructions[i].scale); //loops throught the array of InstructionsLine structs
+    }
+
+    // ==================================================================
+    // ADDED: Back button using texture (same as LevelPage)            -ths
+    // ==================================================================
+    if (backButtonTex)
+    {
+        static float back_x = -750.0f, back_y = 400.0f, back_w = 50.0f, back_h = 50.0f;
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(backButtonTex, 0, 0);
+        AEMtx33 scaleBtn, transBtn, matBtn;
+        AEMtx33Scale(&scaleBtn, back_w, back_h);
+        AEMtx33Trans(&transBtn, back_x, back_y);
+        AEMtx33Concat(&matBtn, &transBtn, &scaleBtn);
+        AEGfxSetTransform(matBtn.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+    }
+
+    // ==================================================================
+    // ADDED: F5 / F9 hints – both aligned to the same X coordinate   -ths
+    // ==================================================================
+    {
+        // "Freeze enemies" at index 15, "Immunity" at index 16        -ths
+        const char* freeze_label = Instructions[15].text;   // "Freeze enemies"
+        const char* immunity_label = Instructions[16].text; // "Immunity"
+        float freeze_label_x = Instructions[15].x;   // 0.18f
+        float freeze_label_y = Instructions[15].y;   // -0.60f
+        float immunity_label_y = Instructions[16].y; // -0.70f
+        float label_scale = Instructions[15].scale;  // 0.64f
+
+        const char* f5_hint = "   (F5 - Save level)";
+        const char* f9_hint = "   (F9 - Load level)";
+        float hint_scale = 0.55f;
+
+        float freeze_w, freeze_h, immunity_w, immunity_h;
+        AEGfxGetPrintSize(fontId, freeze_label, label_scale, &freeze_w, &freeze_h);
+        AEGfxGetPrintSize(fontId, immunity_label, label_scale, &immunity_w, &immunity_h);
+
+        float f5_w, f5_h, f9_w, f9_h;
+        AEGfxGetPrintSize(fontId, f5_hint, hint_scale, &f5_w, &f5_h);
+        AEGfxGetPrintSize(fontId, f9_hint, hint_scale, &f9_w, &f9_h);
+
+        float gap = 0.02f; // small gap in NDC
+        // Compute X position for both hints based on the "Freeze enemies" label
+        float hint_x = freeze_label_x + freeze_w + gap;
+
+        // Y positions centered with their respective labels
+        float f5_hint_y = freeze_label_y + (freeze_h - f5_h) * 0.5f;
+        float f9_hint_y = immunity_label_y + (immunity_h - f9_h) * 0.5f;
+
+        // Draw both hints starting at the same X position
+        AEGfxPrint(fontId, f5_hint, hint_x, f5_hint_y, hint_scale, 1, 1, 1, 1);
+        AEGfxPrint(fontId, f9_hint, hint_x, f9_hint_y, hint_scale, 1, 1, 1, 1);
     }
 }
 
@@ -215,5 +298,9 @@ void Instructions_Free()
 void Instructions_Unload()
 {
     std::cout << "Instructions:Unload\n";
-    AEGfxTextureUnload(wallimage);
+    if (wallimage) AEGfxTextureUnload(wallimage);
+    if (wasd) AEGfxTextureUnload(wasd);
+    if (pwr1) AEGfxTextureUnload(pwr1);
+    if (pwr2) AEGfxTextureUnload(pwr2);
+    if (backButtonTex) AEGfxTextureUnload(backButtonTex);               // -ths
 }

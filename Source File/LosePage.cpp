@@ -78,10 +78,12 @@ void LosePage_Update()
 
     if (AEInputCheckReleased(AEVK_ESCAPE))
     {
+        // Show confirmation before quitting
         Confirmation_Level(GS_LOSE, GS_QUIT, "Are you sure you want to quit the game?");
         next = CONFIRM;
         return;
     }
+
     if (0 == AESysDoesWindowExist())
     {
         next = GS_QUIT;   // immediate quit if window is already closed
@@ -116,7 +118,7 @@ void LosePage_Update()
                     next = CONFIRM;
                     break;
                 }
-                return;
+                return; // Important: exit after handling click
             }
         }
     }

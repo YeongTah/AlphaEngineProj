@@ -5,6 +5,7 @@
 #include "Level1.h"
 #include <iostream>
 #include <fstream>
+#include "Confirmation.h"
 
 // --- NEW AUDIO VARIABLES --- // -ths
 static AEAudio bgmMainMenu;     // -ths
@@ -101,17 +102,20 @@ void MainMenu_Update()
         next = CREDIT;
     }
 
-    // CLICK: EXIT
+    // Inside MainMenu_Update(), replace the exit block
+
+// CLICK: EXIT
     if (AEInputCheckReleased(AEVK_ESCAPE) ||
-        0 == AESysDoesWindowExist() ||
         (AEInputCheckReleased(AEVK_LBUTTON) &&
             IsAreaClicked(button_x, exitbutton_y, 300.0f, 90.0f, mouseX, mouseY)))
     {
-        // BUTTON CLICK SOUND // -ths
-        if (AEAudioIsValidAudio(sfxButtonClick)) // -ths
-            AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0); // -ths
+        // BUTTON CLICK SOUND
+        if (AEAudioIsValidAudio(sfxButtonClick))
+            AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0);
 
-        next = GS_QUIT;
+        // Show confirmation before quitting                      // -ths
+        Confirmation_Level(MAINMENUSTATE, GS_QUIT, "Are you sure you want to quit?");
+        next = CONFIRM;
     }
 
     // CLICK: CREATOR
