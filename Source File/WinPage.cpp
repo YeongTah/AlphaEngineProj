@@ -158,7 +158,7 @@ void WinPage_Draw()
         const float textScale = 0.9f;
         AEGfxGetPrintSize(fontId, winButtons[i].text, textScale, &textW, &textH);
         float leftX = btnCenterNDCX - textW * 0.5f;
-        float baselineY = btnCenterNDCY + textH * 0.5f;
+        float baselineY = btnCenterNDCY + textH * 0.0f;
         AEGfxPrint(fontId, winButtons[i].text, leftX, baselineY, textScale,
             1.0f, 1.0f, 1.0f, 1.0f);
     }
