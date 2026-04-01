@@ -1520,20 +1520,20 @@ void Level1_Draw()
     {
         char buf[64];
         std::snprintf(buf, sizeof(buf), "IMMUNE  %.1fs", gPower.invFrames / 60.0f); // -ths
-        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 0.8f, 0.90f, 0.90f, 0.20f, 1.0f);     // -ths
+        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 1.0f, 0.90f, 0.90f, 0.20f, 1.0f);     // -ths
     }
     if (gPower.freezeFrames > 0)
     {
         char buf[64];
         std::snprintf(buf, sizeof(buf), "FREEZE  %.1fs", gPower.freezeFrames / 60.0f); // -ths
-        AEGfxPrint(fontId, buf, -0.95f, 0.82f, 0.8f, 0.60f, 0.85f, 1.00f, 1.0f);       // -ths
+        AEGfxPrint(fontId, buf, -0.95f, 0.82f, 1.0f, 0.60f, 0.85f, 1.00f, 1.0f);       // -ths
     }
 
     // ====== Coin counter HUD (just below immunity/freeze stack) ======
     {
         char buf[64];
         std::snprintf(buf, sizeof(buf), "Coins: %d", coinCounter);
-        AEGfxPrint(fontId, buf, -0.95f, 0.90f, 0.8f, 1.00f, 0.85f, 0.10f, 1.0f); // golden yellow
+        AEGfxPrint(fontId, buf, -0.95f, 0.90f, 1.2f, 0.60f, 0.15f, 0.20f, 1.0f); // maroon
     }
 
     // ====== Hint: collect a coin before escaping (shown until first coin collected) ======
@@ -1542,7 +1542,7 @@ void Level1_Draw()
         const char* hint = "Coins to escape: 0/1";
         float hw, hh;
         AEGfxGetPrintSize(fontId, hint, 0.7f, &hw, &hh);
-        AEGfxPrint(fontId, hint, -hw * 0.5f, 0.90f, 0.7f, 1.0f, 0.3f, 0.3f, 1.0f); // red, top-center
+        AEGfxPrint(fontId, hint, -hw * 0.5f, 0.90f, 1.2f, 0.60f, 0.15f, 0.20f, 1.0f); // maroon, top-center
     }
 
     // ====== Treasure box popup message -- centered, fades out after ~3 seconds ======

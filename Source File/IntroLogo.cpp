@@ -81,20 +81,13 @@ void Intro_Update()
 
     // Only allow skip if we've met the minimum time requirement for the current page
     bool canSkip = false;
-
-    if (page_index == 0) {
-        // Page 0 (Digipen logo): Can only skip after PAGE_MIN_TIME (2.0f seconds)
-        canSkip = (page_timer >= PAGE_MIN_TIME);
-    }
-    else if (page_index == 1) {
-        // Page 1 (Game title): Can skip immediately (no minimum time)
-        canSkip = true;
-    }
+    // Can only skip after PAGE_MIN_TIME(2.0f seconds)
+    canSkip = (page_timer >= PAGE_MIN_TIME);
 
     // Manual skip (spacebar or left mouse button) with cooldown -ths
     if (canSkip && skip_timer >= SKIP_COOLDOWN)
     {
-        if (AEInputCheckTriggered(AEVK_SPACE) || AEInputCheckTriggered(AEVK_LBUTTON))
+        if (AEInputCheckReleased(AEVK_SPACE) || AEInputCheckReleased(AEVK_LBUTTON))
         {
             advanceRequested = true;
             skip_timer = 0.0f;   // reset cooldown

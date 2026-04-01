@@ -67,8 +67,9 @@ void JumpScare_Update()
 {
     if (!jumpScareActive) return;
 
-    // Update timer
-    jumpScareTimer += AEFrameRateControllerGetFrameTime();
+    // Add delta time to timers
+    float dt = (float)AEFrameRateControllerGetFrameTime();
+    jumpScareTimer += dt;
 
     if (jumpScareTimer >= JUMP_SCARE_DURATION)
     {

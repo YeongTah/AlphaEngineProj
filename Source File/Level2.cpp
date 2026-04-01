@@ -1407,20 +1407,20 @@ void Level2_Draw()
     {
         char buf[64];
         std::snprintf(buf, sizeof(buf), "IMMUNE  %.1fs", l2Power.invFrames / 60.0f); // ~60 FPS -ths
-        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 0.8f, 0.90f, 0.90f, 0.20f, 1.0f);     // yellow-ish -ths
+        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 1.0f, 0.90f, 0.90f, 0.20f, 1.0f);     // yellow-ish -ths
     }
     if (l2Power.freezeFrames > 0)
     {
         char buf[64];
         std::snprintf(buf, sizeof(buf), "FREEZE  %.1fs", l2Power.freezeFrames / 60.0f); // ~60 FPS -ths
-        AEGfxPrint(fontId, buf, -0.95f, 0.82f, 0.8f, 0.60f, 0.85f, 1.00f, 1.0f);        // cyan-ish -ths
+        AEGfxPrint(fontId, buf, -0.95f, 0.82f, 1.0f, 0.60f, 0.85f, 1.00f, 1.0f);        // cyan-ish -ths
     }
 
     // Coin counter HUD
     {
         char buf[64];
         std::snprintf(buf, sizeof(buf), "Coins: %d", l2_coinCounter);
-        AEGfxPrint(fontId, buf, -0.95f, 0.90f, 0.8f, 1.00f, 0.85f, 0.10f, 1.0f);
+        AEGfxPrint(fontId, buf, -0.95f, 0.90f, 1.2f, 0.60f, 0.15f, 0.20f, 1.0f);
     }
 
     // ====== Hint: collect a coin before escaping (shown until first coin collected) ======
@@ -1429,7 +1429,7 @@ void Level2_Draw()
         const char* hint = "Coins to escape: 0/1";
         float hw, hh;
         AEGfxGetPrintSize(fontId, hint, 0.7f, &hw, &hh);
-        AEGfxPrint(fontId, hint, -hw * 0.5f, 0.90f, 0.7f, 1.0f, 0.3f, 0.3f, 1.0f); // red, top-center
+        AEGfxPrint(fontId, hint, -hw * 0.5f, 0.90f, 1.2f, 0.60f, 0.15f, 0.20f, 1.0f); // red, top-center
     }
 
     // Treasure box popup message

@@ -203,39 +203,59 @@ void MainMenu_Draw()
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 
-    // Button text (unchanged)
+    // ================ PRINTING OF BUTTON TEXT ================
+
+    // Convery button world positions to normalised device coordinates
     const float titleScale = 1.2f;
+    float btnCenterX_NDC = button_x / 800.0f;
+    float playY_NDC = playbutton_y / 450.0f;
+    float instructY_NDC = instructbutton_y / 450.0f;
+    float creditY_NDC = creditbutton_y / 450.0f;
+    float exitY_NDC = exitbutton_y / 450.0f;
+    // Specific to creator button
+    float createX_NDC = createbutton_x / 800.0f;
+    float createY_NDC = createbutton_y / 450.0f;
 
-    float w = 0.0f, h = 0.0f;
-
-    // Play
+    // --- Play ---
     const char* t0 = "PLAY";
-    AEGfxGetPrintSize(fontId, t0, titleScale, &w, &h);
-    float x0 = -0.5f * w;
-    AEGfxPrint(fontId, t0, x0, 0.2f, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
+    float w0, h0;
+    AEGfxGetPrintSize(fontId, t0, titleScale, &w0, &h0);
+    float playX_NDC = btnCenterX_NDC - w0 * 0.5f;     // Center horizontally
+    float playY_NDC_centered = playY_NDC - h0 * 0.5f; // Center vertically
+    AEGfxPrint(fontId, t0, playX_NDC, playY_NDC_centered, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    // INSTRUCTIONS
+    // --- INSTRUCTIONS ---
     const char* t1 = "INSTRUCTIONS";
-    AEGfxGetPrintSize(fontId, t1, titleScale, &w, &h);
-    float x1 = -0.5f * w;
-    AEGfxPrint(fontId, t1, x1, -0.08f, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
+    float w1, h1;
+    AEGfxGetPrintSize(fontId, t1, titleScale, &w1, &h1);
+    float instructX_NDC = btnCenterX_NDC - w1 * 0.5f;
+    float instructY_NDC_centered = instructY_NDC - h1 * 0.5f;
+    AEGfxPrint(fontId, t1, instructX_NDC, instructY_NDC_centered, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    // CREDITS
+    // --- CREDITS ---
     const char* t2 = "CREDITS";
-    AEGfxGetPrintSize(fontId, t2, titleScale, &w, &h);
-    float x2 = -0.5f * w;
-    AEGfxPrint(fontId, t2, x2, -0.36f, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
+    float w2, h2;
+    AEGfxGetPrintSize(fontId, t2, titleScale, &w2, &h2);
+    float creditX_NDC = btnCenterX_NDC - w2 * 0.5f;
+    float creditY_NDC_centered = creditY_NDC - h2 * 0.5f;
+    AEGfxPrint(fontId, t2, creditX_NDC, creditY_NDC_centered, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    // EXIT
+    // --- EXIT ---
     const char* t3 = "EXIT";
-    AEGfxGetPrintSize(fontId, t3, titleScale, &w, &h);
-    float x3 = -0.5f * w;
-    AEGfxPrint(fontId, t3, x3, -0.63f, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
+    float w3, h3;
+    AEGfxGetPrintSize(fontId, t3, titleScale, &w3, &h3);
+    float exitX_NDC = btnCenterX_NDC - w3 * 0.5f;
+    float exitY_NDC_centered = exitY_NDC - h3 * 0.5f;
+    AEGfxPrint(fontId, t3, exitX_NDC, exitY_NDC_centered, titleScale, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    // CREATOR
+    // --- CREATOR ---
+    const float createScale = 0.8f;
     const char* t4 = "Creator";
-    AEGfxGetPrintSize(fontId, t4, titleScale, &w, &h);
-    AEGfxPrint(fontId, t4, 0.785f, -0.84f, titleScale-0.4f, 1.0f, 1.0f, 1.0f, 1.0f);
+    float w4, h4;
+    AEGfxGetPrintSize(fontId, t4, createScale, &w4, &h4);
+    float createX_NDC_centered = createX_NDC - w4 * 0.5f;
+    float createY_NDC_centered = createY_NDC - h4 * 0.5f;
+    AEGfxPrint(fontId, t4, createX_NDC_centered, createY_NDC_centered, createScale, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 //----------------------------------------------------------------------------
