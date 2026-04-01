@@ -16,7 +16,7 @@ static int instructionLevel = 1;
 static int instructionNextState = GS_LEVEL1;
 
 static float instructionTimer = 0.0f;
-static const float LEVEL_INSTRUCT_TIME = 2.5f;
+static const float LEVEL_INSTRUCT_TIME = 4.0f;
 
 // ------------------------------------------------------------
 // Switch case for the levels to be loaded more easily
@@ -139,8 +139,14 @@ void LevelInstruct_Draw()
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 
-    AEGfxPrint(fontId, "Press Space to skip", -0.16f, -0.80f,
-        0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
+    const float textScale = 0.65f;
+
+    float w = 0.0f, h = 0.0f;
+
+    const char* t0 = "Press SPACE or click to skip";
+    AEGfxGetPrintSize(fontId, t0, textScale, &w, &h);
+    float x0 = -0.5f * w;
+    AEGfxPrint(fontId, t0, x0, -0.78f, textScale, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 // ------------------------------------------------------------

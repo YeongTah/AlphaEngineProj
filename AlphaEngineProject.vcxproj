@@ -15,6 +15,7 @@
     <ClCompile Include="Source File\Confirmation.cpp" />
     <ClCompile Include="Source File\Creator.cpp" />
     <ClCompile Include="Source File\Credits.cpp" />
+    <ClCompile Include="Source File\Effects.cpp" />
     <ClCompile Include="Source File\GameStateManager.cpp" />
     <ClCompile Include="Source File\GridUtils.cpp" />
     <ClCompile Include="Source File\Instructions.cpp" />
@@ -43,6 +44,7 @@
     <ClInclude Include="Source File\Confirmation.h" />
     <ClInclude Include="Source File\Creator.h" />
     <ClInclude Include="Source File\Credits.h" />
+    <ClInclude Include="Source File\Effects.h" />
     <ClInclude Include="Source File\GameStateList.h" />
     <ClInclude Include="Source File\GameStateManager.h" />
     <ClInclude Include="Source File\GridUtils.h" />
@@ -154,7 +156,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmodL.dll" "$(OutDir)" /s /r /y /q</
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Alpha_EngineD.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Alpha_Engine.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Assets\" "$(OutDir)Assets\" /s /r /y /q`
