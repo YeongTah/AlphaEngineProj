@@ -102,6 +102,18 @@ static struct L3PowerState {
 // Returns true if the player is currently invincible (either turn- or frame-based).
 static bool L3IsInvincibleNow() { return l3Power.invincible || (l3Power.invFrames > 0); }
 
+// Helper: returns true if any enemy occupies the given world position -ths
+static bool L3IsCellOccupiedByEnemy(float x, float y)
+{
+    if (fabsf(x - l3_mummy1.x) < 1.0f && fabsf(y - l3_mummy1.y) < 1.0f) return true;
+    if (fabsf(x - l3_mummy2.x) < 1.0f && fabsf(y - l3_mummy2.y) < 1.0f) return true;
+    if (fabsf(x - l3_mummy3.x) < 1.0f && fabsf(y - l3_mummy3.y) < 1.0f) return true;
+    for (int i = 0; i < l3_boxMummyCount; ++i)
+        if (fabsf(x - l3_boxMummies[i].x) < 1.0f && fabsf(y - l3_boxMummies[i].y) < 1.0f)
+            return true;
+    return false;
+}
+
 // ----------------------------------------------------------------------------
 // L3TickPowers
 // Decrements all turn-based powerup counters by 1. Call once per player move.
@@ -516,7 +528,7 @@ static void DrawPauseButton()
     // Left X for centered text
     float leftX = centerNDCX - w * 0.5f;
 
-    // Vertical centering: baseline = center + 20% of text height
+    // Vertical centering: baseline = center + 20% of text height -ths
     AEGfxPrint(fontId, text, leftX, centerNDCY + h * 0.2f, textScale, 1, 1, 1, 1);
 }
 // ----------------------------------------------------------------------------
@@ -850,8 +862,8 @@ void Level3_Update()
     else if (AEInputCheckTriggered(AEVK_A)) { testX -= l3_gridStep; attemptedMove = true; }
     else if (AEInputCheckTriggered(AEVK_D)) { testX += l3_gridStep; attemptedMove = true; }
 
-    if (attemptedMove &&
-        IsTileWalkable(testX, testY))
+    // Player movement: must be walkable -ths
+    if (attemptedMove && IsTileWalkable(testX, testY))
     {
         l3_player.x = testX;
         l3_player.y = testY;
@@ -975,14 +987,24 @@ void Level3_Update()
                 {
                     float nx, ny;
                     GridToWorldCenter(nR[0], nC[0], nx, ny);
-                    // Prevent two mummies from stacking on the same tile
-                    bool blocked = false;
-                    for (int j = 0; j < 3; ++j)
-                        if (j != i && fabsf(mummies[j]->x - nx) < 1.0f && fabsf(mummies[j]->y - ny) < 1.0f)
-                        {
-                            blocked = true; break;
-                        }
-                    if (!blocked) { m.x = nx; m.y = ny; }
+                    // If the target is the player's cell and the player is invincible, skip moving. -ths
+                    int pR, pC;
+                    WorldToGrid(l3_player.x, l3_player.y, pR, pC);
+                    if (nR[0] == pR && nC[0] == pC && L3IsInvincibleNow())
+                    {
+                        // Do nothing
+                    }
+                    else
+                    {
+                        // Prevent two mummies from stacking on the same tile
+                        bool blocked = false;
+                        for (int j = 0; j < 3; ++j)
+                            if (j != i && fabsf(mummies[j]->x - nx) < 1.0f && fabsf(mummies[j]->y - ny) < 1.0f)
+                            {
+                                blocked = true; break;
+                            }
+                        if (!blocked) { m.x = nx; m.y = ny; }
+                    }
                 }
             }
         }
@@ -1059,18 +1081,28 @@ void Level3_Update()
                 float nx, ny;
                 GridToWorldCenter(tr, tc, nx, ny);
 
-                // Block if occupied by a main mummy or another box mummy
-                bool blocked =
-                    (fabsf(l3_mummy1.x - nx) < 1.0f && fabsf(l3_mummy1.y - ny) < 1.0f) ||
-                    (fabsf(l3_mummy2.x - nx) < 1.0f && fabsf(l3_mummy2.y - ny) < 1.0f) ||
-                    (fabsf(l3_mummy3.x - nx) < 1.0f && fabsf(l3_mummy3.y - ny) < 1.0f);
-                for (int j = 0; !blocked && j < l3_boxMummyCount; ++j)
-                    if (j != i &&
-                        fabsf(l3_boxMummies[j].x - nx) < 1.0f &&
-                        fabsf(l3_boxMummies[j].y - ny) < 1.0f)
-                        blocked = true;
+                // If the target is the player's cell and the player is invincible, skip moving. -ths
+                int pR, pC;
+                WorldToGrid(l3_player.x, l3_player.y, pR, pC);
+                if (tr == pR && tc == pC && L3IsInvincibleNow())
+                {
+                    // Do nothing
+                }
+                else
+                {
+                    // Block if occupied by a main mummy or another box mummy
+                    bool blocked =
+                        (fabsf(l3_mummy1.x - nx) < 1.0f && fabsf(l3_mummy1.y - ny) < 1.0f) ||
+                        (fabsf(l3_mummy2.x - nx) < 1.0f && fabsf(l3_mummy2.y - ny) < 1.0f) ||
+                        (fabsf(l3_mummy3.x - nx) < 1.0f && fabsf(l3_mummy3.y - ny) < 1.0f);
+                    for (int j = 0; !blocked && j < l3_boxMummyCount; ++j)
+                        if (j != i &&
+                            fabsf(l3_boxMummies[j].x - nx) < 1.0f &&
+                            fabsf(l3_boxMummies[j].y - ny) < 1.0f)
+                            blocked = true;
 
-                if (!blocked) { bm.x = nx; bm.y = ny; }
+                    if (!blocked) { bm.x = nx; bm.y = ny; }
+                }
             }
         }
     }

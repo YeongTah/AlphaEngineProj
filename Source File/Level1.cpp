@@ -102,6 +102,19 @@ struct BoxMummy { float x, y, size; };
 static BoxMummy gBoxMummies[8];
 static int      gBoxMummyCount = 0;
 
+// Helper: returns true if any enemy occupies the given world position
+static bool IsCellOccupiedByEnemy(float x, float y)
+{
+    // Main mummy
+    if (fabsf(x - mummy.x) < 1.0f && fabsf(y - mummy.y) < 1.0f)
+        return true;
+    // Box mummies
+    for (int i = 0; i < gBoxMummyCount; ++i)
+        if (fabsf(x - gBoxMummies[i].x) < 1.0f && fabsf(y - gBoxMummies[i].y) < 1.0f)
+            return true;
+    return false;
+}
+
 // Treasure box popup message (shown for ~3 seconds after opening a chest)
 static char gPopupMsg[64] = "";  // text to display, empty = no popup
 static int  gPopupFrames = 0;   // counts down at 60fps; popup visible while > 0
@@ -1001,7 +1014,7 @@ void Level1_Update()
     TickFreezeFrames();
     if (gPopupFrames > 0) --gPopupFrames;
 
-    // --- Player movement ---
+    // Player movement -ths
     float testNextX = player.x;
     float testNextY = player.y;
 
@@ -1010,7 +1023,7 @@ void Level1_Update()
     else if (AEInputCheckTriggered(AEVK_A)) testNextX -= gridStep;
     else if (AEInputCheckTriggered(AEVK_D)) testNextX += gridStep;
 
-    bool attemptedMove = (testNextX != player.x || testNextY != player.y); // -ths
+    bool attemptedMove = (testNextX != player.x || testNextY != player.y);
 
     if (attemptedMove && IsTileWalkable(testNextX, testNextY))
     {
@@ -1018,9 +1031,8 @@ void Level1_Update()
         player.y = testNextY;
         playerMoved = true;
 
-        // ====== PLAY MOVEMENT AUDIO ====== -ths
         if (AEAudioIsValidAudio(sfxPlayerMove))
-            AEAudioPlay(sfxPlayerMove, level1Group, 1.0f, 1.0f, 0); // -ths
+            AEAudioPlay(sfxPlayerMove, level1Group, 1.0f, 1.0f, 0);
     }
 
     // Legacy
@@ -1133,19 +1145,30 @@ void Level1_Update()
             int nextR[1], nextC[1];
             if (BFSNextStep(mummyR, mummyC, playerR, playerC, nextR, nextC))
             {
-                // Check the target cell is not occupied by a box mummy
                 float nx, ny;
                 GridToWorldCenter(nextR[0], nextC[0], nx, ny);
-                bool blocked = false;
-                for (int i = 0; i < gBoxMummyCount; ++i)
-                    if (fabsf(gBoxMummies[i].x - nx) < 1.0f && fabsf(gBoxMummies[i].y - ny) < 1.0f)
-                    {
-                        blocked = true; break;
-                    }
-                if (!blocked)
+
+                // If the next step is the player's cell and the player is invincible, skip moving.
+                int pR, pC;
+                WorldToGrid(player.x, player.y, pR, pC);
+                if (nextR[0] == pR && nextC[0] == pC && IsInvincibleNow())
                 {
-                    mummy.x = nx;
-                    mummy.y = ny;
+                    // Do nothing – stay in place
+                }
+                else
+                {
+                    // Check the target cell is not occupied by a box mummy
+                    bool blocked = false;
+                    for (int i = 0; i < gBoxMummyCount; ++i)
+                        if (fabsf(gBoxMummies[i].x - nx) < 1.0f && fabsf(gBoxMummies[i].y - ny) < 1.0f)
+                        {
+                            blocked = true; break;
+                        }
+                    if (!blocked)
+                    {
+                        mummy.x = nx;
+                        mummy.y = ny;
+                    }
                 }
             }
         }
@@ -1212,19 +1235,29 @@ void Level1_Update()
                 float nx, ny;
                 GridToWorldCenter(tr, tc, nx, ny);
 
-                // Don't move onto main mummy or another box mummy
-                bool blocked = (fabsf(mummy.x - nx) < 1.0f && fabsf(mummy.y - ny) < 1.0f);
-                if (!blocked)
-                    for (int j = 0; j < gBoxMummyCount; ++j)
-                        if (j != i && fabsf(gBoxMummies[j].x - nx) < 1.0f && fabsf(gBoxMummies[j].y - ny) < 1.0f)
-                        {
-                            blocked = true; break;
-                        }
-
-                if (!blocked)
+                // If the target is the player's cell and the player is invincible, skip moving.
+                int pR, pC;
+                WorldToGrid(player.x, player.y, pR, pC);
+                if (tr == pR && tc == pC && IsInvincibleNow())
                 {
-                    bm.x = nx;
-                    bm.y = ny;
+                    // Do nothing – stay in place
+                }
+                else
+                {
+                    // Don't move onto main mummy or another box mummy
+                    bool blocked = (fabsf(mummy.x - nx) < 1.0f && fabsf(mummy.y - ny) < 1.0f);
+                    if (!blocked)
+                        for (int j = 0; j < gBoxMummyCount; ++j)
+                            if (j != i && fabsf(gBoxMummies[j].x - nx) < 1.0f && fabsf(gBoxMummies[j].y - ny) < 1.0f)
+                            {
+                                blocked = true; break;
+                            }
+
+                    if (!blocked)
+                    {
+                        bm.x = nx;
+                        bm.y = ny;
+                    }
                 }
             }
         }
@@ -1243,12 +1276,6 @@ void Level1_Update()
         fabsf(player.x - mummy.x) < 1.0f &&
         fabsf(player.y - mummy.y) < 1.0f)
     {
-        // S 22/3: shifted audio to jumpscare and losing screen logic
-        //if (AEAudioIsValidAudio(sfxJumpscare))
-        //    AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
-        //if (AEAudioIsValidAudio(sfxGameOver))
-        //    AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0);
-
         if (!JumpScare_IsActive() && !pendingGameOverReset)
         {
             if (AEAudioIsValidAudio(sfxJumpscare))
@@ -1259,13 +1286,6 @@ void Level1_Update()
             pendingGameOverReset = true; // Mark that we need to reset after jump scare
             std::cout << "CAUGHT! Playing jump scare...\n";
         }
-
-        // S: 22/3 need to move to reset to later else level will reset immediately upon losing,
-        // S: 22/3 causing the jump scare to load AFTER game over scene
-        //ResetLevel1();
-        //printf("Caught by the Mummy! Level Reset!\n");
-        //gShowLose = true;
-        //return; // skip remaining update logic this frame
     }
 
     // ====== TREASURE BOX TOUCH ======
@@ -1284,12 +1304,6 @@ void Level1_Update()
             if (fabsf(player.x - gBoxMummies[i].x) < 1.0f &&
                 fabsf(player.y - gBoxMummies[i].y) < 1.0f)
             {
-                // S 22/3: shifted audio to jumpscare and losing screen logic
-                //if (AEAudioIsValidAudio(sfxJumpscare))
-                //    AEAudioPlay(sfxJumpscare, level1Group, 1.0f, 1.0f, 0);
-                //if (AEAudioIsValidAudio(sfxGameOver))
-                //    AEAudioPlay(sfxGameOver, level1Group, 1.0f, 1.0f, 0);
-
                 if (!JumpScare_IsActive() && !pendingGameOverReset)
                 {
                     if (AEAudioIsValidAudio(sfxJumpscare))
@@ -1300,13 +1314,6 @@ void Level1_Update()
                     pendingGameOverReset = true; // Mark that we need to reset after jump scare
                     std::cout << "CAUGHT! Playing jump scare...\n";
                 }
-
-                // S: 22/3 need to move to reset to later else level will reset immediately upon losing,
-                // S: 22/3 causing the jump scare to load AFTER game over scene
-                //ResetLevel1();
-                //printf("Caught by a Box Mummy! Level Reset!\n");
-                //gShowLose = true;
-                //return; // skip remaining update logic this frame
             }
         }
     }

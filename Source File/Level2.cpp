@@ -1083,11 +1083,22 @@ void Level2_Update()
                 {
                     float nx, ny;
                     GridToWorldCenter(nR[0], nC[0], nx, ny);
-                    // Ensure target cell is not occupied by another main enemy or scorpion
-                    bool blocked =
-                        (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f) ||
-                        (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
-                    if (!blocked) { l2_mummy.x = nx; l2_mummy.y = ny; }
+
+                    // 🛡️ NEW: Invincibility check - prevent moving onto player if immune
+                    int pR, pC;
+                    WorldToGrid(l2_player.x, l2_player.y, pR, pC);
+                    if (nR[0] == pR && nC[0] == pC && L2IsInvincibleNow())
+                    {
+                        // Stay in place this turn
+                    }
+                    else
+                    {
+                        // Ensure target cell is not occupied by another main enemy or scorpion
+                        bool blocked =
+                            (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f) ||
+                            (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
+                        if (!blocked) { l2_mummy.x = nx; l2_mummy.y = ny; }
+                    }
                 }
             }
 
@@ -1099,10 +1110,21 @@ void Level2_Update()
                 {
                     float nx, ny;
                     GridToWorldCenter(nR[0], nC[0], nx, ny);
-                    bool blocked =
-                        (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
-                        (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
-                    if (!blocked) { l2_mummy2.x = nx; l2_mummy2.y = ny; }
+
+                    // 🛡️ NEW: Invincibility check
+                    int pR, pC;
+                    WorldToGrid(l2_player.x, l2_player.y, pR, pC);
+                    if (nR[0] == pR && nC[0] == pC && L2IsInvincibleNow())
+                    {
+                        // Do nothing
+                    }
+                    else
+                    {
+                        bool blocked =
+                            (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
+                            (fabsf(l2_scorpion.x - nx) < 1.0f && fabsf(l2_scorpion.y - ny) < 1.0f);
+                        if (!blocked) { l2_mummy2.x = nx; l2_mummy2.y = ny; }
+                    }
                 }
             }
 
@@ -1114,10 +1136,21 @@ void Level2_Update()
                 {
                     float nx, ny;
                     GridToWorldCenter(nR[0], nC[0], nx, ny);
-                    bool blocked =
-                        (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
-                        (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f);
-                    if (!blocked) { l2_scorpion.x = nx; l2_scorpion.y = ny; }
+
+                    // 🛡️ NEW: Invincibility check
+                    int pR, pC;
+                    WorldToGrid(l2_player.x, l2_player.y, pR, pC);
+                    if (nR[0] == pR && nC[0] == pC && L2IsInvincibleNow())
+                    {
+                        // Do nothing
+                    }
+                    else
+                    {
+                        bool blocked =
+                            (fabsf(l2_mummy.x - nx) < 1.0f && fabsf(l2_mummy.y - ny) < 1.0f) ||
+                            (fabsf(l2_mummy2.x - nx) < 1.0f && fabsf(l2_mummy2.y - ny) < 1.0f);
+                        if (!blocked) { l2_scorpion.x = nx; l2_scorpion.y = ny; }
+                    }
                 }
             }
         }
@@ -1185,6 +1218,14 @@ void Level2_Update()
 
                 float nx, ny;
                 GridToWorldCenter(tr, tc, nx, ny);
+
+                // 🛡️ NEW: Invincibility check for box mummies
+                int pR, pC;
+                WorldToGrid(l2_player.x, l2_player.y, pR, pC);
+                if (tr == pR && tc == pC && L2IsInvincibleNow())
+                {
+                    continue; // Skip moving this box mummy this turn
+                }
 
                 // Block if occupied by a main enemy or another box mummy
                 bool blocked =
@@ -1562,4 +1603,4 @@ void Level2_Unload()
     }
 
     l2_initialised = false;
-}
+} 
