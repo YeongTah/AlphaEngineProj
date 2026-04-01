@@ -19,6 +19,7 @@ Technology is prohibited.
 #include "leveleditor.hpp"
 #include "GridUtils.h"
 #include "Level1.h"
+#include "Effects.h"
 #include "JumpScare.h"
 #include "gamestatemanager.h"
 #include "GameStateList.h"
@@ -182,7 +183,7 @@ static void OpenTreasureBox()
     bool spawnMummy = (AERandFloat() >= 0.5f); // 50/50
 
     if (!spawnMummy)
-    {
+    {    
         // Reward: instant bonus coin
         coinCounter++;
         printf("Treasure Box: COIN! Total coins: %d\n", coinCounter);
@@ -615,6 +616,9 @@ void Level1_Load()
     // ====== ADDED: load treasure box texture ======
     gTreasureBoxTex = AEGfxTextureLoad("Assets/TreasureChest.png");
 
+    // Load particles
+    Particle_Load();
+
     // Load jump scare texture
     JumpScare_Load();
 
@@ -718,6 +722,9 @@ void Level1_Initialize()
 
     // Initialise jump scare
     JumpScare_Init();
+
+    // Initialise particles
+    TrailParticle_Init();
 
     // Force re-initialisation every time (handles restart correctly)
     level1_initialised = false;
@@ -1032,7 +1039,20 @@ void Level1_Update()
         playerMoved = true;
 
         if (AEAudioIsValidAudio(sfxPlayerMove))
-            AEAudioPlay(sfxPlayerMove, level1Group, 1.0f, 1.0f, 0);
+            AEAudioPlay(sfxPlayerMove, level1Group, 1.0f, 1.0f, 0); // -ths
+
+
+        // ====== UPDATE PARTICLES ======
+
+        static float lastTime = 0.0f;
+        float currentTime = (float)AEFrameRateControllerGetFrameTime();
+        float dt = currentTime - lastTime;
+        lastTime = currentTime;
+        //if (dt > 0.033f) dt = 0.033f; // safety clamp
+
+        TrailParticle_Update(dt, player.x, player.y); // animate trail particles
+        TrailParticle_Spawn(player.x, player.y);      // store position for next frame
+
     }
 
     // Legacy
@@ -1561,6 +1581,9 @@ void Level1_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
+    // --- Draw particles ---
+    TrailParticle_Draw();
+
     // --- Jump Scare --- 
     JumpScare_Draw();
 
@@ -1646,6 +1669,9 @@ void Level1_Unload()
     // ------ Unload Jump Scare ------
     JumpScare_Unload();
 
+    // ------ Unload particles ------
+    TrailParticle_Unload();
+
     // ====== Unload treasure box texture ======
     if (gTreasureBoxTex) { AEGfxTextureUnload(gTreasureBoxTex); gTreasureBoxTex = nullptr; }
 
@@ -1711,6 +1737,10 @@ void ResetLevel1()
     // ====== Treasure box: clear spawned mummies and re-place the box ======
     gBoxMummyCount = 0;
     SpawnTreasureBox();
+
+    // Clear particles when resetting level (but keep systems active)
+    TrailParticle_Clear();
+    TrailParticle_Init(); // Re-initialize trail system
 
     // Reset movement tracking
     nextX = player.x;
