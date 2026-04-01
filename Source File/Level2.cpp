@@ -856,50 +856,92 @@ void Level2_Update()
 
     if (l2_paused)
     {
-        // Mouse clicks on pause overlay buttons -ths
-        s32 mxS, myS; TransformScreentoWorld(mxS, myS);
+        // --- Mouse click handling (updated coordinates) ---
+        s32 mxS, myS;
+        TransformScreentoWorld(mxS, myS);
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            // Resume button (0,80) 280x70 -ths
-            if (IsAreaClicked(0.0f, 80.0f, 280.0f, 70.0f, mxS, myS))
+            // Resume (0, 120)
+            if (IsAreaClicked(0.0f, 120.0f, 280.0f, 70.0f, mxS, myS))
             {
                 if (AEAudioIsValidAudio(l2_sfxButton))
                     AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
                 l2_paused = false;
                 return;
             }
-            // Restart button (0,0) 280x70 -ths
-            if (IsAreaClicked(0.0f, 0.0f, 280.0f, 70.0f, mxS, myS))
+            // Restart (0, 40)
+            if (IsAreaClicked(0.0f, 40.0f, 280.0f, 70.0f, mxS, myS))
             {
                 if (AEAudioIsValidAudio(l2_sfxButton))
                     AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
-                next = GS_RESTART;   // use GS_RESTART to reload level -ths
+                next = GS_RESTART;
                 return;
             }
-            // Level Select button (0,-80) 280x70 -ths
-            if (IsAreaClicked(0.0f, -80.0f, 280.0f, 70.0f, mxS, myS))
+            // Level Select (0, -40)
+            if (IsAreaClicked(0.0f, -40.0f, 280.0f, 70.0f, mxS, myS))
             {
                 if (AEAudioIsValidAudio(l2_sfxButton))
                     AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
-                next = LEVELPAGE;
+                Confirmation_Level(GS_LEVEL2, LEVELPAGE, "Are you sure you want to go to Level Select?");
+                next = CONFIRM;
                 return;
             }
-            // Quit button (0,-160) 280x70 -ths
-            if (IsAreaClicked(0.0f, -160.0f, 280.0f, 70.0f, mxS, myS))
+            // Quit (0, -120)
+            if (IsAreaClicked(0.0f, -120.0f, 280.0f, 70.0f, mxS, myS))
             {
                 if (AEAudioIsValidAudio(l2_sfxButton))
                     AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
-                next = GS_QUIT;
+                Confirmation_Level(GS_LEVEL2, GS_QUIT, "Are you sure you want to quit?");
+                next = CONFIRM;
+                return;
+            }
+            // Main Menu (0, -200)
+            if (IsAreaClicked(0.0f, -200.0f, 280.0f, 70.0f, mxS, myS))
+            {
+                if (AEAudioIsValidAudio(l2_sfxButton))
+                    AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+                Confirmation_Level(GS_LEVEL2, MAINMENUSTATE, "Are you sure you want to go to the Main Menu?");
+                next = CONFIRM;
                 return;
             }
         }
 
-        // Keyboard shortcuts (R to restart) -ths
-        if (AEInputCheckReleased(AEVK_R))
+        // --- Keyboard shortcuts for the pause overlay ---
+        if (AEInputCheckReleased(AEVK_P))
         {
-            next = GS_RESTART;
+            l2_paused = false;      // resume
             return;
         }
+        if (AEInputCheckReleased(AEVK_R))
+        {
+            next = GS_RESTART;      // restart the level
+            return;
+        }
+        if (AEInputCheckReleased(AEVK_B))
+        {
+            if (AEAudioIsValidAudio(l2_sfxButton))
+                AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+            Confirmation_Level(GS_LEVEL2, LEVELPAGE, "Are you sure you want to go to Level Select?");
+            next = CONFIRM;
+            return;
+        }
+        if (AEInputCheckReleased(AEVK_M))
+        {
+            if (AEAudioIsValidAudio(l2_sfxButton))
+                AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+            Confirmation_Level(GS_LEVEL2, MAINMENUSTATE, "Are you sure you want to go to the Main Menu?");
+            next = CONFIRM;
+            return;
+        }
+        if (AEInputCheckReleased(AEVK_ESCAPE))
+        {
+            if (AEAudioIsValidAudio(l2_sfxButton))
+                AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
+            Confirmation_Level(GS_LEVEL2, GS_QUIT, "Are you sure you want to quit?");
+            next = CONFIRM;
+            return;
+        }
+
         return; // freeze game logic while paused
     }
 

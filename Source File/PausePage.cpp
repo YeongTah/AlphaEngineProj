@@ -28,16 +28,17 @@ static void DrawRect(float centre_x, float centre_y, float width, float height,
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 }
 
-// Button definitions
+// Button definitions – now with a fifth button for Main Menu
 static struct {
     float x, y, w, h;
     const char* text;
-    int action; // 0=Resume, 1=Restart, 2=LevelSelect, 3=Quit
+    int action; // 0=Resume, 1=Restart, 2=LevelSelect, 3=Quit, 4=MainMenu
 } pauseButtons[] = {
-    {    0.0f,  80.0f, 280.0f, 70.0f, "Resume", 0 },
-    {    0.0f,   0.0f, 280.0f, 70.0f, "Restart", 1 },
-    {    0.0f, -80.0f, 280.0f, 70.0f, "Level Select", 2 },
-    {    0.0f,-160.0f, 280.0f, 70.0f, "Quit", 3 }
+    {    0.0f, 120.0f, 280.0f, 70.0f, "Resume", 0 },
+    {    0.0f,  40.0f, 280.0f, 70.0f, "Restart", 1 },
+    {    0.0f, -40.0f, 280.0f, 70.0f, "Level Select", 2 },
+    {    0.0f,-120.0f, 280.0f, 70.0f, "Quit", 3 },
+    {    0.0f,-200.0f, 280.0f, 70.0f, "Main Menu", 4 }
 };
 static const int pauseBtnCount = sizeof(pauseButtons) / sizeof(pauseButtons[0]);
 
@@ -70,6 +71,7 @@ void PausePage_Update()
         return;
     }
 
+    // Level Select (same as B)
     if (AEInputCheckReleased(AEVK_B))
     {
         if (AEAudioIsValidAudio(sfxButton))
@@ -79,11 +81,21 @@ void PausePage_Update()
         return;
     }
 
+    // Main Menu (new shortcut)
+    if (AEInputCheckReleased(AEVK_M))
+    {
+        if (AEAudioIsValidAudio(sfxButton))
+            AEAudioPlay(sfxButton, pauseGroup, 1.0f, 1.0f, 0);
+        Confirmation_Level(GS_PAUSE, MAINMENUSTATE, "Are you sure you want to go to the Main Menu?");
+        next = CONFIRM;
+        return;
+    }
+
+    // Quit with confirmation
     if (AEInputCheckReleased(AEVK_ESCAPE))
     {
         if (AEAudioIsValidAudio(sfxButton))
             AEAudioPlay(sfxButton, pauseGroup, 1.0f, 1.0f, 0);
-        // Show confirmation before quitting
         Confirmation_Level(GS_PAUSE, GS_QUIT, "Are you sure you want to quit the game?");
         next = CONFIRM;
         return;
@@ -131,6 +143,10 @@ void PausePage_Update()
                     Confirmation_Level(GS_PAUSE, GS_QUIT, "Are you sure you want to quit the game?");
                     next = CONFIRM;
                     break;
+                case 4: // Main Menu
+                    Confirmation_Level(GS_PAUSE, MAINMENUSTATE, "Are you sure you want to go to the Main Menu?");
+                    next = CONFIRM;
+                    break;
                 }
                 return; // Important: exit after handling click
             }
@@ -160,7 +176,7 @@ void PausePage_Draw()
     float w, h;
     const float titleScale = 2.0f;
     AEGfxGetPrintSize(fontId, title, titleScale, &w, &h);
-    AEGfxPrint(fontId, title, -0.5f * w, 0.50f, titleScale, 1, 1, 1, 1);
+    AEGfxPrint(fontId, title, -0.5f * w, 0.55f, titleScale, 1, 1, 1, 1);
 
     // Draw buttons
     for (int i = 0; i < pauseBtnCount; ++i)
@@ -169,22 +185,26 @@ void PausePage_Draw()
             pauseButtons[i].w, pauseButtons[i].h,
             0.4f, 0.4f, 0.4f); // dark gray
 
-        // Center text inside button
+        // Center text horizontally and vertically inside button
         float btnCenterNDCX = pauseButtons[i].x / 800.0f;
         float btnCenterNDCY = pauseButtons[i].y / 450.0f;
 
         float textW, textH;
         const float textScale = 0.9f;
         AEGfxGetPrintSize(fontId, pauseButtons[i].text, textScale, &textW, &textH);
+
+        // Horizontal centering
         float leftX = btnCenterNDCX - textW * 0.5f;
-        float baselineY = btnCenterNDCY + textH * 0.5f;
+        // Vertical centering: use 0.2f multiplier (adjusted for Kenney Mini font)
+        float baselineY = btnCenterNDCY + textH * 0.0f;
+
         AEGfxPrint(fontId, pauseButtons[i].text, leftX, baselineY, textScale,
             1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    // Keyboard shortcuts footer
+    // Keyboard shortcuts footer (updated)
     const float helpScale = 0.65f;
-    const char* help1 = "Keyboard: [P] Resume | [R] Restart | [B] Level Select | [ESC] Quit";
+    const char* help1 = "Keyboard: [P] Resume | [R] Restart | [B] Level Select | [M] Main Menu | [ESC] Quit";
     float helpW, helpH;
     AEGfxGetPrintSize(fontId, help1, helpScale, &helpW, &helpH);
     AEGfxPrint(fontId, help1, -0.5f * helpW, -0.85f, helpScale, 0.8f, 0.8f, 0.8f, 1.0f);

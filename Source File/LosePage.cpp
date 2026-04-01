@@ -150,7 +150,7 @@ void LosePage_Draw()
         const float textScale = 0.9f;
         AEGfxGetPrintSize(fontId, loseButtons[i].text, textScale, &textW, &textH);
         float leftX = btnCenterNDCX - textW * 0.5f;
-        float baselineY = btnCenterNDCY + textH * 0.5f;
+        float baselineY = btnCenterNDCY + textH * 0.0f;
         AEGfxPrint(fontId, loseButtons[i].text, leftX, baselineY, textScale,
             1.0f, 1.0f, 1.0f, 1.0f);
     }
