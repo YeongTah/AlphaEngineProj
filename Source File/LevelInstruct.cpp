@@ -51,7 +51,7 @@ void LevelInstruct_Load()
 
     Level1instruct = AEGfxTextureLoad("Assets/Level1Instructions.png");
     Level2instruct = AEGfxTextureLoad("Assets/Level2Instructions.png");
-    Level3instruct = AEGfxTextureLoad("Assets/Level3Instruct.png");
+    Level3instruct = AEGfxTextureLoad("Assets/Level3Instructions.png");
 
     pMesh = CreateSquareMesh();
 }
