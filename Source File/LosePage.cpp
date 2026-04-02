@@ -6,9 +6,28 @@
 #include "leveleditor.hpp"
 #include "Confirmation.h"
 
+//                                                                --- VARIABLES DECLARATION START HERE ---
 static AEAudio sfxButton;
 static AEAudioGroup loseGroup;
 
+// === BUTTONS ===
+static struct {
+    float x, y, w, h;
+    const char* text;
+    int action; // 0=LevelSelect, 1=Restart, 2=Quit
+} loseButtons[] = {
+    {    0.0f,  60.0f, 280.0f, 70.0f, "Level Select", 0 },
+    {    0.0f, -20.0f, 280.0f, 70.0f, "Restart", 1 },
+    {    0.0f,-100.0f, 280.0f, 70.0f, "Quit", 2 }
+};
+static const int loseBtnCount = sizeof(loseButtons) / sizeof(loseButtons[0]);
+//                                                                --- VARIABLES DECLARATION END HERE ---
+
+// ----------------------------------------------------------------------------
+// DrawRect
+// Draws a solid coloured rectangle using the shared square mesh.
+// Used for the Lose page buttons.
+// ----------------------------------------------------------------------------
 static void DrawRect(float centre_x, float centre_y, float width, float height,
     float r, float g, float b)
 {
@@ -25,17 +44,9 @@ static void DrawRect(float centre_x, float centre_y, float width, float height,
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 }
 
-static struct {
-    float x, y, w, h;
-    const char* text;
-    int action; // 0=LevelSelect, 1=Restart, 2=Quit
-} loseButtons[] = {
-    {    0.0f,  60.0f, 280.0f, 70.0f, "Level Select", 0 },
-    {    0.0f, -20.0f, 280.0f, 70.0f, "Restart", 1 },
-    {    0.0f,-100.0f, 280.0f, 70.0f, "Quit", 2 }
-};
-static const int loseBtnCount = sizeof(loseButtons) / sizeof(loseButtons[0]);
-
+// ----------------------------------------------------------------------------
+// LosePage_Load
+// Loads the square mesh and audio for the Lose page.
 // ----------------------------------------------------------------------------
 void LosePage_Load()
 {
@@ -44,8 +55,17 @@ void LosePage_Load()
     sfxButton = AEAudioLoadSound("Assets/audio/button.wav");
 }
 
+// ----------------------------------------------------------------------------
+// LosePage_Initialize
+// Empty initialisation for the Lose page.
+// ----------------------------------------------------------------------------
 void LosePage_Initialize() {}
 
+// ----------------------------------------------------------------------------
+// LosePage_Update
+// Handles keyboard and mouse input for the Lose page.
+// Actions: Level Select, Restart, Quit – all with confirmation.
+// ----------------------------------------------------------------------------
 void LosePage_Update()
 {
     // Keyboard fallback
@@ -124,6 +144,10 @@ void LosePage_Update()
     }
 }
 
+// ----------------------------------------------------------------------------
+// LosePage_Draw
+// Renders the Lose page overlay: background colour, title, buttons, and footer.
+// ----------------------------------------------------------------------------
 void LosePage_Draw()
 {
     // Background color (dark red)
@@ -163,8 +187,16 @@ void LosePage_Draw()
     AEGfxPrint(fontId, help, -0.5f * helpW, -0.85f, helpScale, 0.8f, 0.8f, 0.8f, 1.0f);
 }
 
+// ----------------------------------------------------------------------------
+// LosePage_Free
+// Empty free function for the Lose page.
+// ----------------------------------------------------------------------------
 void LosePage_Free() {}
 
+// ----------------------------------------------------------------------------
+// LosePage_Unload
+// Unloads audio resources and the shared mesh.
+// ----------------------------------------------------------------------------
 void LosePage_Unload()
 {
     if (AEAudioIsValidAudio(sfxButton))

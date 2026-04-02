@@ -1,5 +1,4 @@
 ﻿#include "pch.h"
-
 #include "leveleditor.hpp"
 #include "GridUtils.h"
 #include "Level1.h"
@@ -34,36 +33,34 @@
 // FOR REGULAR COMMENTING OF CODE E.G., FOR UNDERSTANDING, EXPLAINING WHAT THE CODE DOES, WRITE HOWEVER YOU WISH
 
 // ====================== LEVEL 1 AUDIO VARIABLES ======================
-static AEAudio sfxPlayerMove;     // -ths
-static AEAudio sfxChest;          // -ths
-static AEAudio sfxPowerup;        // -ths
-static AEAudio sfxJumpscare;      // -ths
-static AEAudio sfxExitDoor;       // -ths
-static AEAudio sfxGameOver;       // -ths
+static AEAudio sfxPlayerMove;
+static AEAudio sfxChest;
+static AEAudio sfxPowerup;
+static AEAudio sfxJumpscare;
+static AEAudio sfxExitDoor;
+static AEAudio sfxGameOver;
 static AEAudio sfxButton;
 
-static AEAudioGroup level1Group;  // -ths
+static AEAudioGroup level1Group;
 // =====================================================================
 
+/* Forward declarations to use functions/vars defined in leveleditor.cpp safely without editing headers */
+extern void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol);
+extern void GridToWorldCenter(int row, int col, float& outX, float& outY);
+extern bool canMove(float nextX, float nextY);
+extern int level[18][32];
 
-/* NEW: forward decls to use functions/vars defined in leveleditor.cpp safely without editing headers -ths */
-extern void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol); // -ths
-extern void GridToWorldCenter(int row, int col, float& outX, float& outY); // -ths
-extern bool canMove(float nextX, float nextY); // -ths
-extern int level[18][32]; // -ths
-/*extern int ROWS, COLS; */ // -ths
-
-/* NEW: forward decls to reuse mouse + click helpers (already in your project) -ths */
-extern void TransformScreentoWorld(s32& mouseX, s32& mouseY); // -ths
+/* Forward declarations to reuse mouse + click helpers (already in your project) */
+extern void TransformScreentoWorld(s32& mouseX, s32& mouseY);
 extern bool IsAreaClicked(float area_center_x, float area_center_y, float area_width, float area_height,
-    s32 click_x, s32 click_y); // correct -ths
+    s32 click_x, s32 click_y);
 
 /* Forward declarations for local helpers used by SpawnTreasureBox / OpenTreasureBox */
 static int RandInt(int minV, int maxV);
 static void FindFreeSpawnCell(int startRow, int startCol, float& outX, float& outY,
     int avoidRow = -1, int avoidCol = -1, int minDist = 0, int maxRadius = 15);
 
-// --- Variables declaration start here --- (original)
+//                                                                --- VARIABLES DECLARATION START HERE ---
 static bool level1_initialised = false; // Flag to prevent re-initialisation mid-level
 Entity player; // The player entity (position, size, color, texture)
 Entity mummy; // The main enemy mummy entity
@@ -80,7 +77,6 @@ bool playerMoved = false; // Set to true when the player makes a valid move this
 float gridStep = 50.0f; // World units per one grid cell step (matches GRID_TILE_SIZE)
 float nextX = player.x; // Stores the player's proposed next X position before validation
 float nextY = player.y; // Stores the player's proposed next Y position before validation
-
 //                                                                --- VARIABLES DECLARATION END HERE  ---
 
 // ========================== TREASURE BOX SYSTEM ===========================
@@ -99,19 +95,6 @@ static AEGfxTexture* gTreasureBoxTex = nullptr; // TreasureBox.png (or fallback 
 struct BoxMummy { float x, y, size; };
 static BoxMummy gBoxMummies[8];
 static int      gBoxMummyCount = 0;
-
-// Helper: returns true if any enemy occupies the given world position
-/*static bool IsCellOccupiedByEnemy(float x, float y)
-{
-    // Main mummy
-    if (fabsf(x - mummy.x) < 1.0f && fabsf(y - mummy.y) < 1.0f)
-        return true;
-    // Box mummies
-    for (int i = 0; i < gBoxMummyCount; ++i)
-        if (fabsf(x - gBoxMummies[i].x) < 1.0f && fabsf(y - gBoxMummies[i].y) < 1.0f)
-            return true;
-    return false;
-}*/
 
 // Treasure box popup message (shown for ~3 seconds after opening a chest)
 static char gPopupMsg[64] = "";  // text to display, empty = no popup
@@ -180,7 +163,7 @@ static void OpenTreasureBox()
     bool spawnMummy = (AERandFloat() >= 0.5f); // 50/50
 
     if (!spawnMummy)
-    {    
+    {
         // Reward: instant bonus coin
         coinCounter++;
         printf("Treasure Box: COIN! Total coins: %d\n", coinCounter);
@@ -214,36 +197,32 @@ static void OpenTreasureBox()
             gPopupFrames = 240; // show for ~3 seconds
         }
     }
-
 }
 
 // Powerup tile values encoded in the level[][] grid (set via level editor).
 // These values are read in Level1_Update when the player steps on their tile.
 enum PowerTile {
-    TILE_POWER_SPEED = 5, // Grants +1 extra tile per move for 4 turns -ths
-    TILE_POWER_FREEZE = 6, // Enemies skip moving for 3 turns -ths
-    TILE_POWER_INVINCIBLE = 7, // Player ignores enemy touch for 4 turns (turn-based) -ths
-    TILE_POWER_GOLD_5S = 8 // Black buff block: ~5 seconds frame-based invincibility -ths
+    TILE_POWER_SPEED = 5,      // Grants +1 extra tile per move for 4 turns
+    TILE_POWER_FREEZE = 6,     // Enemies skip moving for 3 turns
+    TILE_POWER_INVINCIBLE = 7, // Player ignores enemy touch for 4 turns (turn-based)
+    TILE_POWER_GOLD_5S = 8     // Black buff block: ~5 seconds frame-based invincibility
 };
 
 // Tracks all active powerup durations for the player this level session.
 static struct PowerState {
-    bool speed = false; int speedTurns = 0; // Speed boost state & remaining turns -ths
-    bool freeze = false; int freezeTurns = 0; // Freeze state & remaining turns -ths
-    bool invincible = false; int invTurns = 0; // Turn-based invincibility -ths
-    int invFrames = 0; // Frame-countdown invincibility (~300 frames = ~5 seconds) -ths
+    bool speed = false; int speedTurns = 0; // Speed boost state & remaining turns
+    bool freeze = false; int freezeTurns = 0; // Freeze state & remaining turns
+    bool invincible = false; int invTurns = 0; // Turn-based invincibility
+    int invFrames = 0; // Frame-countdown invincibility (~300 frames = ~5 seconds)
 
-    // ===================== ADDED: frame-based freeze (3 seconds) ===================== -ths
-    int freezeFrames = 0; // Counts down in frames for real-time freeze (~180 @60fps) -ths
+    // Frame-based freeze (3 seconds)
+    int freezeFrames = 0; // Counts down in frames for real-time freeze (~180 @60fps)
 } gPower;
 
-// Powerup grant helpers -- call these to activate the matching powerup -ths
-//static void GiveSpeed(int turns) { gPower.speed = true; gPower.speedTurns = turns; }
-//static void GiveFreeze(int turns) { gPower.freeze = true; gPower.freezeTurns = turns; }
-//static void GiveInvincibleTurns(int turns) { gPower.invincible = true; gPower.invTurns = turns; }
+// Powerup grant helper -- activate frame-based invincibility
 static void GiveInvincibleFrames(int frames) { if (frames > gPower.invFrames) gPower.invFrames = frames; }
 
-// Returns true if the player is currently protected from any enemy (either turn- or frame-based). -ths
+// Returns true if the player is currently protected from any enemy (either turn- or frame-based).
 static bool IsInvincibleNow() { return gPower.invincible || (gPower.invFrames > 0); }
 
 // ----------------------------------------------------------------------------
@@ -267,28 +246,39 @@ static void TickPowers()
 // ----------------------------------------------------------------------------
 static void TickFramePowers()
 {
-    if (gPower.invFrames > 0) --gPower.invFrames; // counts down at 60 FPS; set to 300 for ~5 seconds -ths
+    if (gPower.invFrames > 0) --gPower.invFrames; // counts down at 60 FPS; set to 300 for ~5 seconds
 }
 
-// ===================== ADDED: TickFreezeFrames (real-time freeze) ===================== -ths
-static void TickFreezeFrames() { if (gPower.freezeFrames > 0) --gPower.freezeFrames; } // -ths
+// ----------------------------------------------------------------------------
+// TickFreezeFrames
+// Decrements the frame-based freeze counter by 1 per frame.
+// Call this every Update frame.
+// ----------------------------------------------------------------------------
+static void TickFreezeFrames() { if (gPower.freezeFrames > 0) --gPower.freezeFrames; }
 
-// ===================== ADDED: Random Power-Up Entity & helpers ===================== -ths
-enum PowerupType { PWR_IMMUNE = 0, PWR_FREEZE = 1 }; // -ths
-static Entity gPowerup;                // power-up pickup on the map -ths
-static bool   gPowerupActive = false;  // active flag -ths
-static int    gPowerupType = PWR_IMMUNE; // current type -ths
-static AEGfxTexture* gImmuneTex = nullptr; // Immune.png -ths
-static AEGfxTexture* gFreezeTex = nullptr; // Freeze.png -ths
+// ========================== RANDOM POWER-UP ENTITY ==========================
+enum PowerupType { PWR_IMMUNE = 0, PWR_FREEZE = 1 };
+static Entity gPowerup;                // power-up pickup on the map
+static bool   gPowerupActive = false;  // active flag
+static int    gPowerupType = PWR_IMMUNE; // current type
+static AEGfxTexture* gImmuneTex = nullptr; // Immune.png
+static AEGfxTexture* gFreezeTex = nullptr; // Freeze.png
 
-// Returns a random integer in [min, max] using engine RNG -ths
+// ----------------------------------------------------------------------------
+// RandInt
+// Returns a random integer in [min, max] using engine RNG.
+// ----------------------------------------------------------------------------
 static int RandInt(int minV, int maxV)
 {
-    float t = AERandFloat(); // [0..1] -ths
+    float t = AERandFloat(); // [0..1]
     int span = (maxV - minV + 1);
     return minV + (int)(t * (float)span);
 }
 
+// ----------------------------------------------------------------------------
+// SpawnRandomPowerup
+// Places a random power-up (immune or freeze) on a free cell near the player.
+// ----------------------------------------------------------------------------
 static void SpawnRandomPowerup()
 {
     gPowerupType = (AERandFloat() < 0.5f) ? PWR_IMMUNE : PWR_FREEZE;
@@ -359,11 +349,13 @@ static void SpawnRandomPowerup()
     }
     gPowerupActive = false;
 }
-// ========================== NEW: overlay flags + button layout (file-scope) =======================
-static bool gPaused = false; // True while P-key pause is active; Update skips game logic -ths
-static bool gShowLose = false; // True while the Lose overlay is displayed -ths
-static bool gShowWin = false; // True while the Win overlay is displayed -ths
-// World-space center positions and dimensions for Retry / Exit buttons on overlays -ths
+
+// ========================== OVERLAY FLAGS + BUTTON LAYOUT ==========================
+static bool gPaused = false; // True while P-key pause is active; Update skips game logic
+static bool gShowLose = false; // True while the Lose overlay is displayed
+static bool gShowWin = false; // True while the Win overlay is displayed
+
+// World-space center positions and dimensions for Retry / Exit buttons on overlays
 static float kBtnRetryX = -200.0f;
 static float kBtnRetryY = -130.0f;
 static float kBtnExitX = 200.0f;
@@ -371,12 +363,10 @@ static float kBtnExitY = -130.0f;
 static float kBtnW = 280.0f;
 static float kBtnH = 90.0f;
 
-// ========================== Treasure box popup message ==========================
-
-// ========================== NEW: world<- >NDC helpers & UI draw helpers ============================
-// Converts a world X coordinate to Normalized Device Coordinates [-1, 1]. -ths
+// ========================== WORLD <-> NDC HELPERS & UI DRAW HELPERS ==========================
+// Converts a world X coordinate to Normalized Device Coordinates [-1, 1].
 static inline float ToNDCX(float worldX) { return worldX / ((float)AEGfxGetWindowWidth() * 0.5f); }
-// Converts a world Y coordinate to Normalized Device Coordinates [-1, 1]. -ths
+// Converts a world Y coordinate to Normalized Device Coordinates [-1, 1].
 static inline float ToNDCY(float worldY) { return worldY / ((float)AEGfxGetWindowHeight() * 0.5f); }
 
 // ----------------------------------------------------------------------------
@@ -387,12 +377,12 @@ static inline float ToNDCY(float worldY) { return worldY / ((float)AEGfxGetWindo
 // ----------------------------------------------------------------------------
 float CenteredTextX(float centerWorldX, const char* text, float scale)
 {
-    const float ndcPerChar = 0.0165f * scale; // empirically tuned for Roboto@32 -ths
+    const float ndcPerChar = 0.0165f * scale; // empirically tuned for Roboto@32
     float halfText = 0.5f * ndcPerChar * (float)std::strlen(text);
-    return ToNDCX(centerWorldX) - halfText; // left-x for AEGfxPrint -ths
+    return ToNDCX(centerWorldX) - halfText; // left-x for AEGfxPrint
 }
 
-// ========================== NEW: Save / Load (local) ==============================================
+// ========================== SAVE / LOAD (LOCAL) ==========================
 // ----------------------------------------------------------------------------
 // SaveLevel1State
 // Writes the current Level 1 runtime state (player position, counters, active
@@ -400,7 +390,6 @@ float CenteredTextX(float centerWorldX, const char* text, float scale)
 // Returns true on success, false if the file cannot be opened.
 // Triggered by F5 in Level1_Update.
 // ----------------------------------------------------------------------------
-
 static bool SaveLevel1State(const char* path)
 {
     std::ofstream f(path);
@@ -492,50 +481,6 @@ static bool LoadLevel1State(const char* path)
     return true;
 }
 
-// ========================== NEW: ensure at least one buff tile (8) exists =========================
-// ----------------------------------------------------------------------------
-// HasBuffTile8
-// Scans the entire level[][] grid and returns true if any cell has value 8
-// (the black immunity buff block).
-// ----------------------------------------------------------------------------
-/*static bool HasBuffTile8()
-{
-    for (int r = 0; r < GRID_ROWS; ++r)
-        for (int c = 0; c < GRID_COLS; ++c)
-            if (level[r][c] == 8) return true;
-    return false;
-}*/
-
-// ----------------------------------------------------------------------------
-// EnsureBuffTilePresent
-// Guarantees that at least one tile-value-8 (immunity buff) exists in the grid.
-// If none is found, it searches outward from the grid center for an empty cell
-// (value 0) and places a buff tile there, then saves it to the level file.
-// Falls back to forcing the center cell if no empty cell is found nearby.
-// Called during Level1_Load to enforce the design requirement.
-// ----------------------------------------------------------------------------
-/*static void EnsureBuffTilePresent()
-{
-    if (HasBuffTile8()) return; // buff already in level, nothing to do -ths
-    int midR = GRID_ROWS / 2, midC = GRID_COLS / 2;
-    for (int dr = -2; dr <= 2; ++dr)
-    {
-        for (int dc = -2; dc <= 2; ++dc)
-        {
-            int rr = midR + dr, cc = midC + dc;
-            if (rr >= 0 && rr < GRID_ROWS && cc >= 0 && cc < GRID_COLS && level[rr][cc] == 0)
-            {
-                level[rr][cc] = 8; // place black buff tile -ths
-                print_file(); // persist the change to the .txt file -ths
-                return;
-            }
-        }
-    }
-    // Fallback: force center cell if no empty cell was found -ths
-    level[midR][midC] = 8;
-    print_file();
-}*/
-
 // ----------------------------------------------------------------------------
 // LoadLevelTxt <-- THIS IS THE FUNCTION THAT READS THE LEVEL FILE
 // Reads "Assets/level1.txt" and fills the shared level[GRID_ROWS][GRID_COLS]
@@ -588,7 +533,7 @@ static void LoadLevelTxt()
 // Responsibilities:
 // 1. Calls LoadLevelTxt() to populate level[][] from "Assets/level1.txt".
 // 2. Loads all textures needed for this level (player, wall, floor, mummy,
-// coin, exit portal).
+//    coin, exit portal).
 // 3. Creates the shared pMesh (unit square) used for all rendering.
 // 4. Initialises the treasure box state (actual spawn happens in Initialize).
 // ----------------------------------------------------------------------------
@@ -596,20 +541,19 @@ void Level1_Load()
 {
     std::cout << "Level1:Load\n";
 
-    // ===================== AUDIO LOAD FOR LEVEL 1 ======================= // -ths
-    // Create an audio group for Level1 sounds                             // -ths
-    level1Group = AEAudioCreateGroup();                                    // -ths
+    // ===================== AUDIO LOAD FOR LEVEL 1 =======================
+    // Create an audio group for Level1 sounds
+    level1Group = AEAudioCreateGroup();
 
-    // Load sound effects                                                   // -ths
-    sfxPlayerMove = AEAudioLoadSound("Assets/audio/player.wav");           // -ths
-    sfxChest = AEAudioLoadSound("Assets/audio/chest.wav");            // -ths
-    sfxPowerup = AEAudioLoadSound("Assets/audio/powerup.wav");          // -ths
-    //sfxButton   = AEAudioLoadSound("Assets/audio/button.wav");
-    sfxJumpscare = AEAudioLoadSound("Assets/audio/jumpscare.wav");        // -ths
-    sfxExitDoor = AEAudioLoadSound("Assets/audio/exit.wav");             // -ths
-    sfxGameOver = AEAudioLoadSound("Assets/audio/gameover.wav");         // -ths
+    // Load sound effects
+    sfxPlayerMove = AEAudioLoadSound("Assets/audio/player.wav");
+    sfxChest = AEAudioLoadSound("Assets/audio/chest.wav");
+    sfxPowerup = AEAudioLoadSound("Assets/audio/powerup.wav");
+    sfxJumpscare = AEAudioLoadSound("Assets/audio/jumpscare.wav");
+    sfxExitDoor = AEAudioLoadSound("Assets/audio/exit.wav");
+    sfxGameOver = AEAudioLoadSound("Assets/audio/gameover.wav");
     sfxButton = AEAudioLoadSound("Assets/audio/button.wav");
-    // ==================================================================== // -ths
+    // ====================================================================
 
     // Step 1: Load the tile map from disk into level[][]
     LoadLevelTxt();
@@ -622,11 +566,11 @@ void Level1_Load()
     coin.pTex = AEGfxTextureLoad("Assets/Coin.png");           // legacy coin texture
     exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png");     // exit portal texture
 
-    // ====== ADDED: load power-up textures (immune / freeze) ====== -ths
-    gImmuneTex = AEGfxTextureLoad("Assets/Immune.png"); // -ths
-    gFreezeTex = AEGfxTextureLoad("Assets/Freeze.png"); // -ths
+    // Load power-up textures (immune / freeze)
+    gImmuneTex = AEGfxTextureLoad("Assets/Immune.png");
+    gFreezeTex = AEGfxTextureLoad("Assets/Freeze.png");
 
-    // ====== ADDED: load treasure box texture ======
+    // Load treasure box texture
     gTreasureBoxTex = AEGfxTextureLoad("Assets/TreasureChest.png");
 
     // Load jump scare texture
@@ -703,7 +647,7 @@ static void FindFreeSpawnCell(int startRow, int startCol, float& outX, float& ou
 // 3. Sizes and positions all entities:
 // - Player : FindFreeSpawnCell starting at center-left (row GRID_ROWS/2, col 4)
 // - Mummy : FindFreeSpawnCell starting at top-right corner, at least 10 cells
-// (Manhattan) away from the player
+//   (Manhattan) away from the player
 // - Exit : FindFreeSpawnCell at center-right (col GRID_COLS-5)
 // - Coin : FindFreeSpawnCell at grid center
 // - Wall : Legacy fixed position (no longer used for collision)
@@ -716,10 +660,10 @@ void Level1_Initialize()
     std::cout << "Level1:Initialize\n";
 
     // =============================================================
-    // STOP ALL PREVIOUS AUDIO (stops MainMenu BGM completely) // -ths
+    // STOP ALL PREVIOUS AUDIO (stops MainMenu BGM completely)
     // =============================================================
 
-    // ============================================================= // -ths
+    // =============================================================
 
     // Always reset powerups and overlays on every (re)entry
     gPower = {};
@@ -727,8 +671,8 @@ void Level1_Initialize()
     gShowLose = false;
     gShowWin = false;
 
-    // ======= ADDED: clear frame-based freeze each entry ======= -ths
-    gPower.freezeFrames = 0; // -ths
+    // Clear frame-based freeze each entry
+    gPower.freezeFrames = 0;
 
     // Initialise jump scare
     JumpScare_Init();
@@ -785,10 +729,10 @@ void Level1_Initialize()
         coin.g = 0.5f;
         coin.b = 0.0f; // orange tint
 
-        // ====== ADDED: spawn a random power-up at a free cell ====== -ths
-        SpawnRandomPowerup(); // -ths
+        // Spawn a random power-up at a free cell
+        SpawnRandomPowerup();
 
-        // ====== Initialise treasure box (gridStep is now set) ======
+        // Initialise treasure box (gridStep is now set)
         gBoxMummyCount = 0;
         SpawnTreasureBox();
 
@@ -809,8 +753,8 @@ void Level1_Initialize()
 
         level1_initialised = true;
     }
-
 }
+
 // ----------------------------------------------------------------------------
 // Level1_Update
 // Called every frame during the Level 1 game loop.
@@ -818,21 +762,21 @@ void Level1_Initialize()
 // 1. Legacy level1_counter decrement -- transitions to MAINMENUSTATE at 0.
 // 2. Back (B) and Quit (ESC) key handling.
 // 3. Win/Lose overlay input (mouse click on Retry/Exit buttons, R, ENTER, Q).
-// Returns early -- game logic is frozen while overlays are visible.
+//    Returns early -- game logic is frozen while overlays are visible.
 // 4. Pause toggle (P) -- returns early when paused.
 // 5. Save (F5) / Load (F9) to/from "Assets/save1.txt".
 // 6. Player movement: WASD triggers a candidate position; IsTileWalkable()
-// validates it against the grid before applying.
+//    validates it against the grid before applying.
 // 7. Per-turn logic (runs only when playerMoved == true):
-// a. Coin collection: if level[r][c] == 4, remove tile and add to counter.
-// b. Mummy AI: every 2nd turn, move mummy one step horizontally then
-// vertically toward the player (axis-priority chase), using canMove()
-// to respect walls.
-// c. TickPowers() -- decrement turn-based powerup durations.
+//    a. Coin collection: if level[r][c] == 4, remove tile and add to counter.
+//    b. Mummy AI: every 2nd turn, move mummy one step horizontally then
+//       vertically toward the player (axis-priority chase), using canMove()
+//       to respect walls.
+//    c. TickPowers() -- decrement turn-based powerup durations.
 // 8. Lose check: if player and mummy share the same cell (and player has moved
-// at least once and is not invincible), call ResetLevel1() and show lose overlay.
-// Also checks box mummies spawned by the treasure box.
-// Jump Scare is also shown.
+//    at least once and is not invincible), call ResetLevel1() and show lose overlay.
+//    Also checks box mummies spawned by the treasure box.
+//    Jump Scare is also shown.
 // 9. Win check: if player reaches exitPortal cell, set next = GS_WIN.
 // 10. Legacy coin entity collect (moves coin off-screen on contact).
 // ----------------------------------------------------------------------------
@@ -854,28 +798,27 @@ void Level1_Update()
         next = GS_QUIT;
     }
 
-
-    // ==================== WIN / LOSE OVERLAY HANDLING ==================== // -ths
+    // ==================== WIN / LOSE OVERLAY HANDLING ====================
     if (gShowLose || gShowWin)
     {
         s32 mxS, myS; TransformScreentoWorld(mxS, myS);
         if (AEInputCheckReleased(AEVK_LBUTTON))
         {
-            // Level Select button (0,60) 280x70 -ths
+            // Level Select button (0,60) 280x70
             if (IsAreaClicked(0.0f, 60.0f, 280.0f, 70.0f, mxS, myS))
             {
                 next = LEVELPAGE;
                 gShowLose = gShowWin = false;
                 return;
             }
-            // Restart button (0,-20) 280x70 -ths
+            // Restart button (0,-20) 280x70
             if (IsAreaClicked(0.0f, -20.0f, 280.0f, 70.0f, mxS, myS))
             {
                 next = GS_LEVEL1;
                 gShowLose = gShowWin = false;
                 return;
             }
-            // Quit button (0,-100) 280x70 -ths
+            // Quit button (0,-100) 280x70
             if (IsAreaClicked(0.0f, -100.0f, 280.0f, 70.0f, mxS, myS))
             {
                 next = GS_QUIT;
@@ -884,7 +827,7 @@ void Level1_Update()
             }
         }
 
-        // Keyboard handling with confirmation (unchanged) -ths
+        // Keyboard handling with confirmation (unchanged)
         if (AEInputCheckReleased(AEVK_R))
         {
             if (AEAudioIsValidAudio(sfxButton))
@@ -910,10 +853,10 @@ void Level1_Update()
         }
         return; // freeze game logic
     }
+
     // =========================================================================
-    // ADDED: PAUSE BUTTON CLICK DETECTION (top-right corner) -ths
+    // PAUSE BUTTON CLICK DETECTION (top-right corner)
     // =========================================================================
-    // --- Pause overlay handling ---
     {
         s32 mxS, myS; TransformScreentoWorld(mxS, myS);
         if (AEInputCheckReleased(AEVK_LBUTTON))
@@ -921,13 +864,14 @@ void Level1_Update()
             if (IsAreaClicked(750.0f, 420.0f, 80.0f, 40.0f, mxS, myS))
             {
                 // Play click sound (use level‑specific sfxButton)
-                if (AEAudioIsValidAudio(sfxButton))   // for Level1 use sfxButton, for Level2 use l2_sfxButton, etc.
+                if (AEAudioIsValidAudio(sfxButton))
                     AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
                 gPaused = true;                       // toggle pause overlay
                 return;
             }
         }
     }
+
     if (gPaused)
     {
         // --- Mouse click handling (updated coordinates) ---
@@ -1026,12 +970,12 @@ void Level1_Update()
     // --- Debug overlay toggle (F1) ---
     Debug_HandleToggle();
 
-    // ====== Frame counters ====== -ths
+    // ====== Frame counters ======
     TickFramePowers();
     TickFreezeFrames();
     if (gPopupFrames > 0) --gPopupFrames;
 
-    // Player movement -ths
+    // Player movement
     float testNextX = player.x;
     float testNextY = player.y;
 
@@ -1052,18 +996,14 @@ void Level1_Update()
             AEAudioPlay(sfxPlayerMove, level1Group, 1.0f, 1.0f, 0);
     }
 
-    // Legacy
-    //bool playerWallCollision = (fabsf(testNextX - wall.x) < (player.size / 2.0f + wall.size / 2.0f)) &&
-    //   (fabsf(testNextY - wall.y) < (player.size / 2.0f + wall.size / 2.0f));
-
-    // ======= POWER-UP PICKUP ======= -ths
+    // ======= POWER-UP PICKUP =======
     if (gPowerupActive &&
         fabsf(player.x - gPowerup.x) < 1.0f &&
         fabsf(player.y - gPowerup.y) < 1.0f)
     {
-        // Play powerup audio -ths
+        // Play powerup audio
         if (AEAudioIsValidAudio(sfxPowerup))
-            AEAudioPlay(sfxPowerup, level1Group, 1.0f, 1.0f, 0); // -ths
+            AEAudioPlay(sfxPowerup, level1Group, 1.0f, 1.0f, 0);
 
         if (gPowerupType == PWR_IMMUNE)
         {
@@ -1091,7 +1031,7 @@ void Level1_Update()
             std::cout << "Collected! Coins: " << coinCounter << "\n";
         }
 
-        // Enemy freeze stop -ths
+        // Enemy freeze stop
         if (turnCounter != 0 && gPower.freezeFrames <= 0)
         {
             // ---- BFS: find the next step toward the player ----
@@ -1350,15 +1290,15 @@ void Level1_Update()
         return; // skip remaining update logic this frame
     }
 
-    // ====== EXIT PORTAL WIN ====== -ths
+    // ====== EXIT PORTAL WIN ======
     if (fabsf(player.x - exitPortal.x) < 1.0f &&
         fabsf(player.y - exitPortal.y) < 1.0f)
     {
         if (coinCounter >= 1)
         {
-            // Play exit-door audio -ths
+            // Play exit-door audio
             if (AEAudioIsValidAudio(sfxExitDoor))
-                AEAudioPlay(sfxExitDoor, level1Group, 1.0f, 1.0f, 0); // -ths
+                AEAudioPlay(sfxExitDoor, level1Group, 1.0f, 1.0f, 0);
 
             printf("You Escaped the Maze!\n");
             level1_counter = 0;
@@ -1384,7 +1324,7 @@ void Level1_Update()
 }
 
 // ============================================================================
-// DrawPauseButton - draws a gray rectangle and centers "PAUSE" text inside it -ths
+// DrawPauseButton - draws a gray rectangle and centers "PAUSE" text inside it
 // ============================================================================
 static void DrawPauseButton()
 {
@@ -1402,7 +1342,7 @@ static void DrawPauseButton()
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
     // ---- Center the "PAUSE" text inside the button ----
-    const float textScale = 0.65f;        // <-- changed from 0.8f
+    const float textScale = 0.65f;
     const char* text = "PAUSE";
 
     // Get text dimensions in NDC
@@ -1419,12 +1359,13 @@ static void DrawPauseButton()
     // Print text centered over the button
     AEGfxPrint(fontId, text, leftX, centerNDCY, textScale, 1, 1, 1, 1);
 }
+
 // ----------------------------------------------------------------------------
 // Level1_Draw
 // Called every frame to render Level 1.
 // Rendering order (back to front):
 // 1. If a Lose/Win/Pause overlay is active, delegate to its draw function
-// and return immediately (the overlay covers the whole screen).
+//    and return immediately (the overlay covers the whole screen).
 // 2. Floor: iterate all cells with value == 0 and draw gFloorTex.
 // 3. Walls: iterate all cells with value == 1 and draw gDesertBlockTex.
 // 4. Player: texture at (player.x, player.y) sized player.size x player.size.
@@ -1484,8 +1425,8 @@ void Level1_Draw()
         }
     }
 
-    // ====== ADDED: Draw coin tiles (value 4) ====== -ths
-    AEGfxTextureSet(coin.pTex, 0, 0);  // use the coin texture -ths
+    // Draw coin tiles (value 4)
+    AEGfxTextureSet(coin.pTex, 0, 0);
     for (int row = 0; row < GRID_ROWS; row++)
     {
         for (int col = 0; col < GRID_COLS; col++)
@@ -1494,7 +1435,7 @@ void Level1_Draw()
             {
                 float x, y;
                 GridToWorldCenter(row, col, x, y);
-                AEMtx33Scale(&scale, coin.size, coin.size); // use coin.size to stay in sync with editor and legacy coin -ths
+                AEMtx33Scale(&scale, coin.size, coin.size);
                 AEMtx33Trans(&trans, x, y);
                 AEMtx33Concat(&transform, &trans, &scale);
                 AEGfxSetTransform(transform.m);
@@ -1559,15 +1500,15 @@ void Level1_Draw()
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 
-    // ======= POWERUP DRAWING ======= -ths
+    // ======= POWERUP DRAWING =======
     if (gPowerupActive)
     {
-        AEGfxTextureSet((gPowerupType == PWR_IMMUNE) ? gImmuneTex : gFreezeTex, 0, 0); // -ths
-        AEMtx33Scale(&scale, gPowerup.size, gPowerup.size); // -ths
-        AEMtx33Trans(&trans, gPowerup.x, gPowerup.y);       // -ths
-        AEMtx33Concat(&transform, &trans, &scale);          // -ths
-        AEGfxSetTransform(transform.m);                     // -ths
-        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);         // -ths
+        AEGfxTextureSet((gPowerupType == PWR_IMMUNE) ? gImmuneTex : gFreezeTex, 0, 0);
+        AEMtx33Scale(&scale, gPowerup.size, gPowerup.size);
+        AEMtx33Trans(&trans, gPowerup.x, gPowerup.y);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 
     // --- Exit portal ---
@@ -1581,18 +1522,18 @@ void Level1_Draw()
     // --- Jump Scare --- 
     JumpScare_Draw();
 
-    // ===== HUD FOR ACTIVE POWER-UPS ===== -ths
+    // ===== HUD FOR ACTIVE POWER-UPS =====
     if (gPower.invFrames > 0)
     {
         char buf[64];
-        std::snprintf(buf, sizeof(buf), "IMMUNE  %.1fs", gPower.invFrames / 60.0f); // -ths
-        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 1.0f, 0.90f, 0.90f, 0.20f, 1.0f);     // -ths
+        std::snprintf(buf, sizeof(buf), "IMMUNE  %.1fs", gPower.invFrames / 60.0f);
+        AEGfxPrint(fontId, buf, -0.95f, 0.74f, 1.0f, 0.90f, 0.90f, 0.20f, 1.0f);
     }
     if (gPower.freezeFrames > 0)
     {
         char buf[64];
-        std::snprintf(buf, sizeof(buf), "FREEZE  %.1fs", gPower.freezeFrames / 60.0f); // -ths
-        AEGfxPrint(fontId, buf, -0.95f, 0.82f, 1.0f, 0.60f, 0.85f, 1.00f, 1.0f);       // -ths
+        std::snprintf(buf, sizeof(buf), "FREEZE  %.1fs", gPower.freezeFrames / 60.0f);
+        AEGfxPrint(fontId, buf, -0.95f, 0.82f, 1.0f, 0.60f, 0.85f, 1.00f, 1.0f);
     }
 
     // ====== Coin counter HUD (just below immunity/freeze stack) ======
@@ -1623,34 +1564,34 @@ void Level1_Draw()
     }
 
     // ====================================================================
-    // ADD: Top‑right PAUSE BUTTON (Draw only during gameplay) -ths
+    // Top‑right PAUSE BUTTON (Draw only during gameplay)
     // ====================================================================
-    DrawPauseButton();   // renders the pause button using helper from earlier -ths
+    DrawPauseButton();   // renders the pause button using helper from earlier
 
     // ---- Debug overlay: fill info struct and call shared draw function ----
     // Press F1 in-game to toggle on / off.
     if (Debug_IsActive())
     {
         DebugEntityInfo dbg;
-        dbg.playerX = player.x;   
-        dbg.playerY = player.y;    
+        dbg.playerX = player.x;
+        dbg.playerY = player.y;
         dbg.playerSize = player.size;
 
         dbg.hasMummy1 = true;
-        dbg.mummy1X = mummy.x;    
-        dbg.mummy1Y = mummy.y;    
+        dbg.mummy1X = mummy.x;
+        dbg.mummy1Y = mummy.y;
         dbg.mummy1Size = mummy.size;
 
         dbg.exitX = exitPortal.x;
         dbg.exitY = exitPortal.y;
         dbg.exitSize = exitPortal.size;
-        dbg.coinX = coin.x;       
-        dbg.coinY = coin.y;       
+        dbg.coinX = coin.x;
+        dbg.coinY = coin.y;
         dbg.coinSize = coin.size;
 
         dbg.powerupActive = gPowerupActive;
-        dbg.powerupX = gPowerup.x; 
-        dbg.powerupY = gPowerup.y; 
+        dbg.powerupX = gPowerup.x;
+        dbg.powerupY = gPowerup.y;
         dbg.powerupSize = gPowerup.size;
 
         dbg.treasureBoxActive = gTreasureBoxActive;
@@ -1682,6 +1623,7 @@ void Level1_Draw()
         Debug_DrawOverlay(dbg);
     }
 }
+
 // ----------------------------------------------------------------------------
 // Level1_Free
 // Called after the game loop exits this state, before Unload.
@@ -1711,27 +1653,27 @@ void Level1_Unload()
     AEGfxTextureUnload(coin.pTex);
     AEGfxTextureUnload(exitPortal.pTex);
 
-    // ====== ADDED: unload power-up textures ====== -ths
-    AEGfxTextureUnload(gImmuneTex);  // -ths
-    AEGfxTextureUnload(gFreezeTex);  // -ths
+    // Unload power-up textures
+    AEGfxTextureUnload(gImmuneTex);
+    AEGfxTextureUnload(gFreezeTex);
 
     // ------ Unload Jump Scare ------
     JumpScare_Unload();
 
-    // ====== Unload treasure box texture ======
+    // Unload treasure box texture
     if (gTreasureBoxTex) { AEGfxTextureUnload(gTreasureBoxTex); gTreasureBoxTex = nullptr; }
 
-    // ---------------- AUDIO UNLOAD ---------------- // -ths
-    if (AEAudioIsValidAudio(sfxPlayerMove)) AEAudioUnloadAudio(sfxPlayerMove);   // -ths
-    if (AEAudioIsValidAudio(sfxChest))      AEAudioUnloadAudio(sfxChest);        // -ths
-    if (AEAudioIsValidAudio(sfxPowerup))    AEAudioUnloadAudio(sfxPowerup);      // -ths
-    if (AEAudioIsValidAudio(sfxJumpscare))  AEAudioUnloadAudio(sfxJumpscare);    // -ths
-    if (AEAudioIsValidAudio(sfxExitDoor))   AEAudioUnloadAudio(sfxExitDoor);     // -ths
-    if (AEAudioIsValidAudio(sfxGameOver))   AEAudioUnloadAudio(sfxGameOver);     // -ths
+    // ---------------- AUDIO UNLOAD ----------------
+    if (AEAudioIsValidAudio(sfxPlayerMove)) AEAudioUnloadAudio(sfxPlayerMove);
+    if (AEAudioIsValidAudio(sfxChest))      AEAudioUnloadAudio(sfxChest);
+    if (AEAudioIsValidAudio(sfxPowerup))    AEAudioUnloadAudio(sfxPowerup);
+    if (AEAudioIsValidAudio(sfxJumpscare))  AEAudioUnloadAudio(sfxJumpscare);
+    if (AEAudioIsValidAudio(sfxExitDoor))   AEAudioUnloadAudio(sfxExitDoor);
+    if (AEAudioIsValidAudio(sfxGameOver))   AEAudioUnloadAudio(sfxGameOver);
     if (AEAudioIsValidAudio(sfxButton)) AEAudioUnloadAudio(sfxButton);
 
-    // Unload group (no harm if empty) -ths
-    AEAudioUnloadAudioGroup(level1Group);  // -ths
+    // Unload group (no harm if empty)
+    AEAudioUnloadAudioGroup(level1Group);
     // ------------------------------------------------
 
     // Mesh cleanup
@@ -1773,14 +1715,14 @@ void ResetLevel1()
     FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS / 2, px, py);
     coin.x = px; coin.y = py;
 
-    // ====== ADDED: respawn exit portal on reset ====== -ths
+    // Respawn exit portal on reset
     FindFreeSpawnCell(GRID_ROWS / 2, GRID_COLS - 5, px, py);
-    exitPortal.x = px; exitPortal.y = py; // -ths
+    exitPortal.x = px; exitPortal.y = py;
 
-    // ====== ADDED: respawn power-up on reset ====== -ths
-    SpawnRandomPowerup(); // -ths
+    // Respawn power-up on reset
+    SpawnRandomPowerup();
 
-    // ====== Treasure box: clear spawned mummies and re-place the box ======
+    // Treasure box: clear spawned mummies and re-place the box
     gBoxMummyCount = 0;
     SpawnTreasureBox();
 
@@ -1795,7 +1737,7 @@ void ResetLevel1()
     gPower.freeze = false; gPower.freezeTurns = 0;
     gPower.invincible = false; gPower.invTurns = 0;
     gPower.invFrames = 0;
-    gPower.freezeFrames = 0; // -ths
+    gPower.freezeFrames = 0;
 
     // Clear any lingering treasure box popup
     gPopupFrames = 0;

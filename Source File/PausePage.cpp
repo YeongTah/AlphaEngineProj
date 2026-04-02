@@ -8,10 +8,31 @@
 #include <cstring>
 #include "Confirmation.h"
 
+//                                                                --- VARIABLES DECLARATION START HERE ---
 static AEAudio sfxButton;
 static AEAudioGroup pauseGroup;
 
-// Local helper to draw a solid rectangle
+// === BUTTONS ===
+// Action codes: 0=Resume, 1=Restart, 2=LevelSelect, 3=Quit, 4=MainMenu
+static struct {
+    float x, y, w, h;
+    const char* text;
+    int action;
+} pauseButtons[] = {
+    {    0.0f, 120.0f, 280.0f, 70.0f, "Resume", 0 },
+    {    0.0f,  40.0f, 280.0f, 70.0f, "Restart", 1 },
+    {    0.0f, -40.0f, 280.0f, 70.0f, "Level Select", 2 },
+    {    0.0f,-120.0f, 280.0f, 70.0f, "Quit", 3 },
+    {    0.0f,-200.0f, 280.0f, 70.0f, "Main Menu", 4 }
+};
+static const int pauseBtnCount = sizeof(pauseButtons) / sizeof(pauseButtons[0]);
+//                                                                --- VARIABLES DECLARATION END HERE ---
+
+// ----------------------------------------------------------------------------
+// DrawRect
+// Draws a solid coloured rectangle using the shared square mesh.
+// Used for the Pause page buttons.
+// ----------------------------------------------------------------------------
 static void DrawRect(float centre_x, float centre_y, float width, float height,
     float r, float g, float b)
 {
@@ -28,20 +49,9 @@ static void DrawRect(float centre_x, float centre_y, float width, float height,
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 }
 
-// Button definitions – now with a fifth button for Main Menu
-static struct {
-    float x, y, w, h;
-    const char* text;
-    int action; // 0=Resume, 1=Restart, 2=LevelSelect, 3=Quit, 4=MainMenu
-} pauseButtons[] = {
-    {    0.0f, 120.0f, 280.0f, 70.0f, "Resume", 0 },
-    {    0.0f,  40.0f, 280.0f, 70.0f, "Restart", 1 },
-    {    0.0f, -40.0f, 280.0f, 70.0f, "Level Select", 2 },
-    {    0.0f,-120.0f, 280.0f, 70.0f, "Quit", 3 },
-    {    0.0f,-200.0f, 280.0f, 70.0f, "Main Menu", 4 }
-};
-static const int pauseBtnCount = sizeof(pauseButtons) / sizeof(pauseButtons[0]);
-
+// ----------------------------------------------------------------------------
+// PausePage_Load
+// Loads the square mesh and audio for the Pause page.
 // ----------------------------------------------------------------------------
 void PausePage_Load()
 {
@@ -50,8 +60,18 @@ void PausePage_Load()
     sfxButton = AEAudioLoadSound("Assets/audio/button.wav");
 }
 
+// ----------------------------------------------------------------------------
+// PausePage_Initialize
+// Empty initialisation for the Pause page.
+// ----------------------------------------------------------------------------
 void PausePage_Initialize() {}
 
+// ----------------------------------------------------------------------------
+// PausePage_Update
+// Handles keyboard and mouse input for the Pause page.
+// Actions: Resume, Restart, Level Select, Quit, Main Menu – all with confirmation.
+// Also supports F5 (save) and F9 (load) shortcuts.
+// ----------------------------------------------------------------------------
 void PausePage_Update()
 {
     // Keyboard shortcuts
@@ -154,6 +174,10 @@ void PausePage_Update()
     }
 }
 
+// ----------------------------------------------------------------------------
+// PausePage_Draw
+// Renders the Pause page overlay: dimmed background, title, buttons, and footer.
+// ----------------------------------------------------------------------------
 void PausePage_Draw()
 {
     // Dim the background
@@ -195,7 +219,7 @@ void PausePage_Draw()
 
         // Horizontal centering
         float leftX = btnCenterNDCX - textW * 0.5f;
-        // Vertical centering: use 0.2f multiplier (adjusted for Kenney Mini font)
+        // Vertical centering: use 0.0f adjustment (Kenney Mini font baseline)
         float baselineY = btnCenterNDCY + textH * 0.0f;
 
         AEGfxPrint(fontId, pauseButtons[i].text, leftX, baselineY, textScale,
@@ -210,8 +234,16 @@ void PausePage_Draw()
     AEGfxPrint(fontId, help1, -0.5f * helpW, -0.85f, helpScale, 0.8f, 0.8f, 0.8f, 1.0f);
 }
 
+// ----------------------------------------------------------------------------
+// PausePage_Free
+// Empty free function for the Pause page.
+// ----------------------------------------------------------------------------
 void PausePage_Free() {}
 
+// ----------------------------------------------------------------------------
+// PausePage_Unload
+// Unloads audio resources and the shared mesh.
+// ----------------------------------------------------------------------------
 void PausePage_Unload()
 {
     if (pMesh)

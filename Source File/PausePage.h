@@ -1,8 +1,38 @@
 // PausePage.h
 #pragma once
-void PausePage_Load();     // -ths
-void PausePage_Initialize(); // -ths
-void PausePage_Update();   // -ths
-void PausePage_Draw();     // -ths
-void PausePage_Free();     // -ths
-void PausePage_Unload();   // -ths
+
+// ----------------------------------------------------------------------------
+// PausePage_Load
+// Loads resources for the Pause page (audio, mesh).
+// ----------------------------------------------------------------------------
+void PausePage_Load();
+
+// ----------------------------------------------------------------------------
+// PausePage_Initialize
+// Initialises the Pause page state.
+// ----------------------------------------------------------------------------
+void PausePage_Initialize();
+
+// ----------------------------------------------------------------------------
+// PausePage_Update
+// Handles input and transitions from the Pause page.
+// ----------------------------------------------------------------------------
+void PausePage_Update();
+
+// ----------------------------------------------------------------------------
+// PausePage_Draw
+// Renders the Pause page overlay.
+// ----------------------------------------------------------------------------
+void PausePage_Draw();
+
+// ----------------------------------------------------------------------------
+// PausePage_Free
+// Frees runtime data for the Pause page.
+// ----------------------------------------------------------------------------
+void PausePage_Free();
+
+// ----------------------------------------------------------------------------
+// PausePage_Unload
+// Unloads all resources used by the Pause page.
+// ----------------------------------------------------------------------------
+void PausePage_Unload();

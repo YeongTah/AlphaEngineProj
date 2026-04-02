@@ -1,5 +1,38 @@
 // WinPage.h
 #pragma once
-void WinPage_Load(); void WinPage_Initialize();
-void WinPage_Update(); void WinPage_Draw();
-void WinPage_Free();  void WinPage_Unload(); // -ths
+
+// ----------------------------------------------------------------------------
+// WinPage_Load
+// Loads resources for the Win page (audio, mesh).
+// ----------------------------------------------------------------------------
+void WinPage_Load();
+
+// ----------------------------------------------------------------------------
+// WinPage_Initialize
+// Initialises the Win page state.
+// ----------------------------------------------------------------------------
+void WinPage_Initialize();
+
+// ----------------------------------------------------------------------------
+// WinPage_Update
+// Handles input and transitions from the Win page.
+// ----------------------------------------------------------------------------
+void WinPage_Update();
+
+// ----------------------------------------------------------------------------
+// WinPage_Draw
+// Renders the Win page overlay.
+// ----------------------------------------------------------------------------
+void WinPage_Draw();
+
+// ----------------------------------------------------------------------------
+// WinPage_Free
+// Frees runtime data for the Win page.
+// ----------------------------------------------------------------------------
+void WinPage_Free();
+
+// ----------------------------------------------------------------------------
+// WinPage_Unload
+// Unloads all resources used by the Win page.
+// ----------------------------------------------------------------------------
+void WinPage_Unload();

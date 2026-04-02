@@ -6,10 +6,29 @@
 #include "Confirmation.h"
 #include <iostream>
 
+//                                                                --- VARIABLES DECLARATION START HERE ---
 static AEAudio sfxWin;
 static AEAudio sfxButton;
 static AEAudioGroup winGroup;
 
+// === BUTTONS ===
+static struct {
+    float x, y, w, h;
+    const char* text;
+    int action; // 0=LevelSelect, 1=Restart, 2=Quit
+} winButtons[] = {
+    {    0.0f,  60.0f, 280.0f, 70.0f, "Level Select", 0 },
+    {    0.0f, -20.0f, 280.0f, 70.0f, "Restart", 1 },
+    {    0.0f,-100.0f, 280.0f, 70.0f, "Quit", 2 }
+};
+static const int winBtnCount = sizeof(winButtons) / sizeof(winButtons[0]);
+//                                                                --- VARIABLES DECLARATION END HERE ---
+
+// ----------------------------------------------------------------------------
+// DrawRect
+// Draws a solid coloured rectangle using the shared square mesh.
+// Used for the Win page buttons.
+// ----------------------------------------------------------------------------
 static void DrawRect(float centre_x, float centre_y, float width, float height,
     float r, float g, float b)
 {
@@ -26,17 +45,10 @@ static void DrawRect(float centre_x, float centre_y, float width, float height,
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 }
 
-static struct {
-    float x, y, w, h;
-    const char* text;
-    int action; // 0=LevelSelect, 1=Restart, 2=Quit
-} winButtons[] = {
-    {    0.0f,  60.0f, 280.0f, 70.0f, "Level Select", 0 },
-    {    0.0f, -20.0f, 280.0f, 70.0f, "Restart", 1 },
-    {    0.0f,-100.0f, 280.0f, 70.0f, "Quit", 2 }
-};
-static const int winBtnCount = sizeof(winButtons) / sizeof(winButtons[0]);
-
+// ----------------------------------------------------------------------------
+// WinPage_Load
+// Loads audio and the square mesh for the Win page.
+// Plays the victory sound once on entry.
 // ----------------------------------------------------------------------------
 void WinPage_Load()
 {
@@ -51,8 +63,17 @@ void WinPage_Load()
     pMesh = CreateSquareMesh();
 }
 
+// ----------------------------------------------------------------------------
+// WinPage_Initialize
+// Empty initialisation for the Win page.
+// ----------------------------------------------------------------------------
 void WinPage_Initialize() {}
 
+// ----------------------------------------------------------------------------
+// WinPage_Update
+// Handles keyboard and mouse input for the Win page.
+// Actions: Level Select, Restart, Quit – all with confirmation.
+// ----------------------------------------------------------------------------
 void WinPage_Update()
 {
     // Keyboard fallback
@@ -132,6 +153,10 @@ void WinPage_Update()
     }
 }
 
+// ----------------------------------------------------------------------------
+// WinPage_Draw
+// Renders the Win page overlay: background colour, title, buttons, and footer.
+// ----------------------------------------------------------------------------
 void WinPage_Draw()
 {
     // Background color (dark red)
@@ -171,8 +196,16 @@ void WinPage_Draw()
     AEGfxPrint(fontId, help, -0.5f * helpW, -0.85f, helpScale, 0.8f, 0.8f, 0.8f, 1.0f);
 }
 
+// ----------------------------------------------------------------------------
+// WinPage_Free
+// Empty free function for the Win page.
+// ----------------------------------------------------------------------------
 void WinPage_Free() {}
 
+// ----------------------------------------------------------------------------
+// WinPage_Unload
+// Unloads audio resources and the shared mesh.
+// ----------------------------------------------------------------------------
 void WinPage_Unload()
 {
     if (AEAudioIsValidAudio(sfxWin))
