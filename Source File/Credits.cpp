@@ -122,7 +122,7 @@ namespace
 //----------------------------------------------------------------------------
 void Credit_Load()
 {
-    std::cout << "Credit:Load\n";
+    //std::cout << "Credit:Load\n";
     wallimage = AEGfxTextureLoad("Assets/Bigwall.png"); // floor tile texture
     // ADDED: load back button texture                                 -ths
     backButtonTex = AEGfxTextureLoad("Assets/Back.png");               // -ths
@@ -134,7 +134,7 @@ void Credit_Load()
 //----------------------------------------------------------------------------
 void Credit_Initialize()
 {
-    std::cout << "Credit:Initialize\n";
+    //std::cout << "Credit:Initialize\n";
 
     //starting Y pos
     //CreditOffsetY = 0.5f;
@@ -145,7 +145,7 @@ void Credit_Initialize()
 //----------------------------------------------------------------------------
 void Credit_Update()
 {
-    std::cout << "Credit:Update\n";
+    //std::cout << "Credit:Update\n";
 
     // ==================================================================
     // ADDED: Back button click detection (top-left corner)             -ths
@@ -167,14 +167,14 @@ void Credit_Update()
     if (AEInputCheckReleased(AEVK_B))
     {
         next = MAINMENUSTATE;
-        std::cout << "Back key Released" << '\n';
+        //std::cout << "Back key Released" << '\n';
     }
 
     // Quit game when ESC is hit or when the window is closed
     if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
     {
         next = GS_QUIT;
-        std::cout << "Q key Released" << '\n';
+        //std::cout << "Q key Released" << '\n';
     }
 
     // UP key is pressed
@@ -208,7 +208,7 @@ void Credit_Update()
 //----------------------------------------------------------------------------
 void Credit_Draw()
 {
-    std::cout << "Credit:Draw\n";
+    //std::cout << "Credit:Draw\n";
 
     //adding of the main page image--
     AEMtx33 scale, trans, transform;
@@ -236,7 +236,7 @@ void Credit_Draw()
     }
 
     // Draw text copyright
-    AEGfxPrint(fontId, "All content © 2026 DigiPen Institute of Technology Singapore. All Rights Reserved.", -0.52f, -0.90f, 0.70f, 0.21f, 0.11f, 0.12f, 1.0f);
+    AEGfxPrint(fontId, "All content © 2026 DigiPen Institute of Technology Singapore. All Rights Reserved.", -0.52f, 0.90f, 0.70f,1.0f, 1.0f, 1.0f, 1.0f);
 
     //rendering mode to colour mode
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -273,7 +273,7 @@ void Credit_Draw()
 //----------------------------------------------------------------------------
 void Credit_Free()
 {
-    std::cout << "Credit:Free\n";
+    //std::cout << "Credit:Free\n";
 }
 
 //----------------------------------------------------------------------------
@@ -281,7 +281,7 @@ void Credit_Free()
 //----------------------------------------------------------------------------
 void Credit_Unload()
 {
-    std::cout << "Credit:Unload\n";
+    //std::cout << "Credit:Unload\n";
     if (wallimage)
     {
         AEGfxTextureUnload(wallimage);
