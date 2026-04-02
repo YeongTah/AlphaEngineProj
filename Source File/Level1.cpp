@@ -433,41 +433,70 @@ static void SnapToGridCenter(float inX, float inY, float& outX, float& outY)
 // Returns true on success, false if the file cannot be opened.
 // Triggered by F5 in Level1_Update.
 // ----------------------------------------------------------------------------
+
 static bool SaveLevel1State(const char* path)
 {
     std::ofstream f(path);
     if (!f.is_open()) return false;
+
+    // Player
     f << player.x << ' ' << player.y << '\n';
+    // Counters
     f << coinCounter << ' ' << turnCounter << '\n';
+    // Power‑ups (turn‑based)
     f << (int)gPower.speed << ' ' << gPower.speedTurns << ' '
         << (int)gPower.freeze << ' ' << gPower.freezeTurns << ' '
         << (int)gPower.invincible << ' ' << gPower.invTurns << ' '
         << gPower.invFrames << '\n';
+
+    // Box mummies
     f << gBoxMummyCount << '\n';
     for (int i = 0; i < gBoxMummyCount; ++i)
         f << gBoxMummies[i].x << ' ' << gBoxMummies[i].y << '\n';
+
+    // Main mummy
+    f << mummy.x << ' ' << mummy.y << '\n';
+
+    // Treasure chest
+    f << gTreasureBox.x << ' ' << gTreasureBox.y << ' '
+        << (gTreasureBoxActive ? 1 : 0) << '\n';
+
+    // Exit portal
+    f << exitPortal.x << ' ' << exitPortal.y << '\n';
+
+    // Legacy coin entity (if you still use it)
+    f << coin.x << ' ' << coin.y << '\n';
+
     return true;
 }
 
 // ----------------------------------------------------------------------------
-// LoadLevel1State
-// Reads a previously saved Level 1 state from 'path' and restores player
-// position, counters, powerup durations, and box-mummy positions.
-// Returns true on success, false if the file cannot be opened.
-// Triggered by F9 in Level1_Update.
+// LoadLevel1State – restores all saved data.  Returns true on success.
 // ----------------------------------------------------------------------------
 static bool LoadLevel1State(const char* path)
 {
     std::ifstream f(path);
     if (!f.is_open()) return false;
+
+    // Player
     f >> player.x >> player.y;
+
+    // Counters
     f >> coinCounter >> turnCounter;
+
+    // Power‑ups
     int sp, fr, iv;
-    f >> sp >> gPower.speedTurns >> fr >> gPower.freezeTurns >> iv >> gPower.invTurns >> gPower.invFrames;
+    f >> sp >> gPower.speedTurns
+        >> fr >> gPower.freezeTurns
+        >> iv >> gPower.invTurns
+        >> gPower.invFrames;
     gPower.speed = (sp != 0);
     gPower.freeze = (fr != 0);
     gPower.invincible = (iv != 0);
-    f >> gBoxMummyCount; if (gBoxMummyCount < 0) gBoxMummyCount = 0;
+
+    // Box mummies
+    f >> gBoxMummyCount;
+    if (gBoxMummyCount < 0) gBoxMummyCount = 0;
     if (gBoxMummyCount > (int)(sizeof(gBoxMummies) / sizeof(gBoxMummies[0])))
         gBoxMummyCount = (int)(sizeof(gBoxMummies) / sizeof(gBoxMummies[0]));
     for (int i = 0; i < gBoxMummyCount; ++i)
@@ -475,6 +504,24 @@ static bool LoadLevel1State(const char* path)
         f >> gBoxMummies[i].x >> gBoxMummies[i].y;
         gBoxMummies[i].size = gridStep;
     }
+
+    // Main mummy
+    f >> mummy.x >> mummy.y;
+
+    // Treasure chest
+    int activeFlag;
+    f >> gTreasureBox.x >> gTreasureBox.y >> activeFlag;
+    gTreasureBoxActive = (activeFlag != 0);
+    gTreasureBox.size = gridStep * 0.9f;   // ensure consistent size
+
+    // Exit portal
+    f >> exitPortal.x >> exitPortal.y;
+    exitPortal.size = 50.0f;   // as set in Level1_Initialize
+
+    // Legacy coin
+    f >> coin.x >> coin.y;
+    coin.size = GRID_TILE_SIZE * 0.8f;   // as set in Level1_Initialize
+
     return true;
 }
 

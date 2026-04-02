@@ -310,7 +310,111 @@ static void L3OpenTreasureBox()
     }
     // Chest stays inactive -- no re-spawn. A new one is placed on next reset.
 }
+// ========== SAVE/LOAD FOR LEVEL 3 ==========
+// --------------------------------------------------------------------
+// SaveLevel3State
+// Saves Level 3's current runtime state to the given file path.
+// --------------------------------------------------------------------
+static bool SaveLevel3State(const char* path)
+{
+    std::ofstream f(path);
+    if (!f.is_open()) return false;
 
+    // Player
+    f << l3_player.x << ' ' << l3_player.y << '\n';
+
+    // Counters
+    f << l3_coinCounter << ' ' << l3_turnCounter << '\n';
+
+    // Power state (turn‑based + frame‑based)
+    f << (int)l3Power.speed << ' ' << l3Power.speedTurns << ' '
+        << (int)l3Power.freeze << ' ' << l3Power.freezeTurns << ' '
+        << (int)l3Power.invincible << ' ' << l3Power.invTurns << ' '
+        << l3Power.invFrames << ' ' << l3Power.freezeFrames << '\n';
+
+    // Box mummies (from treasure chest)
+    f << l3_boxMummyCount << '\n';
+    for (int i = 0; i < l3_boxMummyCount; ++i)
+        f << l3_boxMummies[i].x << ' ' << l3_boxMummies[i].y << '\n';
+
+    // Main mummies (three mummies)
+    f << l3_mummy1.x << ' ' << l3_mummy1.y << '\n';
+    f << l3_mummy2.x << ' ' << l3_mummy2.y << '\n';
+    f << l3_mummy3.x << ' ' << l3_mummy3.y << '\n';
+
+    // Treasure chest
+    f << l3_treasureBox.x << ' ' << l3_treasureBox.y << ' '
+        << (l3_treasureBoxActive ? 1 : 0) << '\n';
+
+    // Exit portal
+    f << l3_exitPortal.x << ' ' << l3_exitPortal.y << '\n';
+
+    // Legacy coin entity
+    f << l3_coin.x << ' ' << l3_coin.y << '\n';
+
+    return true;
+}
+
+// --------------------------------------------------------------------
+// LoadLevel3State
+// Restores Level 3's runtime state from the given file path.
+// --------------------------------------------------------------------
+static bool LoadLevel3State(const char* path)
+{
+    std::ifstream f(path);
+    if (!f.is_open()) return false;
+
+    // Player
+    f >> l3_player.x >> l3_player.y;
+
+    // Counters
+    f >> l3_coinCounter >> l3_turnCounter;
+
+    // Power state
+    int sp, fr, iv;
+    f >> sp >> l3Power.speedTurns
+        >> fr >> l3Power.freezeTurns
+        >> iv >> l3Power.invTurns
+        >> l3Power.invFrames >> l3Power.freezeFrames;
+    l3Power.speed = (sp != 0);
+    l3Power.freeze = (fr != 0);
+    l3Power.invincible = (iv != 0);
+
+    // Box mummies
+    f >> l3_boxMummyCount;
+    if (l3_boxMummyCount < 0) l3_boxMummyCount = 0;
+    if (l3_boxMummyCount > (int)(sizeof(l3_boxMummies) / sizeof(l3_boxMummies[0])))
+        l3_boxMummyCount = (int)(sizeof(l3_boxMummies) / sizeof(l3_boxMummies[0]));
+    for (int i = 0; i < l3_boxMummyCount; ++i)
+    {
+        f >> l3_boxMummies[i].x >> l3_boxMummies[i].y;
+        l3_boxMummies[i].size = l3_gridStep;
+    }
+
+    // Main mummies
+    f >> l3_mummy1.x >> l3_mummy1.y;
+    f >> l3_mummy2.x >> l3_mummy2.y;
+    f >> l3_mummy3.x >> l3_mummy3.y;
+    l3_mummy1.size = l3_gridStep;
+    l3_mummy2.size = l3_gridStep;
+    l3_mummy3.size = l3_gridStep;
+
+    // Treasure chest
+    int activeFlag;
+    f >> l3_treasureBox.x >> l3_treasureBox.y >> activeFlag;
+    l3_treasureBoxActive = (activeFlag != 0);
+    l3_treasureBox.size = l3_gridStep * 0.9f;
+
+    // Exit portal
+    f >> l3_exitPortal.x >> l3_exitPortal.y;
+    l3_exitPortal.size = 50.0f;
+
+    // Legacy coin
+    f >> l3_coin.x >> l3_coin.y;
+    l3_coin.size = GRID_TILE_SIZE * 0.8f;
+
+    return true;
+}
 // ----------------------------------------------------------------------------
 // ResetLevel3
 // Repositions all Level 3 entities without reloading textures or the tile map.
@@ -664,7 +768,9 @@ void Level3_Update()
         next = GS_QUIT;
         return;
     }
-
+    // --- Save (F5) / Load (F9) ---                                   // <-- NEW
+    if (AEInputCheckReleased(AEVK_F5)) { if (SaveLevel3State("Assets/save3.txt")) std::cout << "Saved (Assets/save3.txt)\n"; }
+    if (AEInputCheckReleased(AEVK_F9)) { if (LoadLevel3State("Assets/save3.txt")) std::cout << "Loaded (Assets/save3.txt)\n"; }
     // ===== PER-FRAME IMMUNITY/FREEZE TICKERS ===== -ths
     L3TickInvFrames();     // -ths
     L3TickFreezeFrames();  // -ths

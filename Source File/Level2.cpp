@@ -526,7 +526,111 @@ static void L2OpenTreasureBox()
 
 // ===== ADDED: Scorpion texture handle (loaded in Level2_Load) ===== -ths
 static AEGfxTexture* l2_ScorpionTex = nullptr; // Assets/scorpion.png -ths
+// ========== SAVE/LOAD FOR LEVEL 2 ==========
+// --------------------------------------------------------------------
+// SaveLevel2State
+// Saves Level 2's current runtime state to the given file path.
+// --------------------------------------------------------------------
+static bool SaveLevel2State(const char* path)
+{
+    std::ofstream f(path);
+    if (!f.is_open()) return false;
 
+    // Player
+    f << l2_player.x << ' ' << l2_player.y << '\n';
+
+    // Counters
+    f << l2_coinCounter << ' ' << l2_turnCounter << '\n';
+
+    // Power state (turn‑based + frame‑based)
+    f << (int)l2Power.speed << ' ' << l2Power.speedTurns << ' '
+        << (int)l2Power.freeze << ' ' << l2Power.freezeTurns << ' '
+        << (int)l2Power.invincible << ' ' << l2Power.invTurns << ' '
+        << l2Power.invFrames << ' ' << l2Power.freezeFrames << '\n';
+
+    // Box mummies (from treasure chest)
+    f << l2_boxMummyCount << '\n';
+    for (int i = 0; i < l2_boxMummyCount; ++i)
+        f << l2_boxMummies[i].x << ' ' << l2_boxMummies[i].y << '\n';
+
+    // Main enemies: two mummies + scorpion
+    f << l2_mummy.x << ' ' << l2_mummy.y << '\n';
+    f << l2_mummy2.x << ' ' << l2_mummy2.y << '\n';
+    f << l2_scorpion.x << ' ' << l2_scorpion.y << '\n';
+
+    // Treasure chest
+    f << l2_treasureBox.x << ' ' << l2_treasureBox.y << ' '
+        << (l2_treasureBoxActive ? 1 : 0) << '\n';
+
+    // Exit portal
+    f << l2_exitPortal.x << ' ' << l2_exitPortal.y << '\n';
+
+    // Legacy coin entity (if still used)
+    f << l2_coin.x << ' ' << l2_coin.y << '\n';
+
+    return true;
+}
+
+// --------------------------------------------------------------------
+// LoadLevel2State
+// Restores Level 2's runtime state from the given file path.
+// --------------------------------------------------------------------
+static bool LoadLevel2State(const char* path)
+{
+    std::ifstream f(path);
+    if (!f.is_open()) return false;
+
+    // Player
+    f >> l2_player.x >> l2_player.y;
+
+    // Counters
+    f >> l2_coinCounter >> l2_turnCounter;
+
+    // Power state
+    int sp, fr, iv;
+    f >> sp >> l2Power.speedTurns
+        >> fr >> l2Power.freezeTurns
+        >> iv >> l2Power.invTurns
+        >> l2Power.invFrames >> l2Power.freezeFrames;
+    l2Power.speed = (sp != 0);
+    l2Power.freeze = (fr != 0);
+    l2Power.invincible = (iv != 0);
+
+    // Box mummies
+    f >> l2_boxMummyCount;
+    if (l2_boxMummyCount < 0) l2_boxMummyCount = 0;
+    if (l2_boxMummyCount > (int)(sizeof(l2_boxMummies) / sizeof(l2_boxMummies[0])))
+        l2_boxMummyCount = (int)(sizeof(l2_boxMummies) / sizeof(l2_boxMummies[0]));
+    for (int i = 0; i < l2_boxMummyCount; ++i)
+    {
+        f >> l2_boxMummies[i].x >> l2_boxMummies[i].y;
+        l2_boxMummies[i].size = l2_gridStep;
+    }
+
+    // Main enemies
+    f >> l2_mummy.x >> l2_mummy.y;
+    f >> l2_mummy2.x >> l2_mummy2.y;
+    f >> l2_scorpion.x >> l2_scorpion.y;
+    l2_mummy.size = l2_gridStep;
+    l2_mummy2.size = l2_gridStep;
+    l2_scorpion.size = l2_gridStep;
+
+    // Treasure chest
+    int activeFlag;
+    f >> l2_treasureBox.x >> l2_treasureBox.y >> activeFlag;
+    l2_treasureBoxActive = (activeFlag != 0);
+    l2_treasureBox.size = l2_gridStep * 0.9f;
+
+    // Exit portal
+    f >> l2_exitPortal.x >> l2_exitPortal.y;
+    l2_exitPortal.size = 50.0f;
+
+    // Legacy coin
+    f >> l2_coin.x >> l2_coin.y;
+    l2_coin.size = GRID_TILE_SIZE * 0.8f;
+
+    return true;
+}
 // ----------------------------------------------------------------------------
 // Level2_Load
 // Called once when entering Level 2.
@@ -771,7 +875,9 @@ void Level2_Update()
         0 == AESysDoesWindowExist()) {
         next = GS_QUIT; return;
     }
-
+    // --- Save (F5) / Load (F9) ---                                   // <-- NEW
+    if (AEInputCheckReleased(AEVK_F5)) { if (SaveLevel2State("Assets/save2.txt")) std::cout << "Saved (Assets/save2.txt)\n"; }
+    if (AEInputCheckReleased(AEVK_F9)) { if (LoadLevel2State("Assets/save2.txt")) std::cout << "Loaded (Assets/save2.txt)\n"; }
     // ===== PER-FRAME POWER TIMERS ===== -ths
     L2TickInvFrames();     // -ths
     L2TickFreezeFrames();  // -ths
@@ -1084,7 +1190,7 @@ void Level2_Update()
                     float nx, ny;
                     GridToWorldCenter(nR[0], nC[0], nx, ny);
 
-                    // 🛡️ NEW: Invincibility check - prevent moving onto player if immune
+                    // NEW: Invincibility check - prevent moving onto player if immune
                     int pR, pC;
                     WorldToGrid(l2_player.x, l2_player.y, pR, pC);
                     if (nR[0] == pR && nC[0] == pC && L2IsInvincibleNow())
@@ -1111,7 +1217,7 @@ void Level2_Update()
                     float nx, ny;
                     GridToWorldCenter(nR[0], nC[0], nx, ny);
 
-                    // 🛡️ NEW: Invincibility check
+                    // NEW: Invincibility check
                     int pR, pC;
                     WorldToGrid(l2_player.x, l2_player.y, pR, pC);
                     if (nR[0] == pR && nC[0] == pC && L2IsInvincibleNow())
@@ -1137,7 +1243,7 @@ void Level2_Update()
                     float nx, ny;
                     GridToWorldCenter(nR[0], nC[0], nx, ny);
 
-                    // 🛡️ NEW: Invincibility check
+                    // NEW: Invincibility check
                     int pR, pC;
                     WorldToGrid(l2_player.x, l2_player.y, pR, pC);
                     if (nR[0] == pR && nC[0] == pC && L2IsInvincibleNow())
@@ -1219,7 +1325,7 @@ void Level2_Update()
                 float nx, ny;
                 GridToWorldCenter(tr, tc, nx, ny);
 
-                // 🛡️ NEW: Invincibility check for box mummies
+                //  NEW: Invincibility check for box mummies
                 int pR, pC;
                 WorldToGrid(l2_player.x, l2_player.y, pR, pC);
                 if (tr == pR && tc == pC && L2IsInvincibleNow())
