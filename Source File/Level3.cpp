@@ -30,6 +30,7 @@ Technology is prohibited.
 #include <cstdio>  // snprintf for HUD text -ths
 #include <cstdlib>
 #include "Confirmation.h"
+#include "Debug.h"
 
 // ======================= LEVEL 3 AUDIO HANDLES ======================= // -ths
 
@@ -771,6 +772,9 @@ void Level3_Update()
     // --- Save (F5) / Load (F9) ---                                   // <-- NEW
     if (AEInputCheckReleased(AEVK_F5)) { if (SaveLevel3State("Assets/save3.txt")) std::cout << "Saved (Assets/save3.txt)\n"; }
     if (AEInputCheckReleased(AEVK_F9)) { if (LoadLevel3State("Assets/save3.txt")) std::cout << "Loaded (Assets/save3.txt)\n"; }
+
+    // --- Debug overlay toggle (F1) ---
+    Debug_HandleToggle();
     // ===== PER-FRAME IMMUNITY/FREEZE TICKERS ===== -ths
     L3TickInvFrames();     // -ths
     L3TickFreezeFrames();  // -ths
@@ -1010,15 +1014,15 @@ void Level3_Update()
         // Coin tile collection
         int r, c;
         WorldToGrid(l3_player.x, l3_player.y, r, c);
-        if (level[r][c] == 4)
+        if (level[r][c] == 4) // coin counter  yt
         {
             level[r][c] = 0;
             l3_coinCounter++;
-            std::cout << "L3 Coin collected! Total: " << l3_coinCounter << "\n";
+            std::cout << "L3 Coin collected! Total: " << l3_coinCounter << "\n"; // coin text at right top corner to show the coin counter.
         }
 
-        //                                                   Mummy movement every 2nd turn, unless frozen  level 3 YT 
-        if (l3_turnCounter %2 == 0 &&l3Power.freezeFrames <= 0)
+        // Mummy movement every 2nd turn, unless frozen  level 3 YT 
+        if (l3_turnCounter % 2 == 0 && l3Power.freezeFrames <= 0)   // add a turn counter check to move mummies every 2 turns
         {
             // ---- BFS: find the next step on the shortest path from (startR,startC)
             // to (goalR,goalC), avoiding wall tiles (value == 1).
@@ -1534,6 +1538,71 @@ void Level3_Draw()
 
     // ===== ADDED: Pause button (top-right) ===== -ths
     DrawPauseButton(); // -ths
+
+    // ---- Debug overlay: fill info struct and call shared draw function ----
+    // Press F1 in-game to toggle on / off.
+    if (Debug_IsActive())
+    {
+        DebugEntityInfo dbg;
+        dbg.playerX = l3_player.x;  
+        dbg.playerY = l3_player.y;
+        dbg.playerSize = l3_player.size;
+
+        dbg.hasMummy1 = true;
+        dbg.mummy1X = l3_mummy1.x; 
+        dbg.mummy1Y = l3_mummy1.y;  
+        dbg.mummy1Size = l3_mummy1.size;
+
+        dbg.hasMummy2 = true;
+        dbg.mummy2X = l3_mummy2.x; 
+        dbg.mummy2Y = l3_mummy2.y; 
+        dbg.mummy2Size = l3_mummy2.size;
+
+        dbg.hasMummy3 = true;
+        dbg.mummy3X = l3_mummy3.x;  
+        dbg.mummy3Y = l3_mummy3.y; 
+        dbg.mummy3Size = l3_mummy3.size;
+
+        dbg.exitX = l3_exitPortal.x;
+        dbg.exitY = l3_exitPortal.y;
+        dbg.exitSize = l3_exitPortal.size;
+        dbg.coinX = l3_coin.x;     
+        dbg.coinY = l3_coin.y;      
+        dbg.coinSize = l3_coin.size;
+
+        dbg.powerupActive = l3_powerupActive;
+        dbg.powerupX = l3_powerup.x; 
+        dbg.powerupY = l3_powerup.y; 
+        dbg.powerupSize = l3_powerup.size;
+
+        dbg.treasureBoxActive = l3_treasureBoxActive;
+        dbg.treasureBoxX = l3_treasureBox.x; dbg.treasureBoxY = l3_treasureBox.y;
+        dbg.treasureBoxSize = l3_treasureBox.size;
+
+        dbg.boxMummyCount = l3_boxMummyCount;
+        for (int i = 0; i < l3_boxMummyCount; ++i)
+        {
+            dbg.boxMummyX[i] = l3_boxMummies[i].x;
+            dbg.boxMummyY[i] = l3_boxMummies[i].y;
+            dbg.boxMummySize[i] = l3_boxMummies[i].size;
+        }
+
+        dbg.coinCounter = l3_coinCounter;
+        dbg.turnCounter = l3_turnCounter;
+        dbg.invincibleActive = l3Power.invincible;
+        dbg.invFrames = l3Power.invFrames;
+        dbg.freezeActive = l3Power.freeze;
+        dbg.freezeFrames = l3Power.freezeFrames;
+        dbg.speedActive = l3Power.speed;
+        dbg.speedTurns = l3Power.speedTurns;
+        dbg.isPaused = l3_paused;
+        dbg.isWin = l3_showWin;
+        dbg.isLose = l3_showLose;
+        dbg.popupFrames = l3_popupFrames;
+        dbg.tileSize = GRID_TILE_SIZE;
+
+        Debug_DrawOverlay(dbg);
+    }
 
     // Reset render state for next frame
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <math.h>
 #include "GridUtils.h"
+#include "gamestatemanager.h"
 #include "Level1.h"
 
 // Tile size is 50.0f -- matches GRID_TILE_SIZE in GridUtils.h
@@ -63,6 +64,7 @@ namespace
         BTN_L2,     // Switch editor to level2.txt
         BTN_L3,      // Switch editor to level3.txt
         BTN_COIN,    // Add coins
+        BTN_MAINMENU,  // Go back to main menu
         BTN_EDITOR // Editor Button to close / open the table
     };
 
@@ -79,7 +81,8 @@ namespace
         {650.0f,  180.0f, 220.0f, 50.0f, 0.95f, 0.85f, 0.45f, BTN_COIN},   // Coin button - bright gold
         {650.0f,  120.0f, 220.0f, 50.0f, 0.75f, 0.75f, 0.75f, BTN_ERASE},  // Erase button - light grey
         {650.0f,   60.0f, 220.0f, 50.0f, 0.55f, 0.85f, 0.55f, BTN_SAVE},   // Save button - bright yellow
-        {650.0f,    0.0f, 220.0f, 50.0f, 0.55f, 0.70f, 0.95f, BTN_LOCK},   // Load button - bright cyan
+        {650.0f,    0.0f, 220.0f, 50.0f, 0.55f, 0.70f, 0.95f, BTN_LOCK},   // Lock button - bright cyan
+        {650.0f,  -60.0f, 220.0f, 50.0f, 0.90f, 0.55f, 0.90f, BTN_MAINMENU}, // Main Menu button
         //{650.0f,  -60.0f, 220.0f, 50.0f, 0.80f, 0.65f, 0.95f, BTN_LOCK},   // Lock button - bright purple
         {575.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L1},     // Level 1 selector - green
         {650.0f, -180.0f,  70.0f, 50.0f, 0.95f, 0.75f, 0.85f, BTN_L2},      // Level 2 selector - blue
@@ -250,6 +253,7 @@ namespace
                 //case BTN_LOAD:  readfile();                 return true;
             case BTN_LOCK:  gLocked = !gLocked;         return true;
             case BTN_L1:    SetActiveLevel(1, true);    return true;
+            case BTN_MAINMENU:  next = MAINMENUSTATE; return true;
             case BTN_L2:    SetActiveLevel(2, true);    return true;
             case BTN_L3:    SetActiveLevel(3, true);    return true;
             default: break;
@@ -308,9 +312,11 @@ namespace
             else
                 AEGfxPrint(fontId, "EDIT", (gButtons[4].pos_x * HalfW) - 0.05f, (gButtons[4].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
 
-            AEGfxPrint(fontId, "L1", (gButtons[5].pos_x * HalfW) - 0.02f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
-            AEGfxPrint(fontId, "L2", (gButtons[6].pos_x * HalfW) - 0.02f, (gButtons[6].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
-            AEGfxPrint(fontId, "L3", (gButtons[7].pos_x * HalfW) - 0.02f, (gButtons[7].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "MAIN MENU", (gButtons[5].pos_x * HalfW) - 0.10f, (gButtons[5].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+
+            AEGfxPrint(fontId, "L1", (gButtons[6].pos_x * HalfW) - 0.02f, (gButtons[6].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L2", (gButtons[7].pos_x * HalfW) - 0.02f, (gButtons[7].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
+            AEGfxPrint(fontId, "L3", (gButtons[8].pos_x * HalfW) - 0.02f, (gButtons[8].pos_y * HalfH) - 0.02f, 1.0f, 0, 0, 0, 1);
         }
     }
 } // end anonymous namespace

@@ -30,6 +30,7 @@ Technology is prohibited.
 #include <cstdio>  /* snprintf for HUD text -ths */
 #include <cstdlib>
 #include "Confirmation.h"
+#include "Debug.h"
 
 // ====================== LEVEL 1 AUDIO VARIABLES ====================== // -ths
 static AEAudio sfxPlayerMove;     // -ths
@@ -1056,6 +1057,9 @@ void Level1_Update()
     if (AEInputCheckReleased(AEVK_F5)) { if (SaveLevel1State("Assets/save1.txt")) std::cout << "Saved (Assets/save1.txt)\n"; }
     if (AEInputCheckReleased(AEVK_F9)) { if (LoadLevel1State("Assets/save1.txt")) std::cout << "Loaded (Assets/save1.txt)\n"; }
 
+    // --- Debug overlay toggle (F1) ---
+    Debug_HandleToggle();
+
     // ====== Frame counters ====== -ths
     TickFramePowers();
     TickFreezeFrames();
@@ -1224,7 +1228,7 @@ void Level1_Update()
         playerMoved = false;
 
         // ====== BOX MUMMY AI: BFS chase player every 2nd turn ======
-        if (turnCounter % 2 == 0 && gPower.freezeFrames <= 0)
+        if (gPower.freezeFrames <= 0)
         {
             for (int i = 0; i < gBoxMummyCount; ++i)
             {
@@ -1656,6 +1660,61 @@ void Level1_Draw()
     // ADD: Top‑right PAUSE BUTTON (Draw only during gameplay) -ths
     // ====================================================================
     DrawPauseButton();   // renders the pause button using helper from earlier -ths
+
+    // ---- Debug overlay: fill info struct and call shared draw function ----
+    // Press F1 in-game to toggle on / off.
+    if (Debug_IsActive())
+    {
+        DebugEntityInfo dbg;
+        dbg.playerX = player.x;   
+        dbg.playerY = player.y;    
+        dbg.playerSize = player.size;
+
+        dbg.hasMummy1 = true;
+        dbg.mummy1X = mummy.x;    
+        dbg.mummy1Y = mummy.y;    
+        dbg.mummy1Size = mummy.size;
+
+        dbg.exitX = exitPortal.x;
+        dbg.exitY = exitPortal.y;
+        dbg.exitSize = exitPortal.size;
+        dbg.coinX = coin.x;       
+        dbg.coinY = coin.y;       
+        dbg.coinSize = coin.size;
+
+        dbg.powerupActive = gPowerupActive;
+        dbg.powerupX = gPowerup.x; 
+        dbg.powerupY = gPowerup.y; 
+        dbg.powerupSize = gPowerup.size;
+
+        dbg.treasureBoxActive = gTreasureBoxActive;
+        dbg.treasureBoxX = gTreasureBox.x; dbg.treasureBoxY = gTreasureBox.y;
+        dbg.treasureBoxSize = gTreasureBox.size;
+
+        dbg.boxMummyCount = gBoxMummyCount;
+        for (int i = 0; i < gBoxMummyCount; ++i)
+        {
+            dbg.boxMummyX[i] = gBoxMummies[i].x;
+            dbg.boxMummyY[i] = gBoxMummies[i].y;
+            dbg.boxMummySize[i] = gBoxMummies[i].size;
+        }
+
+        dbg.coinCounter = coinCounter;
+        dbg.turnCounter = turnCounter;
+        dbg.invincibleActive = gPower.invincible;
+        dbg.invFrames = gPower.invFrames;
+        dbg.freezeActive = gPower.freeze;
+        dbg.freezeFrames = gPower.freezeFrames;
+        dbg.speedActive = gPower.speed;
+        dbg.speedTurns = gPower.speedTurns;
+        dbg.isPaused = gPaused;
+        dbg.isWin = gShowWin;
+        dbg.isLose = gShowLose;
+        dbg.popupFrames = gPopupFrames;
+        dbg.tileSize = GRID_TILE_SIZE;
+
+        Debug_DrawOverlay(dbg);
+    }
 }
 // ----------------------------------------------------------------------------
 // Level1_Free
