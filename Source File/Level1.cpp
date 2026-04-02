@@ -104,7 +104,7 @@ static BoxMummy gBoxMummies[8];
 static int      gBoxMummyCount = 0;
 
 // Helper: returns true if any enemy occupies the given world position
-static bool IsCellOccupiedByEnemy(float x, float y)
+/*static bool IsCellOccupiedByEnemy(float x, float y)
 {
     // Main mummy
     if (fabsf(x - mummy.x) < 1.0f && fabsf(y - mummy.y) < 1.0f)
@@ -114,7 +114,7 @@ static bool IsCellOccupiedByEnemy(float x, float y)
         if (fabsf(x - gBoxMummies[i].x) < 1.0f && fabsf(y - gBoxMummies[i].y) < 1.0f)
             return true;
     return false;
-}
+}*/
 
 // Treasure box popup message (shown for ~3 seconds after opening a chest)
 static char gPopupMsg[64] = "";  // text to display, empty = no popup
@@ -241,9 +241,9 @@ static struct PowerState {
 } gPower;
 
 // Powerup grant helpers -- call these to activate the matching powerup -ths
-static void GiveSpeed(int turns) { gPower.speed = true; gPower.speedTurns = turns; }
-static void GiveFreeze(int turns) { gPower.freeze = true; gPower.freezeTurns = turns; }
-static void GiveInvincibleTurns(int turns) { gPower.invincible = true; gPower.invTurns = turns; }
+//static void GiveSpeed(int turns) { gPower.speed = true; gPower.speedTurns = turns; }
+//static void GiveFreeze(int turns) { gPower.freeze = true; gPower.freezeTurns = turns; }
+//static void GiveInvincibleTurns(int turns) { gPower.invincible = true; gPower.invTurns = turns; }
 static void GiveInvincibleFrames(int frames) { if (frames > gPower.invFrames) gPower.invFrames = frames; }
 
 // Returns true if the player is currently protected from any enemy (either turn- or frame-based). -ths
@@ -400,7 +400,7 @@ float CenteredTextX(float centerWorldX, const char* text, float scale)
 // Draws a solid colored rectangle at world position (cx, cy) with dimensions
 // (w x h) using the shared pMesh. Used for overlay buttons (Retry, Exit).
 // ----------------------------------------------------------------------------
-static void DrawButtonRect(float cx, float cy, float w, float h, float r, float g, float b)
+/*static void DrawButtonRect(float cx, float cy, float w, float h, float r, float g, float b)
 {
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -413,18 +413,18 @@ static void DrawButtonRect(float cx, float cy, float w, float h, float r, float 
     AEGfxSetTransform(m.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 }
-
+*/
 // ----------------------------------------------------------------------------
 // SnapToGridCenter
 // Converts an arbitrary world position (inX, inY) to the exact center of the
 // grid cell it occupies. Prevents entities from sitting on grid-line borders.
 // ----------------------------------------------------------------------------
-static void SnapToGridCenter(float inX, float inY, float& outX, float& outY)
+/*static void SnapToGridCenter(float inX, float inY, float& outX, float& outY)
 {
     int rr, cc;
     WorldToGrid(inX, inY, rr, cc);
     GridToWorldCenter(rr, cc, outX, outY);
-}
+}*/
 
 // ========================== NEW: Save / Load (local) ==============================================
 // ----------------------------------------------------------------------------
@@ -532,13 +532,13 @@ static bool LoadLevel1State(const char* path)
 // Scans the entire level[][] grid and returns true if any cell has value 8
 // (the black immunity buff block).
 // ----------------------------------------------------------------------------
-static bool HasBuffTile8()
+/*static bool HasBuffTile8()
 {
     for (int r = 0; r < GRID_ROWS; ++r)
         for (int c = 0; c < GRID_COLS; ++c)
             if (level[r][c] == 8) return true;
     return false;
-}
+}*/
 
 // ----------------------------------------------------------------------------
 // EnsureBuffTilePresent
@@ -548,7 +548,7 @@ static bool HasBuffTile8()
 // Falls back to forcing the center cell if no empty cell is found nearby.
 // Called during Level1_Load to enforce the design requirement.
 // ----------------------------------------------------------------------------
-static void EnsureBuffTilePresent()
+/*static void EnsureBuffTilePresent()
 {
     if (HasBuffTile8()) return; // buff already in level, nothing to do -ths
     int midR = GRID_ROWS / 2, midC = GRID_COLS / 2;
@@ -568,7 +568,7 @@ static void EnsureBuffTilePresent()
     // Fallback: force center cell if no empty cell was found -ths
     level[midR][midC] = 8;
     print_file();
-}
+}*/
 
 // ----------------------------------------------------------------------------
 // LoadLevelTxt <-- THIS IS THE FUNCTION THAT READS THE LEVEL FILE
@@ -1087,8 +1087,8 @@ void Level1_Update()
     }
 
     // Legacy
-    bool playerWallCollision = (fabsf(testNextX - wall.x) < (player.size / 2.0f + wall.size / 2.0f)) &&
-        (fabsf(testNextY - wall.y) < (player.size / 2.0f + wall.size / 2.0f));
+    //bool playerWallCollision = (fabsf(testNextX - wall.x) < (player.size / 2.0f + wall.size / 2.0f)) &&
+    //   (fabsf(testNextY - wall.y) < (player.size / 2.0f + wall.size / 2.0f));
 
     // ======= POWER-UP PICKUP ======= -ths
     if (gPowerupActive &&
