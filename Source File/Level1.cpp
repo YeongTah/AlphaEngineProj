@@ -188,7 +188,7 @@ static void OpenTreasureBox()
         coinCounter++;
         printf("Treasure Box: COIN! Total coins: %d\n", coinCounter);
         std::snprintf(gPopupMsg, sizeof(gPopupMsg), "Treasure: +1 Coin! (Total: %d)", coinCounter);
-        gPopupFrames = 180; // show for ~3 seconds
+        gPopupFrames = 240; // show for ~3 seconds
     }
     else
     {
@@ -214,7 +214,7 @@ static void OpenTreasureBox()
             m.x = sx; m.y = sy; m.size = gridStep;
             printf("Treasure Box: MUMMY spawned at (%.0f, %.0f)!\n", sx, sy);
             std::snprintf(gPopupMsg, sizeof(gPopupMsg), "Treasure: A Mummy appeared!");
-            gPopupFrames = 180; // show for ~3 seconds
+            gPopupFrames = 240; // show for ~3 seconds
         }
     }
 

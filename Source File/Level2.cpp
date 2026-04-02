@@ -498,7 +498,7 @@ static void L2OpenTreasureBox()
         l2_coinCounter++;
         printf("L2 Treasure Box: COIN! Total: %d\n", l2_coinCounter);
         std::snprintf(l2_popupMsg, sizeof(l2_popupMsg), "Treasure: +1 Coin! (Total: %d)", l2_coinCounter);
-        l2_popupFrames = 180;
+        l2_popupFrames = 240;
     }
     else
     {
@@ -519,7 +519,7 @@ static void L2OpenTreasureBox()
             bm.x = sx; bm.y = sy; bm.size = l2_gridStep;
             printf("L2 Treasure Box: MUMMY spawned at (%.0f,%.0f)!\n", sx, sy);
             std::snprintf(l2_popupMsg, sizeof(l2_popupMsg), "Treasure: A Mummy appeared!");
-            l2_popupFrames = 180;
+            l2_popupFrames = 240;
         }
     }
     // NOTE: L2SpawnTreasureBox() intentionally NOT called here -- chest appears once only.

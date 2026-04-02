@@ -288,7 +288,7 @@ static void L3OpenTreasureBox()
     {
         l3_coinCounter++;
         std::snprintf(l3_popupMsg, sizeof(l3_popupMsg), "Treasure: +1 Coin! (Total: %d)", l3_coinCounter);
-        l3_popupFrames = 180;
+        l3_popupFrames = 240;
     }
     else
     {
@@ -306,7 +306,7 @@ static void L3OpenTreasureBox()
             L3BoxMummy& m = l3_boxMummies[l3_boxMummyCount++];
             m.x = sx; m.y = sy; m.size = l3_gridStep;
             std::snprintf(l3_popupMsg, sizeof(l3_popupMsg), "Treasure: A Mummy appeared!");
-            l3_popupFrames = 180;
+            l3_popupFrames = 240;
         }
     }
     // Chest stays inactive -- no re-spawn. A new one is placed on next reset.
