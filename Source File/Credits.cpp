@@ -8,10 +8,12 @@
 
 namespace
 {
+    //                                                                --- VARIABLES DECLARATION START HERE ---
+
     struct CreditLine
     {
-        const char* text; // The text 
-        float scale;      // The size of the text 
+        const char* text; // The text to display
+        float scale;      // The size of the text
     };
 
     CreditLine Credits[] =
@@ -86,6 +88,7 @@ namespace
     };
 
     int CreditCount = sizeof(Credits) / sizeof(Credits[0]);
+
     float CreditOffsetY = 0.5f;
     float CreditSpacing = 0.12f;
     float AutoScrollSpeed = 0.0025f;
@@ -93,68 +96,76 @@ namespace
     float topLimit = 0.75f;
     float bottomLimit = -0.8f;
 
-    AEGfxTexture* wallimage = nullptr; //jas added
+    AEGfxTexture* wallimage = nullptr;
+    AEGfxTexture* backButtonTex = nullptr;
 
-    // ADDED: back button texture (same as LevelPage)                   -ths
-    AEGfxTexture* backButtonTex = nullptr;                              // -ths
+    //                                                                --- VARIABLES DECLARATION END HERE ---
 
-    // text = the string to display
-    // x = horizontal print position
-    // y = vertical print position
-    // scale = size of the text
-
+    // ----------------------------------------------------------------------------
+    // DrawCreditText
+    // Draws one line of credit text using the given position and scale.
+    // ----------------------------------------------------------------------------
     void DrawCreditText(const char* text, float x, float y, float scale)
     {
         char strBuffer[256];
 
-        //clear buffer first
+        // Clear buffer first
         memset(strBuffer, 0, sizeof(strBuffer));
 
-        //copy text into the buffer
+        // Copy text into the buffer
         sprintf_s(strBuffer, "%s", text);
 
-        AEGfxPrint(fontId, strBuffer, x, y, scale, 1.0f, 1.0f, 1.0f, 1.0f); //white
+        AEGfxPrint(fontId, strBuffer, x, y, scale, 1.0f, 1.0f, 1.0f, 1.0f); // white
     }
 }
 
-//----------------------------------------------------------------------------
-// Loads Main Menu
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Credit_Load
+// Loads all textures used by the Credits page and creates the mesh used for
+// drawing images on screen.
+// ----------------------------------------------------------------------------
 void Credit_Load()
 {
-    //std::cout << "Credit:Load\n";
-    wallimage = AEGfxTextureLoad("Assets/Bigwall.png"); // floor tile texture
-    // ADDED: load back button texture                                 -ths
-    backButtonTex = AEGfxTextureLoad("Assets/Back.png");               // -ths
+    wallimage = AEGfxTextureLoad("Assets/Bigwall.png");
+    backButtonTex = AEGfxTextureLoad("Assets/Back.png");
+
     pMesh = CreateSquareMesh();
 }
 
-//----------------------------------------------------------------------------
-// Sets up the initial state
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Credit_Initialize
+// Sets up the Credits state when it starts.
+// ----------------------------------------------------------------------------
 void Credit_Initialize()
 {
-    //std::cout << "Credit:Initialize\n";
-
-    //starting Y pos
-    //CreditOffsetY = 0.5f;
+    // Starting Y position can be reset here if needed
+    // CreditOffsetY = 0.5f;
 }
 
-//----------------------------------------------------------------------------
-// Updates Level Selection Page navigation
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Credit_Update
+// Updates input handling and scrolling for the Credits page.
+//
+// Behaviour:
+// 1. Clicking the back button returns to the main menu
+// 2. Pressing B returns to the main menu
+// 3. Pressing ESCAPE or closing the window quits the game
+// 4. W / Up scrolls upward manually
+// 5. S / Down scrolls downward manually
+// 6. If no manual input is given, the credits auto-scroll upward
+// ----------------------------------------------------------------------------
 void Credit_Update()
 {
-    //std::cout << "Credit:Update\n";
-
-    // ==================================================================
-    // ADDED: Back button click detection (top-left corner)             -ths
-    // ==================================================================
+    // === BACK BUTTON CLICK ===
     {
         s32 mouseX, mouseY;
         TransformScreentoWorld(mouseX, mouseY);
-        static float back_x = -750.0f, back_y = 400.0f;                // -ths
-        static float back_w = 50.0f, back_h = 50.0f;                   // -ths
+
+        static float back_x = -750.0f;
+        static float back_y = 400.0f;
+        static float back_w = 50.0f;
+        static float back_h = 50.0f;
+
         if (AEInputCheckReleased(AEVK_LBUTTON) &&
             IsAreaClicked(back_x, back_y, back_w, back_h, mouseX, mouseY))
         {
@@ -167,15 +178,15 @@ void Credit_Update()
     if (AEInputCheckReleased(AEVK_B))
     {
         next = MAINMENUSTATE;
-        //std::cout << "Back key Released" << '\n';
     }
 
     // Quit game when ESC is hit or when the window is closed
     if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
     {
         next = GS_QUIT;
-        //std::cout << "Q key Released" << '\n';
     }
+
+    // === MANUAL / AUTO SCROLL ===
 
     // UP key is pressed
     if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP))
@@ -187,41 +198,44 @@ void Credit_Update()
     {
         CreditOffsetY -= ManualScrollSpeed;
     }
-    // auto scroll upward
+    // Auto scroll upward
     else
     {
         CreditOffsetY += AutoScrollSpeed;
     }
 
-    // last line position
+    // Last line position
     float lastLineY = CreditOffsetY - static_cast<float>(CreditCount - 1) * CreditSpacing;
 
-    // loop credits back to bottom after the entire list leaves the top
+    // Loop credits back to bottom after the entire list leaves the top
     if (lastLineY > topLimit)
     {
         CreditOffsetY = bottomLimit;
     }
 }
 
-//----------------------------------------------------------------------------
-// Renders or draws the visual representation each frame 
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Credit_Draw
+// Renders the full Credits page each frame, including:
+// 1. Background image
+// 2. Copyright text
+// 3. Scrolling credits text
+// 4. Back button
+// ----------------------------------------------------------------------------
 void Credit_Draw()
 {
-    //std::cout << "Credit:Draw\n";
-
-    //adding of the main page image--
     AEMtx33 scale, trans, transform;
 
-    if (wallimage)                                                      // -ths
+    // === BACKGROUND IMAGE ===
+    if (wallimage)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(wallimage, 0, 0);
 
-        // size
+        // Size
         AEMtx33Scale(&scale, 1600.0f, 900.0f);
 
-        //center of screen
+        // Center of screen
         AEMtx33Trans(&trans, 0.0f, 0.0f);
 
         AEMtx33Concat(&transform, &trans, &scale);
@@ -232,62 +246,71 @@ void Credit_Draw()
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES); // main menu image
+        AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 
-    // Draw text copyright
-    AEGfxPrint(fontId, "All content © 2026 DigiPen Institute of Technology Singapore. All Rights Reserved.", -0.52f, 0.90f, 0.70f,1.0f, 1.0f, 1.0f, 1.0f);
+    // === COPYRIGHT TEXT ===
+    AEGfxPrint(fontId,
+        "All content © 2026 DigiPen Institute of Technology Singapore. All Rights Reserved.",
+        -0.52f, 0.90f, 0.70f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    //rendering mode to colour mode
+    // Reset rendering mode back to colour mode
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 
-    //loop through credits array
+    // === SCROLLING CREDITS TEXT ===
     for (int i = 0; i < CreditCount; ++i)
     {
         float y = CreditOffsetY - static_cast<float>(i) * CreditSpacing;
 
-        if (y < bottomLimit || y > topLimit) continue; //to adjust the text not to go over red border
+        // Skip text outside visible bounds
+        if (y < bottomLimit || y > topLimit)
+            continue;
 
         DrawCreditText(Credits[i].text, -0.35f, y, Credits[i].scale);
     }
 
-    // ==================================================================
-    // ADDED: Back button using texture (same as LevelPage)            -ths
-    // ==================================================================
+    // === BACK BUTTON ===
     if (backButtonTex)
     {
-        static float back_x = -750.0f, back_y = 400.0f, back_w = 50.0f, back_h = 50.0f;
+        static float back_x = -750.0f;
+        static float back_y = 400.0f;
+        static float back_w = 50.0f;
+        static float back_h = 50.0f;
+
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(backButtonTex, 0, 0);
+
         AEMtx33 scaleBtn, transBtn, matBtn;
         AEMtx33Scale(&scaleBtn, back_w, back_h);
         AEMtx33Trans(&transBtn, back_x, back_y);
         AEMtx33Concat(&matBtn, &transBtn, &scaleBtn);
         AEGfxSetTransform(matBtn.m);
+
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 }
 
-//----------------------------------------------------------------------------
-// Cleans up dynamic resources while keeping static data 
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Credit_Free
+// Cleans up runtime data for the Credits page while keeping long-lived
+// resources managed separately in Unload.
+// ----------------------------------------------------------------------------
 void Credit_Free()
 {
-    //std::cout << "Credit:Free\n";
 }
 
-//----------------------------------------------------------------------------
-// Unloads all resources completely when exiting the level 
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Credit_Unload
+// Unloads all textures and frees the mesh used by the Credits page.
+// ----------------------------------------------------------------------------
 void Credit_Unload()
 {
-    //std::cout << "Credit:Unload\n";
     if (wallimage)
     {
         AEGfxTextureUnload(wallimage);
         wallimage = nullptr;
     }
-    // ADDED: unload back button texture                               -ths
+
     if (backButtonTex)
     {
         AEGfxTextureUnload(backButtonTex);

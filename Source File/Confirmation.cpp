@@ -5,15 +5,18 @@
 #include "Main.h"
 #include <cstring>
 
-// ======================================================
-// LOCAL VARIABLES
-// ======================================================
+//                                                                --- VARIABLES DECLARATION START HERE ---
 static int  gCurrentState = 0;
 static int  gNextState = 0;
 static char gConfirmMessage[128] = "Are you sure?";
 static bool gConfirmationActive = false;
+//                                                                --- VARIABLES DECLARATION END HERE ---
 
-//Drawing Rectangle for buttons-------------
+// ----------------------------------------------------------------------------
+// DrawRect
+// Draws a solid coloured rectangle using the shared square mesh.
+// Used for the confirmation box background and the Yes / No buttons.
+// ----------------------------------------------------------------------------
 static void DrawRect(float centre_x, float centre_y, float width, float height, float r, float g, float b)
 {
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -31,18 +34,23 @@ static void DrawRect(float centre_x, float centre_y, float width, float height, 
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 }
 
+// ----------------------------------------------------------------------------
+// ConfirmAction
+// Identifies the action associated with each confirmation button.
+// ----------------------------------------------------------------------------
 enum ConfirmAction
 {
-    YES = 0,NO
+    YES = 0,
+    NO
 };
 
+// Button data for the confirmation popup
 static struct
 {
     float x, y, w, h;
     const char* text;
     int action;
-} 
-
+}
 confirmButtons[] =
 {
     { -120.0f, -40.0f, 180.0f, 60.0f, "Yes", YES },
@@ -51,22 +59,26 @@ confirmButtons[] =
 
 static const int confirmBtnCount = sizeof(confirmButtons) / sizeof(confirmButtons[0]);
 
-//----------------------------------------------------------------------------
-// Loads pMesh
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Confirmation_Load
+// Creates the square mesh used to draw the confirmation popup.
+// ----------------------------------------------------------------------------
 void Confirmation_Load()
 {
     pMesh = CreateSquareMesh();
 }
 
-//----------------------------------------------------------------------------
-// Sets up the initial state
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Confirmation_Initialize
+// Sets up the confirmation state when it starts.
+// ----------------------------------------------------------------------------
 void Confirmation_Initialize() {}
 
-//----------------------------------------------------------------------------
-//Function for the transition
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Confirmation_Level
+// Stores the current state, the next state to go to on confirmation,
+// and the message to show in the confirmation popup.
+// ----------------------------------------------------------------------------
 void Confirmation_Level(int currentState, int nextState, const char* message)
 {
     gCurrentState = currentState;
@@ -79,9 +91,16 @@ void Confirmation_Level(int currentState, int nextState, const char* message)
         strcpy_s(gConfirmMessage, "Are you sure?");
 }
 
-//----------------------------------------------------------------------------
-// Updates Selection of the user navigation
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Confirmation_Update
+// Handles input for the confirmation popup.
+//
+// Behaviour:
+// 1. If the confirmation popup is not active, do nothing
+// 2. If the left mouse button is released, check whether a button was clicked
+// 3. YES sends the game to the next state
+// 4. NO returns the game to the current state
+// ----------------------------------------------------------------------------
 void Confirmation_Update()
 {
     if (!gConfirmationActive)
@@ -94,7 +113,9 @@ void Confirmation_Update()
     {
         for (int i = 0; i < confirmBtnCount; ++i)
         {
-            if (IsAreaClicked(confirmButtons[i].x, confirmButtons[i].y, confirmButtons[i].w, confirmButtons[i].h, mouseX, mouseY)) {
+            if (IsAreaClicked(confirmButtons[i].x, confirmButtons[i].y,
+                confirmButtons[i].w, confirmButtons[i].h, mouseX, mouseY))
+            {
                 switch (confirmButtons[i].action)
                 {
                 case YES:
@@ -107,41 +128,57 @@ void Confirmation_Update()
                     gConfirmationActive = false;
                     return;
                 }
+
                 return;
             }
         }
     }
 }
 
-//----------------------------------------------------------------------------
-// Renders or draws the visual representation each frame 
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Confirmation_Draw
+// Draws the confirmation popup when it is active, including:
+// 1. The white background box
+// 2. The confirmation message
+// 3. The Yes / No buttons
+// 4. Centered text inside each button
+// ----------------------------------------------------------------------------
 void Confirmation_Draw()
 {
     if (!gConfirmationActive || !pMesh)
         return;
 
-    //AEGfxSetBackgroundColor(0.1f, 0.1f, 0.1f);
+    // === CONFIRMATION BOX ===
+    DrawRect(0.0f, 0.0f, 700.0f, 250.0f, 1.0f, 1.0f, 1.0f); // white box
 
-    DrawRect(0.0f, 0.0f, 700.0f, 250.0f, 1.0f, 1.0f, 1.0f); //white box
-
+    // === CONFIRMATION MESSAGE ===
     float w, h;
     const float msgScale = 0.9f;
     AEGfxGetPrintSize(fontId, gConfirmMessage, msgScale, &w, &h);
     AEGfxPrint(fontId, gConfirmMessage, -0.5f * w, 0.10f, msgScale, 0.0f, 0.0f, 0.0f, 1.0f);
 
+    // === BUTTONS ===
     for (int i = 0; i < confirmBtnCount; ++i)
     {
-        if (confirmButtons[i].action == YES) {
-            DrawRect(confirmButtons[i].x, confirmButtons[i].y,confirmButtons[i].w, confirmButtons[i].h, 0.2f, 0.7f, 0.2f);
+        // Draw button rectangle with colour based on action
+        if (confirmButtons[i].action == YES)
+        {
+            DrawRect(confirmButtons[i].x, confirmButtons[i].y,
+                confirmButtons[i].w, confirmButtons[i].h,
+                0.2f, 0.7f, 0.2f);
         }
-        else {
-            DrawRect(confirmButtons[i].x, confirmButtons[i].y, confirmButtons[i].w, confirmButtons[i].h, 0.8f, 0.2f, 0.2f);
+        else
+        {
+            DrawRect(confirmButtons[i].x, confirmButtons[i].y,
+                confirmButtons[i].w, confirmButtons[i].h,
+                0.8f, 0.2f, 0.2f);
         }
 
+        // Convert button centre from world coordinates to NDC for text printing
         float btnCenterNDCX = confirmButtons[i].x / 800.0f;
         float btnCenterNDCY = confirmButtons[i].y / 450.0f;
 
+        // Measure text size so it can be centered inside the button
         float textW, textH;
         const float textScale = 0.8f;
         AEGfxGetPrintSize(fontId, confirmButtons[i].text, textScale, &textW, &textH);
@@ -153,14 +190,17 @@ void Confirmation_Draw()
             1.0f, 1.0f, 1.0f, 1.0f);
     }
 }
-//----------------------------------------------------------------------------
-// Cleans up dynamic resources while keeping static data 
-//----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+// Confirmation_Free
+// Cleans up runtime data for the confirmation state if needed.
+// ----------------------------------------------------------------------------
 void Confirmation_Free() {}
 
-//----------------------------------------------------------------------------
-// Unloads all resources completely when exiting the level 
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Confirmation_Unload
+// Frees the square mesh used by the confirmation popup.
+// ----------------------------------------------------------------------------
 void Confirmation_Unload()
 {
     if (pMesh)

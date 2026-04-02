@@ -1,4 +1,3 @@
-
 #include "pch.h"
 #include "leveleditor.hpp"
 #include "Creator.h"
@@ -7,81 +6,75 @@
 #include <iostream>
 #include <fstream>
 
-//----------------------------------------------------------------------------
-// Loads Main Menu
-//---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Creator_Load
+// Loads the textures and mesh needed for the Creator state.
+// Also reads the level file and writes it back once during load.
+// ----------------------------------------------------------------------------
 void Creator_Load()
 {
-    std::cout << "Creator:Load\n"; // Debug purposes
     gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
     pMesh = CreateSquareMesh();
 
-
-
     readfile();
     print_file();
-
 }
 
-//----------------------------------------------------------------------------
-// Sets up the initial state
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Creator_Initialize
+// Sets up the Creator state when it starts.
+// ----------------------------------------------------------------------------
 void Creator_Initialize()
 {
-    std::cout << "Creator:Initialize\n"; // Debug purposes
-
 }
 
-//----------------------------------------------------------------------------
-// Updates Level Selection Page navigation
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Creator_Update
+// Updates input handling for the Creator state.
+//
+// Behaviour:
+// 1. Pressing B returns to the main menu
+// 2. Pressing ESCAPE or closing the window quits the game
+// ----------------------------------------------------------------------------
 void Creator_Update()
 {
-
-    std::cout << "Creator:Update\n"; // Debug purposes
-
     // Move back to main menu upon triggering "B"
     if (AEInputCheckReleased(AEVK_B))
     {
         next = MAINMENUSTATE;
-        std::cout << "Back key Released" << '\n'; // Debug purposes
+       
     }
 
-    // Quit game when Q is hit or when the window is closed
+    // Quit game when ESC is hit or when the window is closed
     if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
     {
         next = GS_QUIT;
-        std::cout << "Q key Released" << '\n'; // Debug purposes
     }
-    
-
 }
 
-//----------------------------------------------------------------------------
-// Renders or draws the visual representation each frame 
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Creator_Draw
+// Draws the Creator state each frame by setting the background colour and
+// calling the level editor drawing / update logic.
+// ----------------------------------------------------------------------------
 void Creator_Draw()
 {
-    std::cout << "Creator:Draw\n"; // Debug purposes
     AEGfxSetBackgroundColor(0.30f, 0.22f, 0.12f);
     generateLevel();
-    
 }
 
-//----------------------------------------------------------------------------
-// Cleans up dynamic resources while keeping static data 
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Creator_Free
+// Cleans up runtime data for the Creator state if needed.
+// ----------------------------------------------------------------------------
 void Creator_Free()
 {
-    std::cout << "Creator:Free\n"; // Debug purposes
-
 }
 
-//----------------------------------------------------------------------------
-// Unloads all resources completely when exiting the level 
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Creator_Unload
+// Unloads resources used by the Creator state if needed.
+// ----------------------------------------------------------------------------
 void Creator_Unload()
 {
-    std::cout << "Creator:Unload\n"; // Debug purposes
-
 }

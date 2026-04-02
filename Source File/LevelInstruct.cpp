@@ -1,13 +1,10 @@
 ﻿#include "pch.h"
-
 #include "IntroLogo.h"
 #include "gamestatemanager.h"
 #include "Main.h"
 #include <iostream>
 
-// ------------------------------------------------------------
-// Variables
-// ------------------------------------------------------------
+//                                                                --- VARIABLES DECLARATION START HERE ---
 AEGfxTexture* Level1instruct = nullptr;
 AEGfxTexture* Level2instruct = nullptr;
 AEGfxTexture* Level3instruct = nullptr;
@@ -17,10 +14,13 @@ static int instructionNextState = GS_LEVEL1;
 
 static float instructionTimer = 0.0f;
 static const float LEVEL_INSTRUCT_TIME = 4.0f;
+//                                                                --- VARIABLES DECLARATION END HERE ---
 
-// ------------------------------------------------------------
-// Switch case for the levels to be loaded more easily
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// GetLevelState
+// Returns the corresponding game state for the given level number.
+// Used so the instruction screen knows which level state to go to next.
+// ----------------------------------------------------------------------------
 static int GetLevelState(int level)
 {
     switch (level)
@@ -32,23 +32,25 @@ static int GetLevelState(int level)
     }
 }
 
-// ------------------------------------------------------------
-// Use this function for calling of which levels to load the images
-// and the timer
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// LevelInstruct
+// Sets which instruction screen to show based on the given level number.
+// Also resets the timer and stores which game state to go to next.
+// ----------------------------------------------------------------------------
 void LevelInstruct(int level)
 {
-    instructionLevel = level; //the number that you put
-    instructionNextState = GetLevelState(level); //switch the level based on the number placed
-    instructionTimer = 0.0f; //start the timer
+    instructionLevel = level;                  // Store which level instruction image to show
+    instructionNextState = GetLevelState(level); // Store which level state to enter next
+    instructionTimer = 0.0f;                  // Reset timer whenever this screen is called
 }
 
-// ------------------------------------------------------------
-// Load
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// LevelInstruct_Load
+// Loads all instruction screen textures and creates the square mesh used
+// to draw the full-screen image.
+// ----------------------------------------------------------------------------
 void LevelInstruct_Load()
 {
-
     Level1instruct = AEGfxTextureLoad("Assets/Level1Instructions.png");
     Level2instruct = AEGfxTextureLoad("Assets/Level2Instructions.png");
     Level3instruct = AEGfxTextureLoad("Assets/Level3Instructions.png");
@@ -56,37 +58,44 @@ void LevelInstruct_Load()
     pMesh = CreateSquareMesh();
 }
 
-// ------------------------------------------------------------
-// Initialize
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// LevelInstruct_Initialize
+// Resets the instruction timer when this state starts.
+// ----------------------------------------------------------------------------
 void LevelInstruct_Initialize()
 {
     instructionTimer = 0.0f;
 }
 
-// ------------------------------------------------------------
-// Update
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// LevelInstruct_Update
+// Updates the timer for the instruction screen.
+//
+// Behaviour:
+// 1. Automatically continues to the next level after a few seconds
+// 2. Allows the player to skip manually with SPACE or left mouse click
+// 3. Allows quitting with ESCAPE or when the window is closed
+// ----------------------------------------------------------------------------
 void LevelInstruct_Update()
 {
     instructionTimer += (float)AEFrameRateControllerGetFrameTime();
 
-    // auto continue after timer
+    // Auto continue after timer
     if (instructionTimer >= LEVEL_INSTRUCT_TIME)
     {
         next = instructionNextState;
         return;
     }
 
-    // continue manually
-    if ( AEInputCheckTriggered(AEVK_SPACE) || //if press space or left MSB
+    // Continue manually
+    if (AEInputCheckTriggered(AEVK_SPACE) ||
         AEInputCheckTriggered(AEVK_LBUTTON))
     {
         next = instructionNextState;
         return;
     }
 
-    // quit
+    // Quit the game
     if (AEInputCheckReleased(AEVK_ESCAPE) ||
         0 == AESysDoesWindowExist())
     {
@@ -95,15 +104,18 @@ void LevelInstruct_Update()
     }
 }
 
-// ------------------------------------------------------------
-// Draw
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// LevelInstruct_Draw
+// Draws the correct instruction image based on the currently selected level.
+// Also prints a small message at the bottom telling the player how to skip.
+// ----------------------------------------------------------------------------
 void LevelInstruct_Draw()
 {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
     AEGfxTexture* currentInstruction = nullptr;
 
+    // === SELECT CURRENT INSTRUCTION IMAGE ===
     switch (instructionLevel)
     {
     case 1:
@@ -120,6 +132,7 @@ void LevelInstruct_Draw()
         break;
     }
 
+    // === DRAW FULL SCREEN INSTRUCTION IMAGE ===
     if (currentInstruction)
     {
         AEMtx33 scale, trans, transform;
@@ -139,6 +152,7 @@ void LevelInstruct_Draw()
         AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
     }
 
+    // === SKIP TEXT ===
     const float textScale = 0.65f;
 
     float w = 0.0f, h = 0.0f;
@@ -149,20 +163,22 @@ void LevelInstruct_Draw()
     AEGfxPrint(fontId, t0, x0, -0.78f, textScale, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
-// ------------------------------------------------------------
-// Free
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// LevelInstruct_Free
+// Frees state-specific runtime data if needed.
+// Currently only prints a debug message.
+// ----------------------------------------------------------------------------
 void LevelInstruct_Free()
 {
-    std::cout << "LevelInstruct:Free\n";
 }
 
-// ------------------------------------------------------------
-// Unload
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// LevelInstruct_Unload
+// Unloads all instruction textures and frees the shared mesh used by this
+// state. Also resets the pointers to nullptr after freeing.
+// ----------------------------------------------------------------------------
 void LevelInstruct_Unload()
 {
-    std::cout << "LevelInstruct:Unload\n";
 
     if (Level1instruct)
     {
