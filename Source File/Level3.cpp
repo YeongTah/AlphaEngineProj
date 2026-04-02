@@ -103,16 +103,16 @@ static struct L3PowerState {
 static bool L3IsInvincibleNow() { return l3Power.invincible || (l3Power.invFrames > 0); }
 
 // Helper: returns true if any enemy occupies the given world position -ths
-static bool L3IsCellOccupiedByEnemy(float x, float y)
-{
-    if (fabsf(x - l3_mummy1.x) < 1.0f && fabsf(y - l3_mummy1.y) < 1.0f) return true;
-    if (fabsf(x - l3_mummy2.x) < 1.0f && fabsf(y - l3_mummy2.y) < 1.0f) return true;
-    if (fabsf(x - l3_mummy3.x) < 1.0f && fabsf(y - l3_mummy3.y) < 1.0f) return true;
-    for (int i = 0; i < l3_boxMummyCount; ++i)
-        if (fabsf(x - l3_boxMummies[i].x) < 1.0f && fabsf(y - l3_boxMummies[i].y) < 1.0f)
-            return true;
-    return false;
-}
+//static bool L3IsCellOccupiedByEnemy(float x, float y)
+//{
+//   if (fabsf(x - l3_mummy1.x) < 1.0f && fabsf(y - l3_mummy1.y) < 1.0f) return true;
+//    if (fabsf(x - l3_mummy2.x) < 1.0f && fabsf(y - l3_mummy2.y) < 1.0f) return true;
+//    if (fabsf(x - l3_mummy3.x) < 1.0f && fabsf(y - l3_mummy3.y) < 1.0f) return true;
+//    for (int i = 0; i < l3_boxMummyCount; ++i)
+//        if (fabsf(x - l3_boxMummies[i].x) < 1.0f && fabsf(y - l3_boxMummies[i].y) < 1.0f)
+//            return true;
+//    return false;
+//}
 
 // ----------------------------------------------------------------------------
 // L3TickPowers
@@ -203,7 +203,7 @@ static void L3LoadLevelTxt()
 // canMove() validates each step against the tile grid.
 // Extracted as a helper to avoid code duplication across 3 mummies.
 // ----------------------------------------------------------------------------
-static void MoveMummyTowardPlayer(Entity& mummy, float playerX, float playerY, float gridStep)
+/*static void MoveMummyTowardPlayer(Entity& mummy, float playerX, float playerY, float gridStep)
 {
     float diffX = playerX - mummy.x;
     float diffY = playerY - mummy.y;
@@ -220,7 +220,7 @@ static void MoveMummyTowardPlayer(Entity& mummy, float playerX, float playerY, f
         float stepY = (diffY > 0) ? gridStep : -gridStep;
         if (canMove(mummy.x, mummy.y + stepY)) mummy.y += stepY;
     }
-}
+}*/
 
 // ----------------------------------------------------------------------------
 // PlayerTouchesMummy
