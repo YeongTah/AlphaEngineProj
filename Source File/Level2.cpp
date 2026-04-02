@@ -31,6 +31,7 @@ Technology is prohibited.
 #include <cstdio>  // snprintf for HUD text -ths
 #include <cstdlib>
 #include "Confirmation.h"
+#include "Debug.h"
 
 // ======================= LEVEL 2 AUDIO HANDLES ======================= // -ths
 
@@ -878,6 +879,9 @@ void Level2_Update()
     // --- Save (F5) / Load (F9) ---                                   // <-- NEW
     if (AEInputCheckReleased(AEVK_F5)) { if (SaveLevel2State("Assets/save2.txt")) std::cout << "Saved (Assets/save2.txt)\n"; }
     if (AEInputCheckReleased(AEVK_F9)) { if (LoadLevel2State("Assets/save2.txt")) std::cout << "Loaded (Assets/save2.txt)\n"; }
+
+    // --- Debug overlay toggle (F1) ---
+    Debug_HandleToggle();
     // ===== PER-FRAME POWER TIMERS ===== -ths
     L2TickInvFrames();     // -ths
     L2TickFreezeFrames();  // -ths
@@ -1118,7 +1122,7 @@ void Level2_Update()
         }
 
         // Mummy & Scorpion movement (frozen if freezeFrames > 0)
-        if (l2_turnCounter %2 == 0 &&l2Power.freezeFrames <= 0)
+        if (l2_turnCounter % 2 == 0 && l2Power.freezeFrames <= 0)
         {
             // ---- BFS: find the next step on the shortest path from (startR,startC)
             // to (goalR,goalC), avoiding wall tiles (value == 1).
@@ -1635,6 +1639,71 @@ void Level2_Draw()
     // ===== ADDED: Pause button (top-right) ===== -ths
     DrawPauseButton(); // -ths
 
+    // ---- Debug overlay: fill info struct and call shared draw function ----
+    // Press F1 in-game to toggle on / off.
+    if (Debug_IsActive())
+    {
+        DebugEntityInfo dbg;
+        dbg.playerX = l2_player.x;  
+        dbg.playerY = l2_player.y;  
+        dbg.playerSize = l2_player.size;
+
+        dbg.hasMummy1 = true;
+        dbg.mummy1X = l2_mummy.x; 
+        dbg.mummy1Y = l2_mummy.y;   
+        dbg.mummy1Size = l2_mummy.size;
+
+        dbg.hasMummy2 = true;
+        dbg.mummy2X = l2_mummy2.x; 
+        dbg.mummy2Y = l2_mummy2.y;
+        dbg.mummy2Size = l2_mummy2.size;
+
+        dbg.hasScorpion = true;
+        dbg.scorpionX = l2_scorpion.x;
+        dbg.scorpionY = l2_scorpion.y;
+        dbg.scorpionSize = l2_scorpion.size;
+
+        dbg.exitX = l2_exitPortal.x; 
+        dbg.exitY = l2_exitPortal.y;
+        dbg.exitSize = l2_exitPortal.size;
+        dbg.coinX = l2_coin.x;   
+        dbg.coinY = l2_coin.y;    
+        dbg.coinSize = l2_coin.size;
+
+        dbg.powerupActive = l2_powerupActive;
+        dbg.powerupX = l2_powerup.x;  dbg.powerupY = l2_powerup.y;
+        dbg.powerupSize = l2_powerup.size;
+
+        dbg.treasureBoxActive = l2_treasureBoxActive;
+        dbg.treasureBoxX = l2_treasureBox.x;
+        dbg.treasureBoxY = l2_treasureBox.y;
+        dbg.treasureBoxSize = l2_treasureBox.size;
+
+        dbg.boxMummyCount = l2_boxMummyCount;
+        for (int i = 0; i < l2_boxMummyCount; ++i)
+        {
+            dbg.boxMummyX[i] = l2_boxMummies[i].x;
+            dbg.boxMummyY[i] = l2_boxMummies[i].y;
+            dbg.boxMummySize[i] = l2_boxMummies[i].size;
+        }
+
+        dbg.coinCounter = l2_coinCounter;
+        dbg.turnCounter = l2_turnCounter;
+        dbg.invincibleActive = l2Power.invincible;
+        dbg.invFrames = l2Power.invFrames;
+        dbg.freezeActive = l2Power.freeze;
+        dbg.freezeFrames = l2Power.freezeFrames;
+        dbg.speedActive = l2Power.speed;
+        dbg.speedTurns = l2Power.speedTurns;
+        dbg.isPaused = l2_paused;
+        dbg.isWin = l2_showWin;
+        dbg.isLose = l2_showLose;
+        dbg.popupFrames = l2_popupFrames;
+        dbg.tileSize = GRID_TILE_SIZE;
+
+        Debug_DrawOverlay(dbg);
+    }
+
     // Reset render state to clean defaults
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1709,4 +1778,4 @@ void Level2_Unload()
     }
 
     l2_initialised = false;
-} 
+}
