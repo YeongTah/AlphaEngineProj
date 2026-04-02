@@ -1118,7 +1118,7 @@ void Level2_Update()
         }
 
         // Mummy & Scorpion movement (frozen if freezeFrames > 0)
-        if (l2Power.freezeFrames <= 0)
+        if (l2_turnCounter %2 == 0 &&l2Power.freezeFrames <= 0)
         {
             // ---- BFS: find the next step on the shortest path from (startR,startC)
             // to (goalR,goalC), avoiding wall tiles (value == 1).

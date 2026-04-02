@@ -1017,8 +1017,8 @@ void Level3_Update()
             std::cout << "L3 Coin collected! Total: " << l3_coinCounter << "\n";
         }
 
-        // Mummy movement every 2nd turn, unless frozen
-        if (l3Power.freezeFrames <= 0)
+        //                                                   Mummy movement every 2nd turn, unless frozen  level 3 YT 
+        if (l3_turnCounter %2 == 0 &&l3Power.freezeFrames <= 0)
         {
             // ---- BFS: find the next step on the shortest path from (startR,startC)
             // to (goalR,goalC), avoiding wall tiles (value == 1).
@@ -1126,7 +1126,7 @@ void Level3_Update()
             L3OpenTreasureBox();
         }
 
-        // ====== BOX MUMMY AI: BFS chase player every turn ======
+        //                                              ====== BOX MUMMY AI: BFS chase player every turn ======
         if (l3Power.freezeFrames <= 0)
         {
             int playerR2, playerC2;
