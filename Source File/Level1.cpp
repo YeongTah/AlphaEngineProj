@@ -1,20 +1,4 @@
-﻿/* Start Header ******************************************************************
-/*!
-\file Level1.cpp
-\author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
-\par sharonjooai.lim@digipen.edu
-\date January, 26, 2026
-\brief This file defines the function Load, Initialize, Update, Draw, Free, Unload
- to produce the level in the game and manage their own counters loaded from text
- files.
- Copyright (C) 2026 DigiPen Institute of Technology.
-Reproduction or disclosure of this file or its contents
-without the prior written consent of DigiPen Institute of
-Technology is prohibited.
-*/
-/* End Header **************************************************************************/
-
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "leveleditor.hpp"
 #include "GridUtils.h"
@@ -25,14 +9,31 @@ Technology is prohibited.
 #include "Main.h"
 #include <iostream>
 #include <fstream>
-#include <cmath> /* fabsf -ths */
-#include <cstring> /* strlen -ths */
-#include <cstdio>  /* snprintf for HUD text -ths */
+#include <cmath>
+#include <cstring>
+#include <cstdio> 
 #include <cstdlib>
 #include "Confirmation.h"
 #include "Debug.h"
 
-// ====================== LEVEL 1 AUDIO VARIABLES ====================== // -ths
+// DOCUMENTATION FOLLOW LIKE THIS:
+// FOR CATEGORISING OF CODE, USE THE BELOW
+//                                                                --- VARIABLES DECLARATION START HERE ---
+//                                                                --- VARIABLES DECLARATION END HERE ---
+
+// FOR JUST NAMING THE START OF THE VARIABLE USE THE BELOW
+// === PLAY ===
+
+// FOR NAMING OF FUNCTION USE THE BELOW
+// ----------------------------------------------------------------------------
+// SpawnTreasureBox
+// Places the treasure box at a random free cell at least 6 Manhattan cells
+// away from the player. Called at init and after each box is opened.
+// ----------------------------------------------------------------------------
+
+// FOR REGULAR COMMENTING OF CODE E.G., FOR UNDERSTANDING, EXPLAINING WHAT THE CODE DOES, WRITE HOWEVER YOU WISH
+
+// ====================== LEVEL 1 AUDIO VARIABLES ======================
 static AEAudio sfxPlayerMove;     // -ths
 static AEAudio sfxChest;          // -ths
 static AEAudio sfxPowerup;        // -ths
@@ -42,13 +43,8 @@ static AEAudio sfxGameOver;       // -ths
 static AEAudio sfxButton;
 
 static AEAudioGroup level1Group;  // -ths
-// ===================================================================== // -ths
+// =====================================================================
 
-
-/* ------------------------------ NEW: minimal, compatible additions --------------------------------
- Everything added in this file is kept local to Level1 and uses your existing engine and globals. -ths
- We do NOT modify GSM/states or other modules. All new comments end with '-ths'. -ths
---------------------------------------------------------------------------------------------------- */
 
 /* NEW: forward decls to use functions/vars defined in leveleditor.cpp safely without editing headers -ths */
 extern void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol); // -ths
@@ -84,7 +80,8 @@ bool playerMoved = false; // Set to true when the player makes a valid move this
 float gridStep = 50.0f; // World units per one grid cell step (matches GRID_TILE_SIZE)
 float nextX = player.x; // Stores the player's proposed next X position before validation
 float nextY = player.y; // Stores the player's proposed next Y position before validation
-// --- Variables declaration end here ---
+
+//                                                                --- VARIABLES DECLARATION END HERE  ---
 
 // ========================== TREASURE BOX SYSTEM ===========================
 // Treasure box system: replaces the old enemy spawning with an interactive chest.
@@ -183,7 +180,7 @@ static void OpenTreasureBox()
     bool spawnMummy = (AERandFloat() >= 0.5f); // 50/50
 
     if (!spawnMummy)
-    {
+    {    
         // Reward: instant bonus coin
         coinCounter++;
         printf("Treasure Box: COIN! Total coins: %d\n", coinCounter);
@@ -395,37 +392,6 @@ float CenteredTextX(float centerWorldX, const char* text, float scale)
     return ToNDCX(centerWorldX) - halfText; // left-x for AEGfxPrint -ths
 }
 
-// ----------------------------------------------------------------------------
-// DrawButtonRect
-// Draws a solid colored rectangle at world position (cx, cy) with dimensions
-// (w x h) using the shared pMesh. Used for overlay buttons (Retry, Exit).
-// ----------------------------------------------------------------------------
-/*static void DrawButtonRect(float cx, float cy, float w, float h, float r, float g, float b)
-{
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(r, g, b, 1.0f);
-    AEMtx33 s, t, m;
-    AEMtx33Scale(&s, w, h);
-    AEMtx33Trans(&t, cx, cy);
-    AEMtx33Concat(&m, &t, &s);
-    AEGfxSetTransform(m.m);
-    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
-}
-*/
-// ----------------------------------------------------------------------------
-// SnapToGridCenter
-// Converts an arbitrary world position (inX, inY) to the exact center of the
-// grid cell it occupies. Prevents entities from sitting on grid-line borders.
-// ----------------------------------------------------------------------------
-/*static void SnapToGridCenter(float inX, float inY, float& outX, float& outY)
-{
-    int rr, cc;
-    WorldToGrid(inX, inY, rr, cc);
-    GridToWorldCenter(rr, cc, outX, outY);
-}*/
-
 // ========================== NEW: Save / Load (local) ==============================================
 // ----------------------------------------------------------------------------
 // SaveLevel1State
@@ -440,7 +406,7 @@ static bool SaveLevel1State(const char* path)
     std::ofstream f(path);
     if (!f.is_open()) return false;
 
-    // Player
+    // ==== PLAYER ====
     f << player.x << ' ' << player.y << '\n';
     // Counters
     f << coinCounter << ' ' << turnCounter << '\n';
