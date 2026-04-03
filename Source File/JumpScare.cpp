@@ -5,10 +5,10 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
-#include <cstdlib> // For rand()
-#include <ctime>   // For time()
+#include <cstdlib>
+#include <ctime> 
 
-//                                                                --- Variables declaration start here ---
+//                                                                --- VARIABLES DECLARATION START HERE ---
 
 static bool jumpScareActive = false;
 static float jumpScareTimer = 0.0f;
@@ -16,14 +16,18 @@ static float jumpScareScale = 0.0f;
 static AEGfxTexture* jumpScareTextures[2] = { nullptr, nullptr }; // 2 images
 static int currentTextureIndex = 0; // Which image to show
 
-// Animation constants
+// === Animation constants ===
 static const float JUMP_SCARE_DURATION = 2.0f;
 static const float POP_OUT_TIME = 0.5f;
 static const float MAX_SCALE = 1.4f;
 static const float MIN_SCALE = 0.6f;
 
-//                                                                --- Variables declaration end here ---
+//                                                                --- VARIABLES DECLARATION END HERE ---
 
+// ----------------------------------------------------------------------------
+// JumpScare_Init
+// Initialise jump scare system
+// ----------------------------------------------------------------------------
 void JumpScare_Init()
 {
     jumpScareActive = false;
@@ -31,6 +35,10 @@ void JumpScare_Init()
     jumpScareScale = 0.0f;
 }
 
+// ----------------------------------------------------------------------------
+// JumpScare_Load
+// Load jump scare texture (call in Level_Load)
+// ----------------------------------------------------------------------------
 void JumpScare_Load()
 {
     // Load both jump scare images
@@ -38,8 +46,8 @@ void JumpScare_Load()
     jumpScareTextures[1] = AEGfxTextureLoad("Assets/JumpScare2.jpg");
 
     // Check if loaded successfully
-    if (!jumpScareTextures[0]) std::cout << "Failed to load JumpScare1.png\n";
-    if (!jumpScareTextures[1]) std::cout << "Failed to load JumpScare2.png\n";
+    if (!jumpScareTextures[0]) return;
+    if (!jumpScareTextures[1]) return;
 
     // Seed random once
     static bool seeded = false;
@@ -51,6 +59,10 @@ void JumpScare_Load()
     pMesh = CreateSquareMesh();
 }
 
+// ----------------------------------------------------------------------------
+// JumpScare_Trigger
+// Trigger the jump scare
+// ----------------------------------------------------------------------------
 void JumpScare_Trigger()
 {
     jumpScareActive = true;
@@ -60,9 +72,12 @@ void JumpScare_Trigger()
     // Randomly choose which image to show (0 or 1)
     currentTextureIndex = rand() % 2; // 0 or 1
 
-    std::cout << "JUMP SCARE TRIGGERED!\n"; // Debug
 }
 
+// ----------------------------------------------------------------------------
+// JumpScare_Update
+// Update jump scare animation (call in Level_Update)
+// ----------------------------------------------------------------------------
 void JumpScare_Update()
 {
     if (!jumpScareActive) return;
@@ -102,6 +117,10 @@ void JumpScare_Update()
     }
 }
 
+// ----------------------------------------------------------------------------
+// JumpScare_Draw
+// Draw jump scare (call in Level_Draw)
+// ----------------------------------------------------------------------------
 void JumpScare_Draw()
 {
     if (!jumpScareActive) return;
@@ -138,11 +157,19 @@ void JumpScare_Draw()
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 }
 
+// ----------------------------------------------------------------------------
+// JumpScare_Draw
+// Returns when jumpscare is active
+// ----------------------------------------------------------------------------
 bool JumpScare_IsActive()
 {
     return jumpScareActive;
 }
 
+// ----------------------------------------------------------------------------
+// JumpScare_Draw
+// Unload jump scare texture (call in Level_Unload)
+// ----------------------------------------------------------------------------
 void JumpScare_Unload()
 {
     // Unload both textures

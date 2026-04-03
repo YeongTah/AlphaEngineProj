@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cmath>
 
-// ==================== PLAYER TRAIL PARTICLE SYSTEM ====================
+//                                                                --- VARIABLES DECLARATION START HERE ---
 Particle g_trailParticles[MAX_TRAIL_PARTICLES];
 bool g_trailParticlesActive = false;
 float g_trailSpawnTimer = 0.0f;
@@ -12,9 +12,10 @@ float g_lastPlayerX = 0.0f;
 float g_lastPlayerY = 0.0f;
 
 static const float TRAIL_SPAWN_DELAY = 0.15f;  // Slower spawn rate
-static const float TRAIL_OFFSET_DISTANCE = 10.0f;  // Distance behind player
+static const float TRAIL_OFFSET_DISTANCE = 50.0f;  // Distance behind player
 static const float TRAIL_PARTICLE_LIFETIME = 2.0f;
-static const float TRAIL_PARTICLE_SIZE = 100.0f;
+static const float TRAIL_PARTICLE_SIZE = 5.0f;
+//                                                                --- VARIABLES DECLARATION END HERE ---
 
 // Spawn a single trail particle behind the player
 static void SpawnTrailParticle(float playerX, float playerY)
@@ -156,14 +157,6 @@ void TrailParticle_Init(void)
 
 void Particle_Load() {
     pMesh = CreateSquareMesh();
-}
-
-void TrailParticle_Spawn(float playerX, float playerY)
-{
-    
-    // Store last position for direction calculation
-    g_lastPlayerX = playerX;
-    g_lastPlayerY = playerY;
 }
 
 void TrailParticle_Update(float dt, float playerX, float playerY)

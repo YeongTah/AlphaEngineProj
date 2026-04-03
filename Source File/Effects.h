@@ -25,7 +25,6 @@ extern float g_lastPlayerY;
 // Player Trail Particle Functions
 void TrailParticle_Init(void);
 void Particle_Load(void);
-void TrailParticle_Spawn(float playerX, float playerY);
 void TrailParticle_Update(float dt, float playerX, float playerY);
 void TrailParticle_Draw(void);
 void TrailParticle_Clear(void);

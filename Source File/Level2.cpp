@@ -1,20 +1,4 @@
-﻿/* Start Header ****************************************************************
-/*!
-\file Level2.cpp
-\author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
-\par sharonjooai.lim@digipen.edu
-\date January, 26, 2026
-\brief Level 2 -- Medium difficulty.
- Same structure as Level 1 but with TWO mummies chasing the player.
- Loads its tile map from "Assets/level2.txt".
- All L2-specific state is prefixed with "l2_" to avoid collisions with Level1 globals.
-Copyright (C) 2026 DigiPen Institute of Technology.
-Reproduction or disclosure of this file or its contents
-without the prior written consent of DigiPen Institute of
-Technology is prohibited.
-*/
-/* End Header **************************************************************** */
-
+﻿
 #include "pch.h"
 
 #include "leveleditor.hpp"
@@ -1587,10 +1571,14 @@ void Level2_Draw()
     }
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // reset tint
 
+<<<<<<< Updated upstream
     // --- Jump Scare --- 
     JumpScare_Draw();
 
     // ===== HUD for active power-ups (top-left) =====
+=======
+    // ===== ADDED: HUD for active power-ups (top-left) ===== -ths
+>>>>>>> Stashed changes
     if (l2Power.invFrames > 0)
     {
         char buf[64];
@@ -1633,6 +1621,9 @@ void Level2_Draw()
 
     // ===== Pause button (top-right) =====
     DrawPauseButton();
+
+    // === Jump Scare ===
+    JumpScare_Draw();
 
     // ---- Debug overlay: fill info struct and call shared draw function ----
     // Press F1 in-game to toggle on / off.

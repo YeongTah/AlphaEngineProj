@@ -2,6 +2,7 @@
 #include "leveleditor.hpp"
 #include "GridUtils.h"
 #include "Level1.h"
+#include "Effects.h"
 #include "JumpScare.h"
 #include "gamestatemanager.h"
 #include "GameStateList.h"
@@ -573,6 +574,9 @@ void Level1_Load()
     // Load treasure box texture
     gTreasureBoxTex = AEGfxTextureLoad("Assets/TreasureChest.png");
 
+    // Load particles
+    Particle_Load();
+
     // Load jump scare texture
     JumpScare_Load();
 
@@ -676,6 +680,9 @@ void Level1_Initialize()
 
     // Initialise jump scare
     JumpScare_Init();
+
+    // Initialise particles
+    TrailParticle_Init();
 
     // Force re-initialisation every time (handles restart correctly)
     level1_initialised = false;
@@ -975,7 +982,14 @@ void Level1_Update()
     TickFreezeFrames();
     if (gPopupFrames > 0) --gPopupFrames;
 
+<<<<<<< Updated upstream
     // Player movement
+=======
+    float dt = (float)AEFrameRateControllerGetFrameTime();
+    TrailParticle_Update(dt, player.x, player.y); // animate trail particles
+
+    // Player movement -ths
+>>>>>>> Stashed changes
     float testNextX = player.x;
     float testNextY = player.y;
 
@@ -993,7 +1007,15 @@ void Level1_Update()
         playerMoved = true;
 
         if (AEAudioIsValidAudio(sfxPlayerMove))
-            AEAudioPlay(sfxPlayerMove, level1Group, 1.0f, 1.0f, 0);
+            AEAudioPlay(sfxPlayerMove, level1Group, 1.0f, 1.0f, 0); // -ths
+
+
+        //// ====== UPDATE PARTICLES ======
+
+        //float dt = (float)AEFrameRateControllerGetFrameTime();
+
+        //TrailParticle_Update(dt, player.x, player.y); // animate trail particles
+
     }
 
     // ======= POWER-UP PICKUP =======
@@ -1519,8 +1541,8 @@ void Level1_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // --- Jump Scare --- 
-    JumpScare_Draw();
+    // --- Draw particles ---
+    TrailParticle_Draw();
 
     // ===== HUD FOR ACTIVE POWER-UPS =====
     if (gPower.invFrames > 0)
@@ -1567,6 +1589,9 @@ void Level1_Draw()
     // Top‑right PAUSE BUTTON (Draw only during gameplay)
     // ====================================================================
     DrawPauseButton();   // renders the pause button using helper from earlier
+
+    // === Jump Scare === 
+    JumpScare_Draw();
 
     // ---- Debug overlay: fill info struct and call shared draw function ----
     // Press F1 in-game to toggle on / off.
@@ -1660,7 +1685,14 @@ void Level1_Unload()
     // ------ Unload Jump Scare ------
     JumpScare_Unload();
 
+<<<<<<< Updated upstream
     // Unload treasure box texture
+=======
+    // ------ Unload particles ------
+    TrailParticle_Unload();
+
+    // ====== Unload treasure box texture ======
+>>>>>>> Stashed changes
     if (gTreasureBoxTex) { AEGfxTextureUnload(gTreasureBoxTex); gTreasureBoxTex = nullptr; }
 
     // ---------------- AUDIO UNLOAD ----------------
@@ -1725,6 +1757,10 @@ void ResetLevel1()
     // Treasure box: clear spawned mummies and re-place the box
     gBoxMummyCount = 0;
     SpawnTreasureBox();
+
+    // Clear particles when resetting level (but keep systems active)
+    TrailParticle_Clear();
+    TrailParticle_Init(); // Re-initialize trail system
 
     // Reset movement tracking
     nextX = player.x;

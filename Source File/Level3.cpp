@@ -1,19 +1,4 @@
-﻿/* Start Header ****************************************************************
-/*!
-\file Level3.cpp
-\author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
-\par sharonjooai.lim@digipen.edu
-\date January, 26, 2026
-\brief Level 3 -- Hard difficulty.
- Same structure as Level 2 but with THREE mummies chasing the player.
- Loads its tile map from "Assets/level3.txt".
- All L3-specific state is prefixed with "l3_" to avoid collisions.
- Copyright (C) 2026 DigiPen Institute of Technology.
-Reproduction or disclosure of this file or its contents
-without the prior written consent of DigiPen Institute of
-Technology is prohibited.
-*/
-/* End Header **************************************************************** */
+﻿
 #include "pch.h"
 
 #include "leveleditor.hpp"
@@ -547,14 +532,16 @@ void Level3_Load()
     l3_coin.pTex = AEGfxTextureLoad("Assets/Coin.png");
     l3_exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png");
 
-    // Load jump scare texture
-    JumpScare_Load();
 
     // Load power‑up textures
     l3_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png");
     l3_FreezeTex = AEGfxTextureLoad("Assets/Freeze.png");
 
     l3_treasureBoxTex = AEGfxTextureLoad("Assets/TreasureChest.png");
+
+
+    // Load jump scare texture
+    JumpScare_Load();
 
     // Shared mesh for all sprites
     pMesh = CreateSquareMesh();
@@ -1425,9 +1412,6 @@ void Level3_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // --- Jump Scare --- 
-    JumpScare_Draw();
-
     // --- Treasure Box ---
     if (l3_treasureBoxActive)
     {
@@ -1496,8 +1480,16 @@ void Level3_Draw()
         AEGfxPrint(fontId, l3_popupMsg, centeredX, 0.4f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
     }
 
+<<<<<<< Updated upstream
     // ===== Pause button (top-right) =====
     DrawPauseButton();
+=======
+    // --- Jump Scare --- 
+    JumpScare_Draw();
+
+    // ===== ADDED: Pause button (top-right) ===== -ths
+    DrawPauseButton(); // -ths
+>>>>>>> Stashed changes
 
     // ---- Debug overlay: fill info struct and call shared draw function ----
     // Press F1 in-game to toggle on / off.

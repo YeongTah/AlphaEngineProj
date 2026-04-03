@@ -21,22 +21,22 @@ Technology is prohibited.
 #include <iostream>
 #include <fstream>
 
-// --- Variables declaration start here ---
+//                                                                --- VARIABLES DECLARATION START HERE ---
 AEGfxTexture* DPLogo = nullptr;      // Digipen logo texture
 
 static int page_index = 0;                // 0 = Digipen Logo, 1 = Game Logo text
-// PAGE_MIN_TIME IS ZERO FOR THE TIME BEING BUT NEED CHANGE TO 2.0f BEFORE SUBMISSION
 static const float PAGE_MIN_TIME = 0.0f;  // prevent instantaneous skip 
 static const float PAGE_AUTO_TIME = 3.0f; // auto-advance after 3 seconds
 static float page_timer = 0.0f;           // time accumulator for current page
 
-// Small delay after pressing skip to prevent accidental double‑skip -ths
+// Small delay after pressing skip to prevent accidental double‑skip
 static const float SKIP_COOLDOWN = 0.2f;
 static float skip_timer = 0.0f;
 
-// --- Variables declaration end here ---
+//                                                                --- VARIABLES DECLARATION END HERE ---
 
 //----------------------------------------------------------------------------
+// Intro_load
 // Loads Intro Screen
 //---------------------------------------------------------------------------
 void Intro_Load()
@@ -49,6 +49,7 @@ void Intro_Load()
 }
 
 //----------------------------------------------------------------------------
+// Intro_Intialize
 // Sets up the initial state
 //---------------------------------------------------------------------------
 void Intro_Initialize()
@@ -61,6 +62,7 @@ void Intro_Initialize()
 }
 
 //----------------------------------------------------------------------------
+// Intro_Update
 // Updates intro screen navigation
 //---------------------------------------------------------------------------
 void Intro_Update()
@@ -121,6 +123,7 @@ void Intro_Update()
 }
 
 //----------------------------------------------------------------------------
+// Intro_Draw
 // Renders or draws the visual representation each frame
 //---------------------------------------------------------------------------
 void Intro_Draw()
@@ -173,14 +176,13 @@ void Intro_Draw()
 }
 
 //----------------------------------------------------------------------------
+// Intro_Free
 // Cleans up dynamic resources while keeping static data
 //---------------------------------------------------------------------------
-void Intro_Free()
-{
-    std::cout << "Intro:Free\n";
-}
+void Intro_Free() {}
 
 //----------------------------------------------------------------------------
+// Intro_Unload
 // Unloads all resources completely when exiting the level
 //---------------------------------------------------------------------------
 void Intro_Unload()
