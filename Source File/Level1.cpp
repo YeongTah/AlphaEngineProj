@@ -72,6 +72,7 @@ int coinCounter = 0; // Tracks total coins collected in this level session
 int turnCounter = 0; // Counts player moves; used to throttle mummy movement (moves every 2nd player turn)
 AEGfxTexture* gDesertBlockTex = nullptr; // Texture for wall/non-walkable tiles (DesertBlock.png)
 static AEGfxTexture* gFloorTex = nullptr; // Texture for floor/walkable tiles (Floor.png)
+static AEGfxTexture* gDoorOpenedTex = nullptr; // Texture for opened exit portal (DoorOpened.png)
 int level1_counter = 0; // Countdown timer; when it hits 0 the level ends (legacy)
 int live1_counter = 3; // Player lives count (adjust here to change starting lives)
 bool playerMoved = false; // Set to true when the player makes a valid move this frame
@@ -168,6 +169,8 @@ static void OpenTreasureBox()
         // Reward: instant bonus coin
         coinCounter++;
         printf("Treasure Box: COIN! Total coins: %d\n", coinCounter);
+        if (AEAudioIsValidAudio(sfxButton))
+         AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
         std::snprintf(gPopupMsg, sizeof(gPopupMsg), "Treasure: +1 Coin! (Total: %d)", coinCounter);
         gPopupFrames = 240; // show for ~3 seconds
     }
@@ -565,6 +568,8 @@ void Level1_Load()
     mummy.pTex = AEGfxTextureLoad("Assets/Enemy.png");          // main mummy texture
     coin.pTex = AEGfxTextureLoad("Assets/Coin.png");           // legacy coin texture
     exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png");     // exit portal texture
+	gDoorOpenedTex = AEGfxTextureLoad("Assets/DoorOpened.png"); // opened exit portal texture  
+
 
     // Load power-up textures (immune / freeze)
     gImmuneTex = AEGfxTextureLoad("Assets/Immune.png");
@@ -1044,6 +1049,8 @@ void Level1_Update()
             level[r][c] = 0;
             coinCounter++;
             std::cout << "Collected! Coins: " << coinCounter << "\n";
+            if (AEAudioIsValidAudio(sfxButton))
+                AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
         }
 
         // Enemy freeze stop
@@ -1337,6 +1344,8 @@ void Level1_Update()
         printf("Coin Collected! Total Coins: %d\n", coinCounter);
         coin.x = 2000.0f;
         coin.y = 2000.0f;
+        if (AEAudioIsValidAudio(sfxButton))
+            AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
     }
 }
 
@@ -1529,7 +1538,7 @@ void Level1_Draw()
     }
 
     // --- Exit portal ---
-    AEGfxTextureSet(exitPortal.pTex, 0, 0);
+    AEGfxTextureSet((coinCounter > 0) ? gDoorOpenedTex : exitPortal.pTex, 0, 0);
     AEMtx33Scale(&scale, exitPortal.size, exitPortal.size);
     AEMtx33Trans(&trans, exitPortal.x, exitPortal.y);
     AEMtx33Concat(&transform, &trans, &scale);
@@ -1565,7 +1574,7 @@ void Level1_Draw()
     {
         const char* hint = "Coins to escape: 0/1";
         float hw, hh;
-        AEGfxGetPrintSize(fontId, hint, 1.2f, &hw, &hh);  
+        AEGfxGetPrintSize(fontId, hint, 1.2f, &hw, &hh);   
         AEGfxPrint(fontId, hint, -hw * 0.5f, 0.90f, 1.2f, 0.60f, 0.15f, 0.20f, 1.0f);
     }
 
@@ -1669,6 +1678,7 @@ void Level1_Unload()
     AEGfxTextureUnload(mummy.pTex);
     AEGfxTextureUnload(coin.pTex);
     AEGfxTextureUnload(exitPortal.pTex);
+    AEGfxTextureUnload(gDoorOpenedTex);
 
     // Unload power-up textures
     AEGfxTextureUnload(gImmuneTex);

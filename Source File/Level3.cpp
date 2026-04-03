@@ -59,6 +59,7 @@ static Entity l3_mummy1;   // Mummy 1 -- spawns top-right
 static Entity l3_mummy2;   // Mummy 2 -- spawns bottom-center
 static Entity l3_mummy3;   // Mummy 3 -- spawns top-left (Level 3 exclusive)
 static Entity l3_exitPortal; // Exit goal; reaching it triggers GS_WIN
+static AEGfxTexture* l3_DoorOpenedTex = nullptr; // Opened exit portal (after collecting coin)
 static Entity l3_coin;     // Legacy single coin entity
 static AEGfxTexture* l3_DesertBlockTex = nullptr; // Wall tile texture (DesertBlock.png)
 static AEGfxTexture* l3_FloorTex = nullptr;       // Floor tile texture (Floor.png)
@@ -536,6 +537,7 @@ void Level3_Load()
     l3_mummy3.pTex = AEGfxTextureLoad("Assets/Enemy.png");
     l3_coin.pTex = AEGfxTextureLoad("Assets/Coin.png");
     l3_exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png");
+    l3_DoorOpenedTex = AEGfxTextureLoad("Assets/DoorOpened.png");
 
 
     // Load power‑up textures
@@ -987,6 +989,8 @@ void Level3_Update()
             level[r][c] = 0;
             l3_coinCounter++;
             std::cout << "L3 Coin collected! Total: " << l3_coinCounter << "\n";
+            if (AEAudioIsValidAudio(l3_sfxButton))
+                AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
         }
 
         // Mummy movement every 2nd turn, unless frozen
@@ -1281,6 +1285,8 @@ void Level3_Update()
         ++l3_coinCounter;
         printf("L3 Coin! Total: %d\n", l3_coinCounter);
         l3_coin.x = l3_coin.y = 2000.0f;
+        if (AEAudioIsValidAudio(l3_sfxButton))
+            AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
     }
 }
 
@@ -1423,7 +1429,7 @@ void Level3_Draw()
     }
 
     // --- Exit portal ---
-    AEGfxTextureSet(l3_exitPortal.pTex, 0, 0);
+    AEGfxTextureSet((l3_coinCounter > 0) ? l3_DoorOpenedTex : l3_exitPortal.pTex, 0, 0);
     AEMtx33Scale(&scale, l3_exitPortal.size, l3_exitPortal.size);
     AEMtx33Trans(&trans, l3_exitPortal.x, l3_exitPortal.y);
     AEMtx33Concat(&transform, &trans, &scale);
@@ -1629,6 +1635,7 @@ void Level3_Unload()
     AEGfxTextureUnload(l3_mummy3.pTex);
     AEGfxTextureUnload(l3_coin.pTex);
     AEGfxTextureUnload(l3_exitPortal.pTex);
+    AEGfxTextureUnload(l3_DoorOpenedTex);
 
     // Unload power-up textures
     AEGfxTextureUnload(l3_ImmuneTex);

@@ -65,6 +65,7 @@ static Entity l2_exitPortal; // Exit goal; reaching it triggers GS_WIN
 static Entity l2_coin;   // Legacy single coin entity
 static AEGfxTexture* l2_DesertBlockTex = nullptr; // Wall tile texture
 static AEGfxTexture* l2_FloorTex = nullptr;       // Floor tile texture
+static AEGfxTexture* l2_DoorOpenedTex = nullptr; // Opened exit portal texture (DoorOpened.png)
 static bool l2_initialised = false; // Prevents double-initialization
 static int  l2_coinCounter = 0;     // Total coins collected this session
 static int  l2_turnCounter = 0;     // Player move count; controls mummy move frequency
@@ -427,15 +428,16 @@ static void SpawnRandomPowerup()
 // ----------------------------------------------------------------------------
 static void L2SpawnTreasureBox()
 {
+    int pr, pc;
+    WorldToGrid(l2_player.x, l2_player.y, pr, pc);
+
     for (int tries = 0; tries < 256; ++tries)
     {
         int r = L2RandInt(0, GRID_ROWS - 1);
         int c = L2RandInt(0, GRID_COLS - 1);
-        if (level[r][c] != 0) continue; // must be walkable
-
-        int pr, pc;
-        WorldToGrid(l2_player.x, l2_player.y, pr, pc);
-        if (abs(r - pr) + abs(c - pc) < 3) continue; // too close to player
+        if (level[r][c] != 0) continue;                          
+        if (abs(r - pr) + abs(c - pc) < 3) continue;             
+        if (!L2IsReachable(pr, pc, r, c)) continue;             
 
         float wx, wy;
         GridToWorldCenter(r, c, wx, wy);
@@ -446,12 +448,13 @@ static void L2SpawnTreasureBox()
         printf("L2 TreasureBox spawned at grid (%d,%d) | world (%.1f,%.1f)\n", r, c, wx, wy);
         return;
     }
-    // Fallback: no distance constraint
+    // Fallback: drop distance constraint but keep reachability
     for (int tries = 0; tries < 256; ++tries)
     {
         int r = L2RandInt(0, GRID_ROWS - 1);
         int c = L2RandInt(0, GRID_COLS - 1);
         if (level[r][c] != 0) continue;
+        if (!L2IsReachable(pr, pc, r, c)) continue;               
         float wx, wy;
         GridToWorldCenter(r, c, wx, wy);
         l2_treasureBox.x = wx;
@@ -655,7 +658,8 @@ void Level2_Load()
     l2_mummy2.pTex = AEGfxTextureLoad("Assets/Enemy.png");             // mummy 2 (same texture)
     l2_coin.pTex = AEGfxTextureLoad("Assets/Coin.png");                // coin
     l2_exitPortal.pTex = AEGfxTextureLoad("Assets/DoorClosed.png");    // exit portal
-
+	l2_DoorOpenedTex = AEGfxTextureLoad("Assets/DoorOpened.png"); // opened exit portal (after collecting coin)
+ 
     // Load power‑up textures
     l2_ImmuneTex = AEGfxTextureLoad("Assets/Immune.png");
     l2_FreezeTex = AEGfxTextureLoad("Assets/Freeze.png");
@@ -1118,6 +1122,8 @@ void Level2_Update()
             level[r][c] = 0;
             l2_coinCounter++;
             std::cout << "L2 Coin collected! Total: " << l2_coinCounter << "\n";
+            if (AEAudioIsValidAudio(l2_sfxButton))
+                AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
         }
 
         // Mummy & Scorpion movement (frozen if freezeFrames > 0)
@@ -1430,6 +1436,8 @@ void Level2_Update()
         ++l2_coinCounter;
         printf("L2 Coin! Total: %d\n", l2_coinCounter);
         l2_coin.x = l2_coin.y = 2000.0f;
+        if (AEAudioIsValidAudio(l2_sfxButton))
+            AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
     }
 }
 
@@ -1558,7 +1566,7 @@ void Level2_Draw()
     }
 
     // --- Exit portal (Exit.png) ---
-    AEGfxTextureSet(l2_exitPortal.pTex, 0, 0);
+    AEGfxTextureSet((l2_coinCounter > 0) ? l2_DoorOpenedTex : l2_exitPortal.pTex, 0, 0);
     AEMtx33Scale(&scale, l2_exitPortal.size, l2_exitPortal.size);
     AEMtx33Trans(&trans, l2_exitPortal.x, l2_exitPortal.y);
     AEMtx33Concat(&transform, &trans, &scale);
@@ -1762,6 +1770,7 @@ void Level2_Unload()
     AEGfxTextureUnload(l2_mummy2.pTex);
     AEGfxTextureUnload(l2_coin.pTex);
     AEGfxTextureUnload(l2_exitPortal.pTex);
+    AEGfxTextureUnload(l2_DoorOpenedTex);
 
     // Unload power-up & scorpion textures
     AEGfxTextureUnload(l2_ImmuneTex);
