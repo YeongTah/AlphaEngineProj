@@ -592,3 +592,18 @@ bool canMove(float nextX, float nextY)
 
     return true; // all 8 sample points are on walkable tiles
 }
+
+void Editor_Unload()
+{
+    if (CoinTex)
+    {
+        AEGfxTextureUnload(CoinTex);
+        CoinTex = nullptr;
+    }
+
+    if (pMesh)
+    {
+        AEGfxMeshFree(pMesh);
+        pMesh = nullptr;
+    }
+}

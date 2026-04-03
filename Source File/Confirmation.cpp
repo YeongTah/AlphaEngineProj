@@ -203,8 +203,7 @@ void Confirmation_Free() {}
 // ----------------------------------------------------------------------------
 void Confirmation_Unload()
 {
-    if (pMesh)
-    {
+    if (pMesh) {
         AEGfxMeshFree(pMesh);
         pMesh = nullptr;
     }

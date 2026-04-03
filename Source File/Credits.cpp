@@ -3,8 +3,6 @@
 #include "Creator.h"
 #include "main.h"
 #include "gamestatemanager.h"
-#include <iostream>
-#include <fstream>
 
 namespace
 {
@@ -138,7 +136,7 @@ void Credit_Load()
 // ----------------------------------------------------------------------------
 void Credit_Initialize()
 {
-    // Starting Y position can be reset here if needed
+    // Starting Y position
     // CreditOffsetY = 0.5f;
 }
 
@@ -317,9 +315,9 @@ void Credit_Unload()
         backButtonTex = nullptr;
     }
 
-    if (pMesh)
-    {
+    if (pMesh) {
         AEGfxMeshFree(pMesh);
         pMesh = nullptr;
     }
+
 }

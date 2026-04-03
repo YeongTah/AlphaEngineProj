@@ -2,7 +2,6 @@
 #include "IntroLogo.h"
 #include "gamestatemanager.h"
 #include "Main.h"
-#include <iostream>
 
 //                                                                --- VARIABLES DECLARATION START HERE ---
 AEGfxTexture* Level1instruct = nullptr;
@@ -197,9 +196,7 @@ void LevelInstruct_Unload()
         AEGfxTextureUnload(Level3instruct);
         Level3instruct = nullptr;
     }
-
-    if (pMesh)
-    {
+    if (pMesh) {
         AEGfxMeshFree(pMesh);
         pMesh = nullptr;
     }

@@ -290,4 +290,9 @@ void MainMenu_Unload()
         AEGfxMeshFree(pMesh);
         pMesh = nullptr;
     }
+    if (mainpage)
+    {
+        AEGfxTextureUnload(mainpage);
+        mainpage = nullptr;
+    }
 }

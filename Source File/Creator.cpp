@@ -3,8 +3,6 @@
 #include "Creator.h"
 #include "main.h"
 #include "gamestatemanager.h"
-#include <iostream>
-#include <fstream>
 
 // ----------------------------------------------------------------------------
 // Creator_Load
@@ -65,7 +63,7 @@ void Creator_Draw()
 
 // ----------------------------------------------------------------------------
 // Creator_Free
-// Cleans up runtime data for the Creator state if needed.
+// Cleans up runtime data for the Creator state
 // ----------------------------------------------------------------------------
 void Creator_Free()
 {
@@ -73,8 +71,20 @@ void Creator_Free()
 
 // ----------------------------------------------------------------------------
 // Creator_Unload
-// Unloads resources used by the Creator state if needed.
+// Unloads resources used by the Creator state
 // ----------------------------------------------------------------------------
 void Creator_Unload()
 {
+    Editor_Unload();
+
+    if (gDesertBlockTex)
+    {
+        AEGfxTextureUnload(gDesertBlockTex);
+        gDesertBlockTex = nullptr;
+    }
+
+    if (pMesh) {
+        AEGfxMeshFree(pMesh);
+        pMesh = nullptr;
+    }
 }

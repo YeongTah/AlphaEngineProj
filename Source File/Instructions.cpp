@@ -321,10 +321,15 @@ void Instructions_Free()
 // ----------------------------------------------------------------------------
 void Instructions_Unload()
 {
+    if (wallimage) { AEGfxTextureUnload(wallimage); wallimage = nullptr; }
+    if (wasd) { AEGfxTextureUnload(wasd); wasd = nullptr; }
+    if (pwr1) { AEGfxTextureUnload(pwr1); pwr1 = nullptr; }
+    if (pwr2) { AEGfxTextureUnload(pwr2); pwr2 = nullptr; }
+    if (backButtonTex) { AEGfxTextureUnload(backButtonTex); backButtonTex = nullptr; }
 
-    if (wallimage) AEGfxTextureUnload(wallimage);
-    if (wasd) AEGfxTextureUnload(wasd);
-    if (pwr1) AEGfxTextureUnload(pwr1);
-    if (pwr2) AEGfxTextureUnload(pwr2);
-    if (backButtonTex) AEGfxTextureUnload(backButtonTex);
+    if (pMesh)
+    {
+        AEGfxMeshFree(pMesh);
+        pMesh = nullptr;
+    }
 }

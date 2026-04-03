@@ -11,6 +11,7 @@ void generateLevel(void);
 int print_file(void);
 void readfile(void);
 bool canMove(float nextX, float nextY);
+void Editor_Unload(void);
 
 // Add this line so Level1.cpp can find the player's grid tile
 //void WorldToGrid(float worldX, float worldY, int& outRow, int& outCol);
