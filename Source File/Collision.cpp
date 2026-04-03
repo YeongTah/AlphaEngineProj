@@ -6,7 +6,7 @@
 // IsAreaClicked
 // For button clicking. 
 // Check if click is within the area calculated from the center. Returns
-// True if it is, false otherwise.
+// True if it is, False otherwise.
 // ----------------------------------------------------------------------------
 bool IsAreaClicked(float area_center_x, float area_center_y, float area_width, float area_height, s32 click_x, s32 click_y) {
     

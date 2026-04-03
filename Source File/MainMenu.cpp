@@ -3,8 +3,6 @@
 #include "gamestatemanager.h"
 #include "Main.h"
 #include "Level1.h"
-#include <iostream>
-#include <fstream>
 #include "Confirmation.h"
 
 //                                                                --- VARIABLES DECLARATION START HERE ---
@@ -25,34 +23,37 @@ AEGfxTexture* mainpage = nullptr;
 
 //                                                                --- VARIABLES DECLARATION END HERE ---
 
-//----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // MainMenu_Load
-// Loads Main Menu
+// Loads the main menu background texture and both audio assets (BGM and button
+// click SFX) from Assets/. Starts the menu BGM immediately on loop. Creates
+// the shared pMesh unit square used for rendering. Called once before the
+// game loop begins.
 //----------------------------------------------------------------------------
 void MainMenu_Load()
 {
-    std::cout << "MainMenu:Load\n";
-
+    // Load Game Picture
     mainpage = AEGfxTextureLoad("Assets/MainPage.png");
 
-    // --- AUDIO LOAD --- // -ths
-    bgmMainMenu = AEAudioLoadMusic("Assets/audio/mainmenu.wav"); // -ths
-    sfxButtonClick = AEAudioLoadSound("Assets/audio/button.wav");   // -ths
+    // Load Audio
+    bgmMainMenu = AEAudioLoadMusic("Assets/audio/mainmenu.wav");
+    sfxButtonClick = AEAudioLoadSound("Assets/audio/button.wav");
 
-    // Play menu BGM (looping) - only if valid // -ths
-    if (AEAudioIsValidAudio(bgmMainMenu))  // -ths
-        AEAudioPlay(bgmMainMenu, AEAudioCreateGroup(), 1.0f, 1.0f, -1); // loop forever // -ths
+    // Play menu BGM (looping) - only if valid
+    if (AEAudioIsValidAudio(bgmMainMenu))
+        AEAudioPlay(bgmMainMenu, AEAudioCreateGroup(), 1.0f, 1.0f, -1); // loop forever
 
     pMesh = CreateSquareMesh();
 }
 
 //----------------------------------------------------------------------------
 // MainMenu_Initialize
-// Sets up the initial state
+// Sets the world-space positions of all five buttons (Play, Instructions,
+// Credits, Exit, Creator) on every entry into the main menu state. Called
+// each time the GSM transitions into MAINMENUSTATE.
 //----------------------------------------------------------------------------
 void MainMenu_Initialize()
 {
-    std::cout << "MainMenu:Initialize\n";
 
     button_x = 0.0f;
     playbutton_y = 100.0f;
@@ -65,7 +66,11 @@ void MainMenu_Initialize()
 
 //----------------------------------------------------------------------------
 // MainMenu_Update
-// Updates main menu navigation
+// Handles mouse click input for all five buttons each frame. Converts screen
+// mouse coordinates to world space and checks each button's hit area using
+// IsAreaClicked. Plays the button click SFX on any valid click. Navigates to
+// LEVELPAGE, INSTRUCTIONS, CREDIT, CREATOR, or routes EXIT and ESC through
+// the confirmation screen before quitting.
 //----------------------------------------------------------------------------
 void MainMenu_Update()
 {
@@ -76,22 +81,20 @@ void MainMenu_Update()
     if (AEInputCheckReleased(AEVK_LBUTTON) &&
         IsAreaClicked(button_x, playbutton_y, 300.0f, 90.0f, mouseX, mouseY))
     {
-        // PLAY BUTTON SFX // -ths
-        if (AEAudioIsValidAudio(sfxButtonClick)) // -ths
-            AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0); // -ths
+        // PLAY BUTTON SFX
+        if (AEAudioIsValidAudio(sfxButtonClick))
+            AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0);
 
         next = LEVELPAGE;
-        std::cout << "Left click released\n";
-        std::cout << "next state: " << next << "\n";
     }
 
     // CLICK: INSTRUCTIONS
     if (AEInputCheckReleased(AEVK_LBUTTON) &&
         IsAreaClicked(button_x, instructbutton_y, 300.0f, 90.0f, mouseX, mouseY))
     {
-        // BUTTON CLICK SOUND // -ths
-        if (AEAudioIsValidAudio(sfxButtonClick)) // -ths
-            AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0); // -ths
+        // BUTTON CLICK SOUND
+        if (AEAudioIsValidAudio(sfxButtonClick))
+            AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0);
 
         next = INSTRUCTIONS;
     }
@@ -100,9 +103,9 @@ void MainMenu_Update()
     if (AEInputCheckReleased(AEVK_LBUTTON) &&
         IsAreaClicked(button_x, creditbutton_y, 300.0f, 90.0f, mouseX, mouseY))
     {
-        // BUTTON CLICK SOUND // -ths
-        if (AEAudioIsValidAudio(sfxButtonClick)) // -ths
-            AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0); // -ths
+        // BUTTON CLICK SOUND 
+        if (AEAudioIsValidAudio(sfxButtonClick)) 
+            AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0); 
 
         next = CREDIT;
     }
@@ -118,7 +121,7 @@ void MainMenu_Update()
         if (AEAudioIsValidAudio(sfxButtonClick))
             AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0);
 
-        // Show confirmation before quitting                      // -ths
+        // Show confirmation before quitting                      
         Confirmation_Level(MAINMENUSTATE, GS_QUIT, "Are you sure you want to quit?");
         next = CONFIRM;
     }
@@ -127,9 +130,9 @@ void MainMenu_Update()
     if (AEInputCheckReleased(AEVK_LBUTTON) &&
             IsAreaClicked(createbutton_x, createbutton_y, 150.0f, 65.0f, mouseX, mouseY))
     {
-        // BUTTON CLICK SOUND // -ths
-        if (AEAudioIsValidAudio(sfxButtonClick)) // -ths
-            AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0); // -ths
+        // BUTTON CLICK SOUND 
+        if (AEAudioIsValidAudio(sfxButtonClick)) 
+            AEAudioPlay(sfxButtonClick, AEAudioCreateGroup(), 1.0f, 1.0f, 0); 
 
         next = CREATOR;
     }
@@ -137,7 +140,10 @@ void MainMenu_Update()
 
 //----------------------------------------------------------------------------
 // MainMenu_Draw
-// Draw
+// Renders the main menu each frame. Draws the full-screen background texture
+// first, then overlays five colored button rectangles using AE_GFX_RM_COLOR.
+// Converts each button's world-space position to NDC and center-aligns the
+// button label text using AEGfxGetPrintSize. Called every frame by the GSM.
 //----------------------------------------------------------------------------
 void MainMenu_Draw()
 {
@@ -258,24 +264,26 @@ void MainMenu_Draw()
 
 //----------------------------------------------------------------------------
 // MainMenu_Free
-// Free
+// Called after the game loop exits this state, before Unload.
+// Currently empty as the Main Menu state has no heap allocations or runtime
+// resources that need releasing between Free and Unload. Still needs to be
+// here or there would be linker error / null function pointer crash
 //----------------------------------------------------------------------------
-void MainMenu_Free()
-{
-    std::cout << "MainMenu:Free\n";
-}
+void MainMenu_Free() {}
 
 //----------------------------------------------------------------------------
 // MainMenu_Unload
-// Unload
+// Unloads both audio assets and frees the shared pMesh to prevent memory
+// leaks. Sets pMesh to nullptr after freeing to prevent dangling references.
+// Note: the main menu background texture is not explicitly unloaded here and
+// should be added to prevent a GPU texture leak on exit.
 //----------------------------------------------------------------------------
 void MainMenu_Unload()
 {
-    std::cout << "MainMenu:Unload\n";
 
-    // --- AUDIO UNLOAD --- // -ths
-    if (AEAudioIsValidAudio(bgmMainMenu))     AEAudioUnloadAudio(bgmMainMenu);     // -ths
-    if (AEAudioIsValidAudio(sfxButtonClick))  AEAudioUnloadAudio(sfxButtonClick);  // -ths
+    // Unload Audio
+    if (AEAudioIsValidAudio(bgmMainMenu))     AEAudioUnloadAudio(bgmMainMenu);     
+    if (AEAudioIsValidAudio(sfxButtonClick))  AEAudioUnloadAudio(sfxButtonClick);  
 
     if (pMesh)
     {

@@ -23,8 +23,6 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 #include "LosePage.h" //added lose page jas
 #include "LevelInstruct.h" //added instructions - jas
 #include "Confirmation.h"
-#include "System.h"
-#include <iostream>
 
 // Tracks which level sent the player to the Win Page -ths
 int gLastLevelPlayed = 1;   // default = Level 1
@@ -53,7 +51,6 @@ fpUnload = nullptr;
 void GSM_Initialize(int startingState)
 {
     current = previous = next = startingState;
-    std::cout << "GSM:Initialize\n";
 }
 
 // ----------------------------------------------------------------------------
@@ -77,7 +74,6 @@ void GSM_Initialize(int startingState)
 // ----------------------------------------------------------------------------
 void GSM_Update()
 {
-    std::cout << "GSM:Update\n";
 
     switch (current)
     {
@@ -89,7 +85,7 @@ void GSM_Update()
         fpFree = Intro_Free;
         fpUnload = Intro_Unload;
         break;
-    case LEVELINSTRUCTIONS: // For Intro screen
+    case LEVELINSTRUCTIONS: // For Instructions in each level
         fpLoad = LevelInstruct_Load;
         fpInitialize = LevelInstruct_Initialize;
         fpUpdate = LevelInstruct_Update;
@@ -187,16 +183,13 @@ void GSM_Update()
         fpUnload = LosePage_Unload;
         break;
 
-        // ============================================================================
-        // NEW PAUSE STATE (PausePage) -ths
-        // ============================================================================
     case GS_PAUSE:
-        fpLoad = PausePage_Load;       // -ths
-        fpInitialize = PausePage_Initialize; // -ths
-        fpUpdate = PausePage_Update;     // -ths
-        fpDraw = PausePage_Draw;       // -ths
-        fpFree = PausePage_Free;       // -ths
-        fpUnload = PausePage_Unload;     // -ths
+        fpLoad = PausePage_Load;
+        fpInitialize = PausePage_Initialize;
+        fpUpdate = PausePage_Update;
+        fpDraw = PausePage_Draw;
+        fpFree = PausePage_Free;
+        fpUnload = PausePage_Unload;
         break;
     case CONFIRM:
         fpLoad = Confirmation_Load;
@@ -212,7 +205,6 @@ void GSM_Update()
         break;
 
     case GS_QUIT:
-        System_Exit(); // cleanup
         break;
 
     default:

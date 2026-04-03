@@ -1,8 +1,6 @@
 #include "pch.h"
 
 #include "MouseCoor.h"
-#include <iostream>
-#include <fstream>
 
 //----------------------------------------------------------------------------
 // TransformScreentoWorld

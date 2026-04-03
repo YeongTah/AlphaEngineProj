@@ -6,6 +6,7 @@
 #include "Level1.h"
 #include "Level2.h"
 #include "JumpScare.h"
+#include "Effects.h"
 #include "gamestatemanager.h"
 #include "GameStateList.h"
 #include "Main.h"
@@ -326,6 +327,10 @@ static void ResetLevel2()
     // Reset treasure box (one-time chest — re-spawn it for the new round)
     l2_boxMummyCount = 0;
     L2SpawnTreasureBox();
+
+    // Clear particles when resetting level (but keep systems active)
+    TrailParticle_Clear();
+    TrailParticle_Init(); // Re-initialize trail system
 
     // Clear any lingering popup
     l2_popupFrames = 0;
@@ -684,7 +689,6 @@ void Level2_Load()
 // ----------------------------------------------------------------------------
 void Level2_Initialize()
 {
-    std::cout << "Level2:Initialize\n";
 
     // ================================================================
     // STOP ALL PREVIOUS AUDIO (safe, no FMOD crash)
@@ -703,6 +707,9 @@ void Level2_Initialize()
 
     // Initialise jump scare
     JumpScare_Init();
+
+    // Initialise particles
+    TrailParticle_Init();
 
     if (!l2_initialised)
     {
@@ -1035,6 +1042,13 @@ void Level2_Update()
         return; // freeze game logic while paused
     }
 
+    //                                                                --- PLAYER MOVEMENT START HERE ---
+
+    float dt = (float)AEFrameRateControllerGetFrameTime();
+
+    // Update particle system before movement starts
+    TrailParticle_Update(dt, l2_player.x, l2_player.y);
+
     // --- Player movement ---
     float testX = l2_player.x;
     float testY = l2_player.y;
@@ -1055,7 +1069,12 @@ void Level2_Update()
         // PLAY MOVEMENT AUDIO
         if (AEAudioIsValidAudio(l2_sfxPlayerMove))
             AEAudioPlay(l2_sfxPlayerMove, l2AudioGroup, 1.0f, 1.0f, 0);
+
+        // Particle appear only when player move
+        TrailParticle_OnPlayerMoved(l2_player.x, l2_player.y);
     }
+
+    //                                                                --- PLAYER MOVEMENT END HERE ---
 
     // ===== POWER-UP PICKUP =====
     if (l2_powerupActive &&
@@ -1571,14 +1590,13 @@ void Level2_Draw()
     }
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // reset tint
 
-<<<<<<< Updated upstream
-    // --- Jump Scare --- 
+    // === Draw particles ===
+    TrailParticle_Draw();
+
+    // === Jump Scare ===
     JumpScare_Draw();
 
     // ===== HUD for active power-ups (top-left) =====
-=======
-    // ===== ADDED: HUD for active power-ups (top-left) ===== -ths
->>>>>>> Stashed changes
     if (l2Power.invFrames > 0)
     {
         char buf[64];

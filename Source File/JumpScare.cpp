@@ -2,8 +2,6 @@
 #include "JumpScare.h"
 #include "Main.h"
 
-#include <iostream>
-#include <fstream>
 #include <cmath>
 #include <cstdlib>
 #include <ctime> 
@@ -26,7 +24,10 @@ static const float MIN_SCALE = 0.6f;
 
 // ----------------------------------------------------------------------------
 // JumpScare_Init
-// Initialise jump scare system
+// Initialise jump scare system by resetting all state variables to their
+// default values. Sets jumpScareActive to false, and zeroes the timer and
+// scale. Called in Level1_Initialize to ensure a clean state on every level
+// entry.
 // ----------------------------------------------------------------------------
 void JumpScare_Init()
 {
@@ -37,7 +38,9 @@ void JumpScare_Init()
 
 // ----------------------------------------------------------------------------
 // JumpScare_Load
-// Load jump scare texture (call in Level_Load)
+// Loads both jump scare textures from Assets/ and seeds the random number
+// generator once for texture selection. Returns early if either texture fails
+// to load. Called in Level1_Load before the game loop begins.
 // ----------------------------------------------------------------------------
 void JumpScare_Load()
 {
@@ -55,13 +58,14 @@ void JumpScare_Load()
         srand((unsigned int)time(NULL));
         seeded = true;
     }
-
-    pMesh = CreateSquareMesh();
 }
 
 // ----------------------------------------------------------------------------
 // JumpScare_Trigger
-// Trigger the jump scare
+// Activates the jump scare animation by setting jumpScareActive to true and
+// resetting the timer and scale to zero. Randomly selects which of the two
+// loaded textures to display. Called when the player is caught by a mummy or
+// a mummy spawns from a treasure box.
 // ----------------------------------------------------------------------------
 void JumpScare_Trigger()
 {
@@ -76,7 +80,11 @@ void JumpScare_Trigger()
 
 // ----------------------------------------------------------------------------
 // JumpScare_Update
-// Update jump scare animation (call in Level_Update)
+// Drives the jump scare animation each frame using a two-phase approach.
+// The first 20% of the duration performs a quick ease-out pop from zero to
+// full scale. The remaining 80% applies an accelerating sine-wave pulse that
+// gradually decreases in amplitude. Deactivates the system when the full
+// duration has elapsed. Called every frame in Level1_Update.
 // ----------------------------------------------------------------------------
 void JumpScare_Update()
 {
@@ -119,7 +127,11 @@ void JumpScare_Update()
 
 // ----------------------------------------------------------------------------
 // JumpScare_Draw
-// Draw jump scare (call in Level_Draw)
+// Renders the active jump scare texture centered on screen, scaled by the
+// current jumpScareScale value driven by JumpScare_Update. Uses the shared
+// pMesh and AE_GFX_RM_TEXTURE render mode. Returns early if the system is
+// inactive or the selected texture is null. Called last in Level1_Draw so the
+// jump scare renders on top of all other game elements.
 // ----------------------------------------------------------------------------
 void JumpScare_Draw()
 {
@@ -159,7 +171,9 @@ void JumpScare_Draw()
 
 // ----------------------------------------------------------------------------
 // JumpScare_Draw
-// Returns when jumpscare is active
+// Returns true if a jump scare animation is currently playing, false otherwise.
+// Used in Level1_Update to delay the lose condition reset until the jump scare
+// animation has fully completed, ensuring it is always visible to the player.
 // ----------------------------------------------------------------------------
 bool JumpScare_IsActive()
 {
@@ -168,7 +182,9 @@ bool JumpScare_IsActive()
 
 // ----------------------------------------------------------------------------
 // JumpScare_Draw
-// Unload jump scare texture (call in Level_Unload)
+// Unloads both jump scare textures and sets their pointers to nullptr to
+// prevent dangling references. Called in Level1_Unload when permanently
+// leaving the level to free GPU texture memory.
 // ----------------------------------------------------------------------------
 void JumpScare_Unload()
 {
@@ -180,10 +196,4 @@ void JumpScare_Unload()
         }
     }
 
-    // Mesh cleanup
-    if (pMesh)
-    {
-        AEGfxMeshFree(pMesh);
-        pMesh = nullptr;
-    }
 }

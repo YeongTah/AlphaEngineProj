@@ -6,6 +6,7 @@
 #include "Level1.h"
 #include "Level3.h"
 #include "JumpScare.h"
+#include "Effects.h"
 #include "gamestatemanager.h"
 #include "GameStateList.h"
 #include "Main.h"
@@ -405,6 +406,10 @@ static void ResetLevel3()
     l3Power.freezeFrames = 0;
     SpawnRandomPowerup();
 
+    // Clear particles when resetting level (but keep systems active)
+    TrailParticle_Clear();
+    TrailParticle_Init(); // Re-initialize trail system
+
     // Reset treasure chest
     l3_boxMummyCount = 0;
     L3SpawnTreasureBox();
@@ -617,6 +622,9 @@ void Level3_Initialize()
 
     // Initialise jump scare
     JumpScare_Init();
+
+    // Initialise particles
+    TrailParticle_Init();
 
     if (!l3_initialised)
     {
@@ -909,9 +917,14 @@ void Level3_Update()
         return; // freeze game logic while paused
     }
 
-    // ======================================================================
-    // PLAYER MOVEMENT (WASD)
-    // ======================================================================
+    //                                                                --- PLAYER MOVEMENT START HERE ---
+
+    float dt = (float)AEFrameRateControllerGetFrameTime();
+
+    // Update particle system before movement starts
+    TrailParticle_Update(dt, l3_player.x, l3_player.y);
+
+
     float testX = l3_player.x;
     float testY = l3_player.y;
 
@@ -932,8 +945,13 @@ void Level3_Update()
         // PLAY MOVEMENT AUDIO
         if (AEAudioIsValidAudio(l3_sfxPlayerMove))
             AEAudioPlay(l3_sfxPlayerMove, l3AudioGroup, 1.0f, 1.0f, 0);
+
+        // Particle appear only when player move
+        TrailParticle_OnPlayerMoved(l3_player.x, l3_player.y);
     }
 
+//                                                                --- PLAYER MOVEMENT END HERE ---
+// 
     // ======================================================================
     // POWER-UP PICKUP
     // ======================================================================
@@ -1480,16 +1498,14 @@ void Level3_Draw()
         AEGfxPrint(fontId, l3_popupMsg, centeredX, 0.4f, popupScale, 1.0f, 1.0f, 0.4f, alpha);
     }
 
-<<<<<<< Updated upstream
     // ===== Pause button (top-right) =====
     DrawPauseButton();
-=======
-    // --- Jump Scare --- 
-    JumpScare_Draw();
 
-    // ===== ADDED: Pause button (top-right) ===== -ths
-    DrawPauseButton(); // -ths
->>>>>>> Stashed changes
+    // === Draw particles ===
+    TrailParticle_Draw();
+
+    // === Jump Scare ===
+    JumpScare_Draw();
 
     // ---- Debug overlay: fill info struct and call shared draw function ----
     // Press F1 in-game to toggle on / off.

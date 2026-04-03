@@ -540,7 +540,6 @@ static void LoadLevelTxt()
 // ----------------------------------------------------------------------------
 void Level1_Load()
 {
-    std::cout << "Level1:Load\n";
 
     // ===================== AUDIO LOAD FOR LEVEL 1 =======================
     // Create an audio group for Level1 sounds
@@ -573,9 +572,6 @@ void Level1_Load()
 
     // Load treasure box texture
     gTreasureBoxTex = AEGfxTextureLoad("Assets/TreasureChest.png");
-
-    // Load particles
-    Particle_Load();
 
     // Load jump scare texture
     JumpScare_Load();
@@ -661,7 +657,6 @@ static void FindFreeSpawnCell(int startRow, int startCol, float& outX, float& ou
 // ----------------------------------------------------------------------------
 void Level1_Initialize()
 {
-    std::cout << "Level1:Initialize\n";
 
     // =============================================================
     // STOP ALL PREVIOUS AUDIO (stops MainMenu BGM completely)
@@ -796,7 +791,7 @@ void Level1_Update()
         next = MAINMENUSTATE;
     }
 
-    // --- Navigation keys ---
+    //                                                                --- NAVIGATION KEYS START HERE ---
     if (AEInputCheckReleased(AEVK_B)) {
         next = LEVELPAGE;
     }
@@ -977,19 +972,19 @@ void Level1_Update()
     // --- Debug overlay toggle (F1) ---
     Debug_HandleToggle();
 
+    //                                                                --- NAVIGATION KEYS END HERE ---
+
     // ====== Frame counters ======
     TickFramePowers();
     TickFreezeFrames();
     if (gPopupFrames > 0) --gPopupFrames;
 
-<<<<<<< Updated upstream
-    // Player movement
-=======
+    //                                                                --- PLAYER MOVEMENT START HERE ---
     float dt = (float)AEFrameRateControllerGetFrameTime();
-    TrailParticle_Update(dt, player.x, player.y); // animate trail particles
 
-    // Player movement -ths
->>>>>>> Stashed changes
+    // Update particle system before movement starts
+    TrailParticle_Update(dt, player.x, player.y); 
+
     float testNextX = player.x;
     float testNextY = player.y;
 
@@ -1007,17 +1002,15 @@ void Level1_Update()
         playerMoved = true;
 
         if (AEAudioIsValidAudio(sfxPlayerMove))
-            AEAudioPlay(sfxPlayerMove, level1Group, 1.0f, 1.0f, 0); // -ths
-
-
-        //// ====== UPDATE PARTICLES ======
-
-        //float dt = (float)AEFrameRateControllerGetFrameTime();
-
-        //TrailParticle_Update(dt, player.x, player.y); // animate trail particles
-
+            AEAudioPlay(sfxPlayerMove, level1Group, 1.0f, 1.0f, 0);
+        
+        // Particle appear only when player move
+        TrailParticle_OnPlayerMoved(player.x, player.y);
     }
 
+    //                                                                --- PLAYER MOVEMENT END HERE ---
+
+    //                                                                --- POWER UPS START HERE ---
     // ======= POWER-UP PICKUP =======
     if (gPowerupActive &&
         fabsf(player.x - gPowerup.x) < 1.0f &&
@@ -1244,7 +1237,9 @@ void Level1_Update()
 
     const bool effectiveInv = IsInvincibleNow();
 
-    // ====== UPDATE JUMP SCARE ANIMATION =======
+    //                                                                --- POWER UPS END HERE ---
+    
+    // === Update Jump Scare animation ===
     JumpScare_Update(); // Before lose conditions
 
     // Ensure jumpscare is drawn before level resets
@@ -1541,7 +1536,7 @@ void Level1_Draw()
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-    // --- Draw particles ---
+    // === Draw particles ===
     TrailParticle_Draw();
 
     // ===== HUD FOR ACTIVE POWER-UPS =====
@@ -1656,9 +1651,7 @@ void Level1_Draw()
 // beyond what Unload handles (textures, mesh).
 // ----------------------------------------------------------------------------
 void Level1_Free()
-{
-    std::cout << "Level1:Free\n";
-}
+{}
 
 // ----------------------------------------------------------------------------
 // Level1_Unload
@@ -1668,7 +1661,6 @@ void Level1_Free()
 // ----------------------------------------------------------------------------
 void Level1_Unload()
 {
-    std::cout << "Level1:Unload\n";
 
     // ---------------- TEXTURE UNLOAD ----------------
     AEGfxTextureUnload(player.pTex);
@@ -1682,17 +1674,10 @@ void Level1_Unload()
     AEGfxTextureUnload(gImmuneTex);
     AEGfxTextureUnload(gFreezeTex);
 
-    // ------ Unload Jump Scare ------
+    // === Unload Jump Scare ===
     JumpScare_Unload();
 
-<<<<<<< Updated upstream
-    // Unload treasure box texture
-=======
-    // ------ Unload particles ------
-    TrailParticle_Unload();
-
     // ====== Unload treasure box texture ======
->>>>>>> Stashed changes
     if (gTreasureBoxTex) { AEGfxTextureUnload(gTreasureBoxTex); gTreasureBoxTex = nullptr; }
 
     // ---------------- AUDIO UNLOAD ----------------

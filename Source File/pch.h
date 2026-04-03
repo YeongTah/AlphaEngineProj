@@ -1,18 +1,3 @@
-/* Start Header ************************************************************************/
-/*!
-\file   pch.h
-\author Sharon Lim Joo Ai, sharonjooai.lim, 2502241
-\par    sharonjooai.lim@digipen.edu
-\date   January, 26, 2026
-\brief  This file contains headers to be precompiled once, typically for includes that 
-		are used consistently across all source files without redefinition.
-
-Copyright (C) 2026 DigiPen Institute of Technology.
-Reproduction or disclosure of this file or its contents
-without the prior written consent of DigiPen Institute of
-Technology is prohibited.
-*/
-/* End Header **************************************************************************/
 
 // Files listed below are compiled only once, improving build performance for future builds.
 // This also affects IntelliSense performance, including code completion and many code browsing features.
@@ -21,16 +6,17 @@ Technology is prohibited.
 
 #ifndef PCH_H
 #define PCH_H
+
 #include "GameStateList.h"
 #include "AEEngine.h"
 #include "AEInput.h"
 #include "AEFrameRateController.h"
-//#include "leveleditor.hpp"
 #include "Collision.h"
 #include "MouseCoor.h"
 
-// NEW: tiny pages headers -ths
-#include "PausePage.h"  // -ths
-#include "WinPage.h"    // -ths
-#include "LosePage.h"   // -ths
+// tiny pages headers
+#include "PausePage.h"
+#include "WinPage.h"
+#include "LosePage.h"
+
 #endif //PCH_H

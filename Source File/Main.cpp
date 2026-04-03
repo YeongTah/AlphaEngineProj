@@ -4,13 +4,10 @@
 #include <crtdbg.h> // To check for memory leaks
 #include "AEEngine.h"
 #include "GameStateManager.h"
-#include "System.h"
 #include "leveleditor.hpp"
 #include "Level1.h"
 #include "Main.h"
 
-#include <iostream>
-#include <fstream>
 #include <math.h>   // Added for fabsf() -- fabsolute value function to ensure no negative results
 //jas change - coordinates for the entities, reset, and canmove function added readfile();
 //print_file(), generateLevel() and added mesh
@@ -18,10 +15,7 @@
 
 // MAIN
 
-//																--- Variables declaration start here ---
-
-//																--- Variables declaration end here ---
-s8 fontId = -1;										//global variable for font ID, initialized to -1 to indicate not loaded
+s8 fontId = -1; //global variable for font ID, initialized to -1 to indicate not loaded
 
 //															--- helper header ----   yt 4/3 
 // Function to create a standard 1x1 square mesh
@@ -56,14 +50,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	// Initialization of your own variables go here
-
-
-	// 															--- Initialization of variables end here ---
-	// IF THERE IS NO OTHER MANAGERS BUILT, CAN REMOVE THIS AS IT DOES THE SAME AS AESysInit
-	// Initialize system components
-	System_Initialize();
-
 	// Initialize game state manager
 	GSM_Initialize(INTROSTATE);
 
@@ -72,10 +58,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// Load the font from the Assets folder with a size of 32
 	fontId = AEGfxCreateFont("Assets/Fonts/Kenney Mini.ttf", 32);
-	//	gDesertBlockTex = AEGfxTextureLoad("Assets/DesertBlock.png");
 
-
-		//  Check if the font loaded successfully
+	//  Check if the font loaded successfully
 	if (fontId < 0) {
 		printf("Failed to load font!\n");
 	}
@@ -84,7 +68,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	}
 
 	// Changing the window title
-	AESysSetWindowTitle("Mummy Maze Balanced Prototype");
+	AESysSetWindowTitle("The Intro Lab: Mummy Maze Game");
 
 	//																	--- GAME STATE MANAGER LOOP ---
 	// Controls the transition between games
@@ -115,9 +99,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			// Informing the system about the loop's start
 			AESysFrameStart();
 
-			// Update input status by calling input function
-			//std::cout << "Input\n"; // Debug purposes    -- yt 25-2 comment up first, my computer cannot stand D:
-
 			// Call update for current level
 			fpUpdate();
 
@@ -141,16 +122,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		// Set current game state to be equal to next game state
 		current = next;
 
-		// Your own rendering logic goes here
 	}
 
-	// IF THERE IS NO OTHER MANAGERS BUILT, CAN REMOVE THIS AS IT DOES THE SAME AS AESysExit
-	// Terminate system components
-	System_Exit();
-
-	// Unload font
-	// sharon 4/3: the destroy font below should retain in this file as the memory should be deleted upon exit. 
-	// sharon 4/3: It should not delete in each state otherwise no font is loaded after going to next state
+	// Unload font as memory should be deleted upon exit. 
+	// It should not delete in each state otherwise no font is loaded after going to next state
 	AEGfxDestroyFont(fontId);
 
 	// free the system
