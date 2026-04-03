@@ -26,4 +26,3 @@ void TrailParticle_Init(void);
 void TrailParticle_Update(float dt, float playerX, float playerY);
 void TrailParticle_OnPlayerMoved(float playerX, float playerY);
 void TrailParticle_Draw(void);
-void TrailParticle_Clear(void);

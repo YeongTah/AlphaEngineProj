@@ -1265,7 +1265,6 @@ void Level1_Update()
             // Trigger jump scare immediately when caught
             JumpScare_Trigger();
             pendingGameOverReset = true; // Mark that we need to reset after jump scare
-            std::cout << "CAUGHT! Playing jump scare...\n";
         }
     }
 
@@ -1293,7 +1292,6 @@ void Level1_Update()
                     // Trigger jump scare immediately when caught
                     JumpScare_Trigger();
                     pendingGameOverReset = true; // Mark that we need to reset after jump scare
-                    std::cout << "CAUGHT! Playing jump scare...\n";
                 }
             }
         }
@@ -1309,7 +1307,6 @@ void Level1_Update()
 
         ResetLevel1();
         pendingGameOverReset = false;
-        std::cout << "Jump scare finished, resetting level...\n";
         gShowLose = true;
         return; // skip remaining update logic this frame
     }
@@ -1753,8 +1750,6 @@ void ResetLevel1()
     gBoxMummyCount = 0;
     SpawnTreasureBox();
 
-    // Clear particles when resetting level (but keep systems active)
-    TrailParticle_Clear();
     TrailParticle_Init(); // Re-initialize trail system
 
     // Reset movement tracking

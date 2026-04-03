@@ -407,8 +407,6 @@ static void ResetLevel3()
     l3Power.freezeFrames = 0;
     SpawnRandomPowerup();
 
-    // Clear particles when resetting level (but keep systems active)
-    TrailParticle_Clear();
     TrailParticle_Init(); // Re-initialize trail system
 
     // Reset treasure chest

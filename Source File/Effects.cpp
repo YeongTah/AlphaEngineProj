@@ -185,20 +185,3 @@ void TrailParticle_Draw(void)
 
 }
 
-// ----------------------------------------------------------------------------
-// TrailParticle_Clear
-// Deactivates all trail particles without shutting down the system.
-// Resets g_trailParticlesActive to true and clears last player position.
-// Called in ResetLevel1 to flush existing particles when the level resets,
-// while keeping the system ready to spawn again immediately.
-// ----------------------------------------------------------------------------
-void TrailParticle_Clear(void)
-{
-    // Deactivate all trail particles
-    for (int i = 0; i < MAX_TRAIL_PARTICLES; i++) {
-        g_trailParticles[i].active = false;
-    }
-    g_trailParticlesActive = true; // keep active for player movement
-    g_lastPlayerX = 0.0f;
-    g_lastPlayerY = 0.0f;
-}

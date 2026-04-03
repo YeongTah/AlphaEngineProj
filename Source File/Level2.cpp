@@ -329,8 +329,6 @@ static void ResetLevel2()
     l2_boxMummyCount = 0;
     L2SpawnTreasureBox();
 
-    // Clear particles when resetting level (but keep systems active)
-    TrailParticle_Clear();
     TrailParticle_Init(); // Re-initialize trail system
 
     // Clear any lingering popup
