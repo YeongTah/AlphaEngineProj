@@ -1548,8 +1548,8 @@ void Level1_Draw()
     {
         const char* hint = "Coins to escape: 0/1";
         float hw, hh;
-        AEGfxGetPrintSize(fontId, hint, 0.7f, &hw, &hh);
-        AEGfxPrint(fontId, hint, -hw * 0.5f, 0.90f, 1.2f, 0.60f, 0.15f, 0.20f, 1.0f); // maroon, top-center
+        AEGfxGetPrintSize(fontId, hint, 1.2f, &hw, &hh);  
+        AEGfxPrint(fontId, hint, -hw * 0.5f, 0.90f, 1.2f, 0.60f, 0.15f, 0.20f, 1.0f);
     }
 
     // ====== Treasure box popup message -- centered, fades out after ~3 seconds ======

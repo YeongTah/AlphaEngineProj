@@ -1616,7 +1616,7 @@ void Level2_Draw()
     {
         const char* hint = "Coins to escape: 0/1";
         float hw, hh;
-        AEGfxGetPrintSize(fontId, hint, 0.7f, &hw, &hh);
+        AEGfxGetPrintSize(fontId, hint, 1.2f, &hw, &hh);
         AEGfxPrint(fontId, hint, -hw * 0.5f, 0.90f, 1.2f, 0.60f, 0.15f, 0.20f, 1.0f);
     }
 
