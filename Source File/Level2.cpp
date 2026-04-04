@@ -436,7 +436,9 @@ static void L2SpawnTreasureBox()
         if (level[r][c] != 0) continue;                          
         if (abs(r - pr) + abs(c - pc) < 3) continue;             
         if (!L2IsReachable(pr, pc, r, c)) continue;             
-
+        int cr, cc;
+        WorldToGrid(l2_coin.x, l2_coin.y, cr, cc);
+        if (r == cr && c == cc) continue;
         float wx, wy;
         GridToWorldCenter(r, c, wx, wy);
         l2_treasureBox.x = wx;
@@ -452,7 +454,10 @@ static void L2SpawnTreasureBox()
         int r = L2RandInt(0, GRID_ROWS - 1);
         int c = L2RandInt(0, GRID_COLS - 1);
         if (level[r][c] != 0) continue;
-        if (!L2IsReachable(pr, pc, r, c)) continue;               
+        if (!L2IsReachable(pr, pc, r, c)) continue;    
+        int cr, cc;
+        WorldToGrid(l2_coin.x, l2_coin.y, cr, cc);
+        if (r == cr && c == cc) continue;
         float wx, wy;
         GridToWorldCenter(r, c, wx, wy);
         l2_treasureBox.x = wx;

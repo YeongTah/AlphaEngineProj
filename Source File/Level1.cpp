@@ -120,7 +120,12 @@ static void SpawnTreasureBox()
         WorldToGrid(player.x, player.y, pr, pc);
         if (abs(r - pr) + abs(c - pc) < 3) continue;
 
-        float wx, wy;
+        // Don't spawn on the legacy coin entity's cell
+        int cr, cc;
+        WorldToGrid(coin.x, coin.y, cr, cc);
+        if (r == cr && c == cc) continue;
+
+         float wx, wy;
         GridToWorldCenter(r, c, wx, wy);
         gTreasureBox.x = wx;
         gTreasureBox.y = wy;
@@ -135,6 +140,9 @@ static void SpawnTreasureBox()
         int r = RandInt(0, GRID_ROWS - 1);
         int c = RandInt(0, GRID_COLS - 1);
         if (level[r][c] != 0) continue;
+        int cr, cc;
+        WorldToGrid(coin.x, coin.y, cr, cc);
+        if (r == cr && c == cc) continue;
         float wx, wy;
         GridToWorldCenter(r, c, wx, wy);
         gTreasureBox.x = wx;
