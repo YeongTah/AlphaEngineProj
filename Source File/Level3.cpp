@@ -513,8 +513,6 @@ static void SpawnRandomPowerup()
 // ----------------------------------------------------------------------------
 void Level3_Load()
 {
-    std::cout << "Level3:Load\n";
-
     // ================================================================
     // AUDIO LOAD FOR LEVEL 3
     // ================================================================
@@ -608,7 +606,6 @@ static void DrawPauseButton()
 // ----------------------------------------------------------------------------
 void Level3_Initialize()
 {
-    std::cout << "Level3:Initialize\n";
 
     // ================================================================
     // STOP ANY PREVIOUS AUDIO (safe + FMOD-friendly)
@@ -1217,7 +1214,6 @@ void Level3_Update()
             // Trigger jump scare immediately when caught
             JumpScare_Trigger();
             pendingGameOverReset = true; // Mark that we need to reset after jump scare
-            std::cout << "CAUGHT! Playing jump scare...\n";
         }
     }
 
@@ -1249,7 +1245,6 @@ void Level3_Update()
 
         ResetLevel3();
         pendingGameOverReset = false;
-        std::cout << "Jump scare finished, resetting level...\n";
         l3_showLose = true;
         return; // skip remaining update logic this frame
     }
@@ -1591,10 +1586,7 @@ void Level3_Draw()
 // ----------------------------------------------------------------------------
 // Level3_Free -- currently empty; no additional cleanup needed.
 // ----------------------------------------------------------------------------
-void Level3_Free()
-{
-    std::cout << "Level3:Free\n";
-}
+void Level3_Free(){}
 
 // ----------------------------------------------------------------------------
 // Level3_Unload
@@ -1603,8 +1595,6 @@ void Level3_Free()
 // ----------------------------------------------------------------------------
 void Level3_Unload()
 {
-    std::cout << "Level3:Unload\n";
-
     // ==================== AUDIO UNLOAD (LEVEL 3) =====================
     if (AEAudioIsValidAudio(l3_sfxPlayerMove))
         AEAudioUnloadAudio(l3_sfxPlayerMove);

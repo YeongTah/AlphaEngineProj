@@ -634,8 +634,6 @@ static bool LoadLevel2State(const char* path)
 // ----------------------------------------------------------------------------
 void Level2_Load()
 {
-    std::cout << "Level2:Load\n";
-
     // ================================================================
     // AUDIO LOAD FOR LEVEL 2
     // ================================================================
@@ -1391,7 +1389,6 @@ void Level2_Update()
 
             JumpScare_Trigger();
             pendingGameOverReset = true;
-            std::cout << "CAUGHT! Playing jump scare...\n";
         }
     }
 
@@ -1404,7 +1401,6 @@ void Level2_Update()
 
         ResetLevel2();
         pendingGameOverReset = false;
-        std::cout << "Jump scare finished, resetting level...\n";
         l2_showLose = true;
         return; // skip remaining update logic this frame
     }
@@ -1729,10 +1725,7 @@ void Level2_Draw()
 // Level2_Free
 // Called after the game loop exits Level 2. Currently empty.
 // ----------------------------------------------------------------------------
-void Level2_Free()
-{
-    std::cout << "Level2:Free\n";
-}
+void Level2_Free(){}
 
 // ----------------------------------------------------------------------------
 // Level2_Unload
@@ -1741,7 +1734,6 @@ void Level2_Free()
 // ----------------------------------------------------------------------------
 void Level2_Unload()
 {
-    std::cout << "Level2:Unload\n";
 
     // ==================== AUDIO UNLOAD (LEVEL 2) =====================
     if (AEAudioIsValidAudio(l2_sfxPlayerMove))

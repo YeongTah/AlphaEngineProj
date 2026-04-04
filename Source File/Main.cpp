@@ -8,16 +8,14 @@
 #include "Level1.h"
 #include "Main.h"
 
-#include <math.h>   // Added for fabsf() -- fabsolute value function to ensure no negative results
-//jas change - coordinates for the entities, reset, and canmove function added readfile();
-//print_file(), generateLevel() and added mesh
+#include <math.h>   
 
 
 // MAIN
 
 s8 fontId = -1; //global variable for font ID, initialized to -1 to indicate not loaded
 
-//															--- helper header ----   yt 4/3 
+//															--- helper header ----
 // Function to create a standard 1x1 square mesh
 AEGfxVertexList* CreateSquareMesh() {
 	AEGfxMeshStart();
@@ -68,7 +66,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	}
 
 	// Changing the window title
-	AESysSetWindowTitle("The Intro Lab: Mummy Maze Game");
+	AESysSetWindowTitle("The Intro Lab: Mummy Maze");
 
 	//																	--- GAME STATE MANAGER LOOP ---
 	// Controls the transition between games

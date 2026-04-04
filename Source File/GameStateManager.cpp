@@ -19,9 +19,9 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 #include "Level1.h"
 #include "Level2.h"
 #include "Level3.h"
-#include "PausePage.h"   // added for GS_PAUSE -ths
-#include "LosePage.h" //added lose page jas
-#include "LevelInstruct.h" //added instructions - jas
+#include "PausePage.h"
+#include "LosePage.h" 
+#include "LevelInstruct.h"
 #include "Confirmation.h"
 
 // Tracks which level sent the player to the Win Page -ths

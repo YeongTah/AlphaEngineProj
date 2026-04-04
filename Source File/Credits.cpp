@@ -17,69 +17,140 @@ namespace
     CreditLine Credits[] =
     {
         {"CREDITS", 1.6f},
-        {"Mummy Maze", 1.3f},
+        {"Mummy Game", 1.3f},
         {"BY THE INTRO LAB", 1.0f},
 
+        {" "},
+
         {"OUR TEAM", 1.15f},
-        {"Sharon", 0.85f},
-        {"Jasmine", 0.85f},
-        {"Yeong", 0.85f},
-        {"San", 0.85f},
+        {"Sharon Lim Joo Ai", 0.85f},
+        {"Jasmine Dela Cruz Tan", 0.85f},
+        {"Lai Yeong Tah", 0.85f},
+        {"Thu Htoo San", 0.85f},
+
+        {" "},
 
         {"DIRECTOR AND PROGRAMMER", 1.05f},
-        {"Sharon", 0.85f},
-        {"Jasmine", 0.85f},
-        {"Yeong", 0.85f},
-        {"San", 0.85f},
+        {"Sharon Lim Joo Ai", 0.85f},
+        {"Jasmine Dela Cruz Tan", 0.85f},
+        {"Lai Yeong Tah", 0.85f},
+        {"Thu Htoo San", 0.85f},
+
+        {" "},
 
         {"PRODUCER AND DESIGN LEAD", 1.05f},
-        {"Sharon", 0.85f},
-        {"Jasmine", 0.85f},
+        {"Sharon Lim Joo Ai", 0.85f},
+        {"Jasmine Dela Cruz Tan", 0.85f},
+
+        {" "},
 
         {"TECHNICAL LEAD", 1.05f},
-        {"Yeong", 0.85f},
-        {"San", 0.85f},
+        {"Lai Yeong Tah", 0.85f},
+        {"Thu Htoo San", 0.85f},
+
+        {" "},
 
         {"ART LEAD", 1.05f},
-        {"Jasmine", 0.85f},
+        {"Jasmine Dela Cruz Tan", 0.85f},
+
+        {" "},
 
         {"AUDIO LEAD", 1.05f},
-        {"Sharon", 0.85f},
+        {"Thu Htoo San", 0.85f},
+
+        {" "},
 
         {"GRAPHICS PROGRAMMER", 1.05f},
-        {"Sharon", 0.85f},
-        {"Jasmine", 0.85f},
-        {"Yeong", 0.85f},
-        {"San", 0.85f},
+        {"Sharon Lim Joo Ai", 0.85f},
+        {"Jasmine Dela Cruz Tan", 0.85f},
+        {"Lai Yeong Tah", 0.85f},
+        {"Thu Htoo San", 0.85f},
+
+        {" "},
 
         {"LEVEL DESIGNER", 1.05f},
-        {"Jasmine", 0.85f},
+        {"Jasmine Dela Cruz Tan", 0.85f},
+
+        {" "},
 
         {"ENVIRONMENT ARTIST AND UI", 1.05f},
-        {"Sharon", 0.85f},
-        {"Jasmine", 0.85f},
-        {"Yeong", 0.85f},
-        {"San", 0.85f},
+        {"Sharon Lim Joo Ai", 0.85f},
+        {"Jasmine Dela Cruz Tan", 0.85f},
+        {"Lai Yeong Tah", 0.85f},
+        {"Thu Htoo San", 0.85f},
+
+        {" "},
 
         {"COMPOSER", 1.05f},
-        {"Sharon", 0.85f},
-        {"Jasmine", 0.85f},
-        {"Yeong", 0.85f},
-        {"San", 0.85f},
+        {"Sharon Lim Joo Ai", 0.85f},
+        {"Jasmine Dela Cruz Tan", 0.85f},
+        {"Lai Yeong Tah", 0.85f},
+        {"Thu Htoo San", 0.85f},
 
-        {"SPECIAL THANKS", 1.15f},
-        {"PROF. GERALD", 0.85f},
-        {"DR. SOROOR", 0.85f},
-        {"PROF. TOMMY", 0.85f},
-        {"TO THE FELLOW TA'S", 0.85f},
+        {" "},
+
+        {"INSTRUCTORS", 1.15f},
+
+        {"DESIGN AND PRODUCTION", 1.05f},
+        {"Gerald Wong Han Feng", 0.85f},
+        {"Dr. Soroor Malekmohammadai Faradounbeh", 0.85f},
+        {"Tommy Tan Chee Wei", 0.85f},
+
+        {" "},
+
+        {"ART", 1.05f},
+        {"Gerald Wong Han Feng", 0.85f},
+        {"Dr. Soroor Malekmohammadai Faradounbeh", 0.85f},
+        {"Tommy Tan Chee Wei", 0.85f},
+
+        {" "},
+
+        {"PROGRAMMING", 1.05f},
+        {"Gerald Wong Han Feng", 0.85f},
+        {"Dr. Soroor Malekmohammadai Faradounbeh", 0.85f},
+        {"Tommy Tan Chee Wei", 0.85f},
+
+        {" "},
+
+        {"AUDIO", 1.05f},
+        {"Gerald Wong Han Feng", 0.85f},
+        {"Dr. Soroor Malekmohammadai Faradounbeh", 0.85f},
+        {"Tommy Tan Chee Wei", 0.85f},
+
+        { " " },
+
+        {"LAB MANAGEMENT AND IT", 1.05f},
+        {"Gerald Wong Han Feng", 0.85f},
+        {"Dr. Soroor Malekmohammadai Faradounbeh", 0.85f},
+        {"Tommy Tan Chee Wei", 0.85f},
+
+        { " " },
 
         {"CREATED AT", 1.05f},
         {"DIGIPEN INSTITUTE OF TECHNOLOGY SINGAPORE", 0.80f},
 
+        { " " },
+
+        {"PRESIDENT", 1.05f},
+        {"Claude Comair", 0.80f},
+
+        { " " },
+
+        {"EXECUTIVES", 1.05f},
+        {"CHU Jason Yeu Tat", 0.80f},
+        {"Michael GATS", 0.80f},
+        {"TAN Chek Ming", 0.80f},
+        {"Prasanna Kumar GHALI", 0.80f},
+        {"Mandy WONG", 0.80f},
+        {"Johnny DEEK", 0.80f},
+
+        { " " },
+
         {"TOOLS USED", 1.05f},
-        {"KENNEY", 0.85f},
+        {"Font from www.kenny.nl (CCO)", 0.85f},
         {"ASEPRITE", 0.85f},
-        {"WWW.DIGIPEN.EDU", 0.85f},
+
+        { " " },
 
         {"PRESS B TO RETURN TO MAIN MENU", 0.75f},
         {"PRESS ESCAPE TO QUIT", 0.75f}

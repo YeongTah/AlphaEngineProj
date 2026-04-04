@@ -3,8 +3,8 @@
 #include "main.h"
 #include "LevelInstruct.h"
 #include "gamestatemanager.h"
-#include <iostream>
-#include <fstream>
+
+//                                                                --- VARIABLES DECLARATION START HERE ---
 
 // Macro: returns the number of elements in a stack-allocated array
 #define array_count(a) (sizeof(a)/sizeof(*a))
@@ -20,6 +20,7 @@ float backbutton_x, backbutton_y; // X, Y center of the Back button (top-left ar
 AEGfxTexture* backButton = nullptr; // Texture loaded from Assets/Backbutton.png
 AEGfxTexture* wallimage = nullptr; //jas added
 
+//                                                                --- VARIABLES DECLARATION END HERE ---
 
 // ----------------------------------------------------------------------------
 // LevelPage_Load
@@ -28,7 +29,6 @@ AEGfxTexture* wallimage = nullptr; //jas added
 // ----------------------------------------------------------------------------
 void LevelPage_Load()
 {
-    std::cout << "LevelPage:Load\n";
 
     backButton = AEGfxTextureLoad("Assets/Back.png"); // back arrow texture
     wallimage = AEGfxTextureLoad("Assets/wall.png"); // floor tile texture
@@ -43,7 +43,6 @@ void LevelPage_Load()
 // ----------------------------------------------------------------------------
 void LevelPage_Initialize()
 {
-    std::cout << "LevelPage:Initialize\n";
 
     select_y = 0.0f;  // All 3 level buttons share this Y
     easy_x = -400.0f;  // Left side   -- Level 1 (Easy)
@@ -82,8 +81,6 @@ void LevelPage_Update()
     {
         LevelInstruct(1);
         next = LEVELINSTRUCTIONS;
-        //next = GS_LEVEL1;
-        std::cout << "lvl 1 Left click released\n";
     }
 
     // --- Level 2 (Normal) button ---
@@ -92,8 +89,6 @@ void LevelPage_Update()
     {
         LevelInstruct(2);
         next = LEVELINSTRUCTIONS;
-        //next = GS_LEVEL2;
-        std::cout << "lvl 2 Left click released\n";
     }
 
     // --- Level 3 (Hard) button ---
@@ -102,8 +97,6 @@ void LevelPage_Update()
     {
         LevelInstruct(3);
         next = LEVELINSTRUCTIONS;
-        //next = GS_LEVEL3;
-        std::cout << "lvl 3 Left click released\n";
     }
 
     // --- Back button: B key, ESCAPE, or clicking the back button texture ---
@@ -112,14 +105,12 @@ void LevelPage_Update()
             50.0f, 50.0f, mouseX, mouseY)))
     {
         next = MAINMENUSTATE;
-        std::cout << "Back key released\n";
     }
 
     // --- Quit ---
     if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
     {
         next = GS_QUIT;
-        std::cout << "Q key released\n";
     }
 }
 
@@ -189,7 +180,6 @@ void LevelPage_Draw()
 
     // Set background color (purple -- clamped to 0-1 range by engine)
     AEGfxSetBackgroundColor(0.50f, 0.44f, 0.30f);
-    //AEGfxSetBackgroundColor(0.21f, 0.11f, 0.12f);
 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 0.0f);
@@ -233,10 +223,7 @@ void LevelPage_Draw()
 // ----------------------------------------------------------------------------
 // LevelPage_Free -- currently empty; no heap allocations to release here.
 // ----------------------------------------------------------------------------
-void LevelPage_Free()
-{
-    std::cout << "LevelPage:Free\n";
-}
+void LevelPage_Free(){}
 
 // ----------------------------------------------------------------------------
 // LevelPage_Unload
@@ -244,7 +231,6 @@ void LevelPage_Free()
 // ----------------------------------------------------------------------------
 void LevelPage_Unload()
 {
-    std::cout << "LevelPage:Unload\n";
 
     AEGfxTextureUnload(backButton);
     AEGfxTextureUnload(wallimage);

@@ -158,8 +158,12 @@ void TrailParticle_Draw(void)
     if (!g_trailParticlesActive) return;
 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetBlendMode(AE_GFX_BM_NONE);
     AEGfxSetTransparency(1.0f);
+
+    // Reset colour mode before adding colours
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
     AEMtx33 scale, trans, transform;
 
@@ -169,6 +173,7 @@ void TrailParticle_Draw(void)
             if (alpha > 0.7f) alpha = 0.7f;  // Cap alpha for subtle effect
             if (alpha < 0.1f) alpha = 0.1f;
 
+            // Set actual colours to particles
             AEGfxSetColorToMultiply(g_trailParticles[i].r, g_trailParticles[i].g,
                 g_trailParticles[i].b, alpha);
 
