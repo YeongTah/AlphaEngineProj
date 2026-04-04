@@ -1,9 +1,10 @@
 ﻿/* Start Header ***************************************************************
-\file GameStateManager.cpp
-\brief Manages game state transitions: initializes the starting state and
-       updates the 6 function pointers (Load, Initialize, Update, Draw, Free,
-       Unload) to match whichever game state is currently active.
-       The main game loop in Main.cpp calls these pointers each frame.
+\file       GameStateManager.cpp
+\coders     Sharon, Jasmine, Yeong, San
+\brief      Manages game state transitions: initializes the starting state and
+            updates the 6 function pointers (Load, Initialize, Update, Draw, Free,
+            Unload) to match whichever game state is currently active.
+            The main game loop in Main.cpp calls these pointers each frame.
 Copyright (C) 2026 DigiPen Institute of Technology.
 */
 /* End Header *************************************************************** */

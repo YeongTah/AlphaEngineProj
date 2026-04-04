@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       JumpScare.cpp
+\coders     Sharon
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #include "pch.h"
 #include "JumpScare.h"
 #include "Main.h"

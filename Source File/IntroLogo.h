@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       IntroLogo.h
+\coders     Sharon, San
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #pragma once
 
 void Intro_Load();

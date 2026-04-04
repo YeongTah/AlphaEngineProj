@@ -1,4 +1,10 @@
-﻿
+﻿/* Start Header ***************************************************************
+\file       IntroLogo.cpp
+\coders     Sharon, San
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #include "pch.h"
 
 #include "IntroLogo.h"

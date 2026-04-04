@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       Collision.h
+\coders     Sharon
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #pragma once
 
 #include "AEEngine.h"

@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       LevelPage.cpp
+\coders     Sharon, Jasmine
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #include "pch.h"
 #include "LevelPage.h"
 #include "main.h"

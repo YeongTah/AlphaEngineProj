@@ -1,4 +1,11 @@
-﻿// ---------------------------------------------------------------------------
+﻿/* Start Header ***************************************************************
+\file       Main.cpp
+\coders     Sharon, Jasmine, Yeong, San
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
+// ---------------------------------------------------------------------------
 // includes
 #include "pch.h"
 #include <crtdbg.h> // To check for memory leaks

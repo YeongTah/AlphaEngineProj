@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       Level1.cpp
+\coders     Sharon, San
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #include "pch.h"
 #include "MainMenu.h"
 #include "gamestatemanager.h"

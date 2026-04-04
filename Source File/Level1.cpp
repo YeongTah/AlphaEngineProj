@@ -1,4 +1,11 @@
-﻿#include "pch.h"
+﻿/* Start Header ***************************************************************
+\file       Level1.cpp
+\coders     Sharon, Jasmine, Yeong, San
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
+#include "pch.h"
 #include "leveleditor.hpp"
 #include "GridUtils.h"
 #include "Level1.h"
