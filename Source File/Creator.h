@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       Creator.h
+\coders     Jasmine
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #pragma once
 
 void Creator_Load();

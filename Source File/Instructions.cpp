@@ -1,4 +1,11 @@
-﻿#include "pch.h"
+﻿/* Start Header ***************************************************************
+\file       Instructions.cpp
+\coders     Jasmine , Sharon
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
+#include "pch.h"
 #include "Instructions.h"
 #include "main.h"
 #include "gamestatemanager.h"

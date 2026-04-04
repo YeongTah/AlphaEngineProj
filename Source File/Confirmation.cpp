@@ -1,4 +1,11 @@
-﻿#include "pch.h"
+﻿/* Start Header ***************************************************************
+\file       Confirmation.cpp
+\coders     Jasmine
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
+#include "pch.h"
 #include "Confirmation.h"
 #include "GameStateManager.h"
 #include "MouseCoor.h"

@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       Credits.cpp
+\coders     Jasmine
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #include "pch.h"
 #include "leveleditor.hpp"
 #include "Creator.h"
@@ -148,7 +155,7 @@ namespace
 
         {"TOOLS USED", 1.05f},
         {"Font from www.kenny.nl (CCO)", 0.85f},
-        {"ASEPRITE", 0.85f},
+        {"Sprite Creation using Aseprite", 0.85f},
 
         { " " },
 
@@ -321,7 +328,7 @@ void Credit_Draw()
     // === COPYRIGHT TEXT ===
     AEGfxPrint(fontId,
         "All content © 2026 DigiPen Institute of Technology Singapore. All Rights Reserved.",
-        -0.52f, 0.90f, 0.70f, 1.0f, 1.0f, 1.0f, 1.0f);
+        -0.70f, 0.90f, 0.90f, 1.0f, 1.0f, 1.0f, 1.0f);
 
     // Reset rendering mode back to colour mode
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);

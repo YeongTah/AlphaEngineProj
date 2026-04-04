@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       LevelInstruct.h
+\coders     Jasmine, San
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #pragma once
 
 void LevelInstruct_Load();

@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       leveleditor.cpp
+\coders     Jasmine, Yeong
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #include "pch.h"
 #include "AEEngine.h"
 #include "leveleditor.hpp"
@@ -411,7 +418,6 @@ int print_file()
     std::ofstream os(GetLevelFilename());
     if (!os.is_open())
     {
-        std::cout << "cannot find\n";
         return 0;
     }
 
@@ -446,7 +452,6 @@ void readfile()
     if (!is.is_open())
     {
         LoadDefaultLevel(); // fall back to a minimal default map
-        std::cout << "No file: " << GetLevelFilename() << " starting blank\n";
         return;
     }
 

@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       Credits.h
+\coders     Jasmine
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #pragma once
 
 

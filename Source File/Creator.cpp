@@ -1,3 +1,10 @@
+/* Start Header ***************************************************************
+\file       Creator.cpp
+\coders     Jasmine
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
+
 #include "pch.h"
 #include "leveleditor.hpp"
 #include "Creator.h"
