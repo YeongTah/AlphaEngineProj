@@ -1,3 +1,9 @@
+/* Start Header ***************************************************************
+\file       GridUtils.h
+\coders     Lai Yeong Tah
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
 #pragma once
 
 #include "AEEngine.h"

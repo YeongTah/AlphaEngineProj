@@ -1,3 +1,9 @@
+/* Start Header ***************************************************************
+\file       GridUtils.cpp
+\coders     Lai Yeong Tah
+Copyright (C) 2026 DigiPen Institute of Technology.
+*/
+/* End Header *************************************************************** */
 #include "pch.h"
 
 #include "GridUtils.h"

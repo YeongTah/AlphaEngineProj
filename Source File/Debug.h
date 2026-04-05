@@ -1,22 +1,9 @@
-/* Start Header ******************************************************************
-/*!
-\file   Debug.h
-\brief  Shared in-game debug overlay: hitbox visualiser + runtime variable HUD.
-        Toggle with F1 during any level. No console output -- everything is
-        drawn directly in the game window.
-
-        HOW TO USE IN A LEVEL:
-          1. #include "Debug.h"
-          2. In Update: call Debug_HandleToggle()          -- wires up F1 key
-          3. At end of Draw: call Debug_DrawOverlay(info)  -- draws everything
-
-        Compile Debug.cpp into the project alongside the level files.
-
- Copyright (C) 2026 DigiPen Institute of Technology.
- Reproduction or disclosure of this file or its contents without the prior
- written consent of DigiPen Institute of Technology is prohibited.
+/* Start Header ***************************************************************
+\file       Debug.h
+\coders     Lai Yeong Tah
+Copyright (C) 2026 DigiPen Institute of Technology.
 */
-/* End Header **************************************************************************/
+/* End Header *************************************************************** */
 
 #pragma once
 

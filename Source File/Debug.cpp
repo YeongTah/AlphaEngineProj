@@ -1,26 +1,9 @@
-/* Start Header ******************************************************************
-/*!
-\file   Debug.cpp
-\brief  Implementation of the shared in-game debug overlay.
-        Provides hitbox visualisation and a runtime variable HUD for all levels.
-        Toggle with F1. All output is drawn in the game window -- nothing is
-        printed to the console.
-
-        Colour key (hitbox outlines):
-          Cyan   -- player
-          Red    -- all mummies (mummy 1, 2, 3) and 
-          Orange -- box mummies (spawned by treasure chests)
-          Yellow -- treasure chest
-          Green  -- exit portal
-          Blue   -- legacy coin entity
-          Purple -- power-up pickup
-          Black  -- all tile borders (walkable and wall)
-
- Copyright (C) 2026 DigiPen Institute of Technology.
- Reproduction or disclosure of this file or its contents without the prior
- written consent of DigiPen Institute of Technology is prohibited.
+/* Start Header ***************************************************************
+\file       Debug.cpp
+\coders     Lai Yeong Tah
+Copyright (C) 2026 DigiPen Institute of Technology.
 */
-/* End Header **************************************************************************/
+/* End Header *************************************************************** */
 
 #include "pch.h"
 #include "Debug.h"
@@ -117,9 +100,9 @@ void Debug_DrawOverlay(const DebugEntityInfo& info)
 {
     if (!s_debugActive) return;
 
-    // --------------------------------------------------------
+    // =======================
     // 1. Grid tile outlines
-    // --------------------------------------------------------
+    // =======================
     for (int row = 0; row < GRID_ROWS; ++row)
     {
         for (int col = 0; col < GRID_COLS; ++col)
@@ -143,10 +126,10 @@ void Debug_DrawOverlay(const DebugEntityInfo& info)
         }
     }
 
-    // --------------------------------------------------------
+    // =======================
     // 2. Entity hitbox outlines (drawn back-to-front so the
     //    player outline is always visible on top)
-    // --------------------------------------------------------
+    // =======================
 
     // Exit portal  (green)
     DrawDebugOutline(info.exitX, info.exitY, info.exitSize, info.exitSize,
@@ -204,9 +187,9 @@ void Debug_DrawOverlay(const DebugEntityInfo& info)
         info.playerSize, info.playerSize,
         0.0f, 1.0f, 1.0f, 4.0f);
 
-    // --------------------------------------------------------
+    // =======================
     // 3. Runtime variable HUD (stacked text lines, lower-left)
-    // --------------------------------------------------------
+    // =======================
     // Restore texture mode so AEGfxPrint renders correctly
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);

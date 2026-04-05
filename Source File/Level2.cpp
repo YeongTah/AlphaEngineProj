@@ -1,6 +1,6 @@
 ﻿/* Start Header ***************************************************************
 \file       Level2.cpp
-\coders     Sharon, Jasmine, Yeong, San
+\coders     Sharon, Jasmine, Lai Yeong Tah, San
 Copyright (C) 2026 DigiPen Institute of Technology.
 */
 /* End Header *************************************************************** */
@@ -152,7 +152,7 @@ static void L2FindFreeSpawnCell(int startRow, int startCol, float& outX, float& 
                 if (avoidRow >= 0 && avoidCol >= 0)
                     if (abs(r - avoidRow) + abs(c - avoidCol) < minDist) continue; // too close
                 GridToWorldCenter(r, c, outX, outY);
-                std::cout << "L2 Spawn at grid (" << r << "," << c << ")\n";
+                //std::cout << "L2 Spawn at grid (" << r << "," << c << ")\n";
                 return;
             }
         }
@@ -188,7 +188,7 @@ static void L2LoadLevelTxt()
         for (int col = 0; col < GRID_COLS; ++col)
             level[row][col] = (is >> tile >> comma) ? tile : 0;
     is.close();
-    std::cout << "Level2: Loaded grid from " << path << "\n";
+    //std::cout << "Level2: Loaded grid from " << path << "\n";
 }
 
 // ===== Reachability helpers to keep scorpion out of sealed pockets =====
@@ -451,8 +451,7 @@ static void L2SpawnTreasureBox()
         l2_treasureBox.y = wy;
         l2_treasureBox.size = l2_gridStep * 0.9f;
         l2_treasureBoxActive = true;
-        printf("L2 TreasureBox spawned at grid (%d,%d) | world (%.1f,%.1f)\n", r, c, wx, wy);
-        return;
+         return;
     }
     // Fallback: drop distance constraint but keep reachability
     for (int tries = 0; tries < 256; ++tries)

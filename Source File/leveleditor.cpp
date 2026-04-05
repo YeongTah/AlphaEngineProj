@@ -1,6 +1,6 @@
 /* Start Header ***************************************************************
 \file       leveleditor.cpp
-\coders     Jasmine, Yeong
+\coders     Jasmine, Lai Yeong Tah
 Copyright (C) 2026 DigiPen Institute of Technology.
 */
 /* End Header *************************************************************** */

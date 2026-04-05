@@ -1,6 +1,6 @@
 ﻿/* Start Header ***************************************************************
 \file       Level3.cpp
-\coders     Sharon, Jasmine, Yeong, San
+\coders     Sharon, Jasmine, Yeong Tah, San
 Copyright (C) 2026 DigiPen Institute of Technology.
 */
 /* End Header *************************************************************** */
@@ -137,7 +137,7 @@ static void L3FindFreeSpawnCell(int startRow, int startCol, float& outX, float& 
                 if (avoidRow >= 0 && avoidCol >= 0)
                     if (abs(r - avoidRow) + abs(c - avoidCol) < minDist) continue;
                 GridToWorldCenter(r, c, outX, outY);
-                std::cout << "L3 Spawn at grid (" << r << "," << c << ")\n";
+                //std::cout << "L3 Spawn at grid (" << r << "," << c << ")\n";
                 return;
             }
         }
@@ -173,7 +173,7 @@ static void L3LoadLevelTxt()
         for (int col = 0; col < GRID_COLS; ++col)
             level[row][col] = (is >> tile >> comma) ? tile : 0;
     is.close();
-    std::cout << "Level3: Loaded grid from " << path << "\n";
+    //std::cout << "Level3: Loaded grid from " << path << "\n";
 }
 
 // ----------------------------------------------------------------------------

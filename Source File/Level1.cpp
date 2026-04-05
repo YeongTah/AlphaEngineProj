@@ -1,6 +1,6 @@
 ﻿/* Start Header ***************************************************************
 \file       Level1.cpp
-\coders     Sharon, Jasmine, Yeong, San
+\coders     Sharon, Jasmine, Lai Yeong Tah, San
 Copyright (C) 2026 DigiPen Institute of Technology.
 */
 /* End Header *************************************************************** */
@@ -138,7 +138,7 @@ static void SpawnTreasureBox()
         gTreasureBox.y = wy;
         gTreasureBox.size = gridStep * 0.9f;
         gTreasureBoxActive = true;
-        printf("TreasureBox spawned at grid (%d, %d) | world (%.1f, %.1f)\n", r, c, wx, wy);
+        //printf("TreasureBox spawned at grid (%d, %d) | world (%.1f, %.1f)\n", r, c, wx, wy);
         return;
     }
     // Fallback: retry without distance constraint so the box is always visible
@@ -156,8 +156,7 @@ static void SpawnTreasureBox()
         gTreasureBox.y = wy;
         gTreasureBox.size = gridStep * 0.9f;
         gTreasureBoxActive = true;
-        printf("TreasureBox spawned (fallback) at grid (%d, %d) | world (%.1f, %.1f)\n", r, c, wx, wy);
-        return;
+         return;
     }
     gTreasureBoxActive = false; // map is entirely walled (should never happen)
 }
@@ -211,8 +210,7 @@ static void OpenTreasureBox()
 
             BoxMummy& m = gBoxMummies[gBoxMummyCount++];
             m.x = sx; m.y = sy; m.size = gridStep;
-            printf("Treasure Box: MUMMY spawned at (%.0f, %.0f)!\n", sx, sy);
-            std::snprintf(gPopupMsg, sizeof(gPopupMsg), "Treasure: A Mummy appeared!");
+             std::snprintf(gPopupMsg, sizeof(gPopupMsg), "Treasure: A Mummy appeared!");
             gPopupFrames = 240; // show for ~3 seconds
         }
     }
@@ -543,7 +541,7 @@ static void LoadLevelTxt()
             else
                 level[row][col] = 0; // fallback for truncated files
     is.close();
-    std::cout << "Level1: Loaded grid from " << path << "\n";
+    //std::cout << "Level1: Loaded grid from " << path << "\n";
 }
 
 // ----------------------------------------------------------------------------
@@ -647,7 +645,7 @@ static void FindFreeSpawnCell(int startRow, int startCol, float& outX, float& ou
                 }
                 // Found a valid cell - convert to world coordinates and return
                 GridToWorldCenter(r, c, outX, outY);
-                std::cout << "Spawn found at grid (" << r << "," << c << ")\n";
+                //std::cout << "Spawn found at grid (" << r << "," << c << ")\n";
                 return;
             }
         }
@@ -1336,7 +1334,7 @@ void Level1_Update()
             if (AEAudioIsValidAudio(sfxExitDoor))
                 AEAudioPlay(sfxExitDoor, level1Group, 1.0f, 1.0f, 0);
 
-            printf("You Escaped the Maze!\n");
+            //printf("You Escaped the Maze!\n");
             level1_counter = 0;
             next = GS_WIN;
         }
