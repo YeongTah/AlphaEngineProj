@@ -835,7 +835,10 @@ void Level1_Update()
             // Quit button (0,-100) 280x70
             if (IsAreaClicked(0.0f, -100.0f, 280.0f, 70.0f, mxS, myS))
             {
-                next = GS_QUIT;
+                if (AEAudioIsValidAudio(sfxButton))
+                    AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
+                Confirmation_Level(GS_LEVEL1, GS_QUIT, "Are you sure you want to quit?");
+                next = CONFIRM;
                 gShowLose = gShowWin = false;
                 return;
             }
@@ -860,9 +863,18 @@ void Level1_Update()
             gShowLose = false;
             return;
         }
-        if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+        if (AEInputCheckReleased(AEVK_ESCAPE))
         {
-            next = GS_QUIT;
+            if (AEAudioIsValidAudio(sfxButton))
+                AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
+            Confirmation_Level(GS_LEVEL1, GS_QUIT, "Are you sure you want to quit?");
+            next = CONFIRM;
+            gShowLose = gShowWin = false;
+            return;
+        }
+        if (0 == AESysDoesWindowExist())
+        {
+            next = GS_QUIT;   // immediate quit if window already closed
             return;
         }
         return; // freeze game logic

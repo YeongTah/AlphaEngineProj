@@ -774,10 +774,12 @@ void Level3_Update()
             // Quit button (0,-100) 280x70
             if (IsAreaClicked(0.0f, -100.0f, 280.0f, 70.0f, mxS, myS))
             {
-                if (AEAudioIsValidAudio(l3_sfxButton))
-                    AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
-                l3_showLose = l3_showWin = false;
                 next = GS_QUIT;
+                if (AEAudioIsValidAudio(l3_sfxButton))
+                     AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
+                Confirmation_Level(GS_LEVEL3, GS_QUIT, "Are you sure you want to quit?");
+                next = CONFIRM;
+                l3_showLose = l3_showWin = false;
                 return;
             }
         }
@@ -802,7 +804,19 @@ void Level3_Update()
             return;
         }
         if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+            if (AEInputCheckReleased(AEVK_ESCAPE))
         {
+            next = GS_QUIT;
+            if (AEAudioIsValidAudio(l3_sfxButton))
+                 AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
+            Confirmation_Level(GS_LEVEL3, GS_QUIT, "Are you sure you want to quit?");
+            next = CONFIRM;
+            l3_showLose = l3_showWin = false;
+            return;
+            
+        }
+         if (0 == AESysDoesWindowExist())
+             {
             next = GS_QUIT;
             return;
         }
