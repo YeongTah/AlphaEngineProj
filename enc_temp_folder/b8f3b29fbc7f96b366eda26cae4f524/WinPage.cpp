@@ -57,6 +57,7 @@ static void DrawRect(float centre_x, float centre_y, float width, float height,
 // ----------------------------------------------------------------------------
 void WinPage_Load()
 {
+    //std::cout << "WinPage:Load\n";
     winGroup = AEAudioCreateGroup();
     sfxWin = AEAudioLoadSound("Assets/audio/win.wav");
     sfxButton = AEAudioLoadSound("Assets/audio/button.wav");
