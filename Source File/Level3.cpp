@@ -199,6 +199,9 @@ static void L3SpawnTreasureBox()
         int cr, cc;
         WorldToGrid(l3_coin.x, l3_coin.y, cr, cc);
         if (r == cr && c == cc) continue;
+        int er, ec;
+        WorldToGrid(l3_exitPortal.x, l3_exitPortal.y, er, ec);
+        if (r == er && c == ec) continue;
         float wx, wy;
         GridToWorldCenter(r, c, wx, wy);
         l3_treasureBox.x = wx;
@@ -216,6 +219,9 @@ static void L3SpawnTreasureBox()
         int cr, cc;
         WorldToGrid(l3_coin.x, l3_coin.y, cr, cc);
         if (r == cr && c == cc) continue;
+        int er, ec;
+        WorldToGrid(l3_exitPortal.x, l3_exitPortal.y, er, ec);
+        if (r == er && c == ec) continue;
         float wx, wy;
         GridToWorldCenter(r, c, wx, wy);
         l3_treasureBox.x = wx;

@@ -132,6 +132,12 @@ static void SpawnTreasureBox()
         WorldToGrid(coin.x, coin.y, cr, cc);
         if (r == cr && c == cc) continue;
 
+        // Don't spawn on the exit portal's cell
+        int er, ec;
+        WorldToGrid(exitPortal.x, exitPortal.y, er, ec);
+        if (r == er && c == ec) continue;
+
+
          float wx, wy;
         GridToWorldCenter(r, c, wx, wy);
         gTreasureBox.x = wx;
@@ -149,6 +155,9 @@ static void SpawnTreasureBox()
         int cr, cc;
         WorldToGrid(coin.x, coin.y, cr, cc);
         if (r == cr && c == cc) continue;
+        int er, ec;
+        WorldToGrid(exitPortal.x, exitPortal.y, er, ec);
+        if (r == er && c == ec) continue;
         float wx, wy;
         GridToWorldCenter(r, c, wx, wy);
         gTreasureBox.x = wx;
@@ -390,7 +399,7 @@ static inline float ToNDCY(float worldY) { return worldY / ((float)AEGfxGetWindo
 // string of 'text' around 'centerWorldX' when printed at 'scale'.
 // Used to center-align labels on overlay buttons.
 // ----------------------------------------------------------------------------
-float CenteredTextX(float centerWorldX, const char* text, float scale)
+static float CenteredTextX(float centerWorldX, const char* text, float scale)
 {
     const float ndcPerChar = 0.0165f * scale; // empirically tuned for Roboto@32
     float halfText = 0.5f * ndcPerChar * (float)std::strlen(text);
