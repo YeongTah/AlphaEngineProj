@@ -59,16 +59,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	GSM_Initialize(INTROSTATE);
 
 	// Using custom window procedure
-	AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, NULL);
+	AESysInit(hInstance, nCmdShow, 1600, 900, 0, 60, false, NULL);
+
 
 	// Load the font from the Assets folder with a size of 32
 	fontId = AEGfxCreateFont("Assets/Fonts/Kenney Mini.ttf", 32);
 
 	//  Check if the font loaded successfully
-	if (fontId < 0) {
-	}
-	else {
-	}
 
 	// Changing the window title
 	AESysSetWindowTitle("The Intro Lab: Mummy Maze");
