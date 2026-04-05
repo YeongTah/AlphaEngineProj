@@ -393,18 +393,7 @@ static inline float ToNDCX(float worldX) { return worldX / ((float)AEGfxGetWindo
 // Converts a world Y coordinate to Normalized Device Coordinates [-1, 1].
 static inline float ToNDCY(float worldY) { return worldY / ((float)AEGfxGetWindowHeight() * 0.5f); }
 
-// ----------------------------------------------------------------------------
-// CenteredTextX
-// Calculates the NDC left-edge X position needed to visually center a text
-// string of 'text' around 'centerWorldX' when printed at 'scale'.
-// Used to center-align labels on overlay buttons.
-// ----------------------------------------------------------------------------
-static float CenteredTextX(float centerWorldX, const char* text, float scale)
-{
-    const float ndcPerChar = 0.0165f * scale; // empirically tuned for Roboto@32
-    float halfText = 0.5f * ndcPerChar * (float)std::strlen(text);
-    return ToNDCX(centerWorldX) - halfText; // left-x for AEGfxPrint
-}
+
 
 // ========================== SAVE / LOAD (LOCAL) ==========================
 // ----------------------------------------------------------------------------
