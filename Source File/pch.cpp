@@ -1,12 +1,9 @@
-/******************************************************************************/
-/*!
-\author     Thu Htoo San
-\date       April, 5 , 2026
-\copyright  Copyright (C) 2013 DigiPen Institute of Technology. Reproduction
-            or disclosure of this file or its contents without the prior
-            written consent of DigiPen Institute of Technology is prohibited.
+/* Start Header ***************************************************************
+\file       pch.cpp
+\coders     Thu Htoo San
+Copyright (C) 2026 DigiPen Institute of Technology.
 */
-/******************************************************************************/
+/* End Header *************************************************************** */
 // pch.cpp: source file corresponding to the pre-compiled header
 
 #include "pch.h"

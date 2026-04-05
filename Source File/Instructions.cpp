@@ -1,6 +1,6 @@
 ﻿/* Start Header ***************************************************************
 \file       Instructions.cpp
-\coders     Jasmine , Sharon
+\coders     Jasmine , Sharon , San
 Copyright (C) 2026 DigiPen Institute of Technology.
 */
 /* End Header *************************************************************** */
