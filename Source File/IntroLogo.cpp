@@ -15,7 +15,7 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 AEGfxTexture* DPLogo = nullptr;      // Digipen logo texture
 
 static int page_index = 0;                // 0 = Digipen Logo, 1 = Game Logo text
-static const float PAGE_MIN_TIME = 0.0f;  // prevent instantaneous skip 
+static const float PAGE_MIN_TIME = 2.0f;  // prevent instantaneous skip 
 static const float PAGE_AUTO_TIME = 3.0f; // auto-advance after 3 seconds
 static float page_timer = 0.0f;           // time accumulator for current page
 
