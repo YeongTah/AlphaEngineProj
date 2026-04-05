@@ -1,10 +1,6 @@
 ﻿/* Start Header ***************************************************************
 \file       GameStateManager.cpp
 \coders     Sharon, Jasmine, Yeong, San
-\brief      Manages game state transitions: initializes the starting state and
-            updates the 6 function pointers (Load, Initialize, Update, Draw, Free,
-            Unload) to match whichever game state is currently active.
-            The main game loop in Main.cpp calls these pointers each frame.
 Copyright (C) 2026 DigiPen Institute of Technology.
 */
 /* End Header *************************************************************** */
@@ -25,7 +21,7 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 #include "LevelInstruct.h"
 #include "Confirmation.h"
 
-// Tracks which level sent the player to the Win Page -ths
+// Tracks which level sent the player to the Win Page
 int gLastLevelPlayed = 1;   // default = Level 1
 
 // The three state variables used by the main loop in Main.cpp:
@@ -69,7 +65,7 @@ void GSM_Initialize(int startingState)
 //   GS_LEVEL2     -> Level2_*    functions
 //   GS_LEVEL3     -> Level3_*    functions
 //   GS_WIN        -> WinPage_*   functions
-//   GS_PAUSE      -> PausePage_* functions   <-- added -ths
+//   GS_PAUSE      -> PausePage_* functions   
 //   GS_RESTART    -> No-op; Main.cpp resolves state before this call
 //   GS_QUIT       -> System_Exit()
 // ----------------------------------------------------------------------------
