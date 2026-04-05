@@ -7,6 +7,7 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 
 #include "pch.h"
 #include "leveleditor.hpp"
+#include "Confirmation.h"
 #include "Creator.h"
 #include "main.h"
 #include "gamestatemanager.h"
@@ -53,7 +54,8 @@ void Creator_Update()
     // Quit game when ESC is hit or when the window is closed
     if (AEInputCheckReleased(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
     {
-        next = GS_QUIT;
+        Confirmation_Level(CREATOR, GS_QUIT, "Are you sure you want to quit?");
+        next = CONFIRM;
     }
 }
 

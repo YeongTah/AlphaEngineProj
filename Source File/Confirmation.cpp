@@ -72,6 +72,7 @@ static const int confirmBtnCount = sizeof(confirmButtons) / sizeof(confirmButton
 // ----------------------------------------------------------------------------
 void Confirmation_Load()
 {
+    AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
     pMesh = CreateSquareMesh();
 }
 
