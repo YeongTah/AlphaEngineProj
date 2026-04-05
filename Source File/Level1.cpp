@@ -23,22 +23,9 @@ Copyright (C) 2026 DigiPen Institute of Technology.
 #include "Confirmation.h"
 #include "Debug.h"
 
-// DOCUMENTATION FOLLOW LIKE THIS:
-// FOR CATEGORISING OF CODE, USE THE BELOW
 //                                                                --- VARIABLES DECLARATION START HERE ---
-//                                                                --- VARIABLES DECLARATION END HERE ---
 
-// FOR JUST NAMING THE START OF THE VARIABLE USE THE BELOW
-// === PLAY ===
 
-// FOR NAMING OF FUNCTION USE THE BELOW
-// ----------------------------------------------------------------------------
-// SpawnTreasureBox
-// Places the treasure box at a random free cell at least 6 Manhattan cells
-// away from the player. Called at init and after each box is opened.
-// ----------------------------------------------------------------------------
-
-// FOR REGULAR COMMENTING OF CODE E.G., FOR UNDERSTANDING, EXPLAINING WHAT THE CODE DOES, WRITE HOWEVER YOU WISH
 
 // ====================== LEVEL 1 AUDIO VARIABLES ======================
 static AEAudio sfxPlayerMove;
@@ -108,6 +95,8 @@ static int      gBoxMummyCount = 0;
 // Treasure box popup message (shown for ~3 seconds after opening a chest)
 static char gPopupMsg[64] = "";  // text to display, empty = no popup
 static int  gPopupFrames = 0;   // counts down at 60fps; popup visible while > 0
+
+//                                                                --- VARIABLES DECLARATION END HERE ---
 
 // ----------------------------------------------------------------------------
 // SpawnTreasureBox
