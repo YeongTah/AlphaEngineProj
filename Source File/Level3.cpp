@@ -137,13 +137,11 @@ static void L3FindFreeSpawnCell(int startRow, int startCol, float& outX, float& 
                 if (avoidRow >= 0 && avoidCol >= 0)
                     if (abs(r - avoidRow) + abs(c - avoidCol) < minDist) continue;
                 GridToWorldCenter(r, c, outX, outY);
-                //std::cout << "L3 Spawn at grid (" << r << "," << c << ")\n";
                 return;
             }
         }
     }
     GridToWorldCenter(startRow, startCol, outX, outY);
-    std::cout << "L3 Spawn fallback at grid (" << startRow << "," << startCol << ")\n";
 }
 
 // ----------------------------------------------------------------------------
@@ -162,7 +160,6 @@ static void L3LoadLevelTxt()
     std::ifstream is(path);
     if (!is.is_open())
     {
-        std::cout << "Level3: Could not open " << path << " - grid all zeros\n";
         for (int r = 0; r < GRID_ROWS; ++r)
             for (int c = 0; c < GRID_COLS; ++c)
                 level[r][c] = 0;
@@ -173,7 +170,6 @@ static void L3LoadLevelTxt()
         for (int col = 0; col < GRID_COLS; ++col)
             level[row][col] = (is >> tile >> comma) ? tile : 0;
     is.close();
-    //std::cout << "Level3: Loaded grid from " << path << "\n";
 }
 
 // ----------------------------------------------------------------------------
@@ -736,8 +732,8 @@ void Level3_Update()
         return;
     }
     // --- Save (F5) / Load (F9) ---
-    if (AEInputCheckReleased(AEVK_F5)) { if (SaveLevel3State("Assets/save3.txt")) std::cout << "Saved (Assets/save3.txt)\n"; }
-    if (AEInputCheckReleased(AEVK_F9)) { if (LoadLevel3State("Assets/save3.txt")) std::cout << "Loaded (Assets/save3.txt)\n"; }
+    if (AEInputCheckReleased(AEVK_F5)) { SaveLevel3State("Assets/save3.txt"); }
+    if (AEInputCheckReleased(AEVK_F9)) { LoadLevel3State("Assets/save3.txt"); }
 
     // --- Debug overlay toggle (F1) ---
     Debug_HandleToggle();
@@ -995,7 +991,6 @@ void Level3_Update()
         {
             level[r][c] = 0;
             l3_coinCounter++;
-            std::cout << "L3 Coin collected! Total: " << l3_coinCounter << "\n";
             if (AEAudioIsValidAudio(l3_sfxButton))
                 AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);
         }
@@ -1267,7 +1262,6 @@ void Level3_Update()
             if (AEAudioIsValidAudio(l3_sfxExitDoor))
                 AEAudioPlay(l3_sfxExitDoor, l3AudioGroup, 1.0f, 1.0f, 0);
 
-            printf("L3: You Escaped!\n");
 
             gLastLevelPlayed = 3;   // so WinPage restarts Level 3
 
@@ -1288,7 +1282,6 @@ void Level3_Update()
         fabsf(l3_player.y - l3_coin.y) < 1.0f)
     {
         ++l3_coinCounter;
-        printf("L3 Coin! Total: %d\n", l3_coinCounter);
         l3_coin.x = l3_coin.y = 2000.0f;
         if (AEAudioIsValidAudio(l3_sfxButton))
             AEAudioPlay(l3_sfxButton, l3AudioGroup, 1.0f, 1.0f, 0);

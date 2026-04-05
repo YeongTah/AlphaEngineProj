@@ -66,10 +66,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	//  Check if the font loaded successfully
 	if (fontId < 0) {
-		printf("Failed to load font!\n");
 	}
 	else {
-		printf("Font Roboto-Regular in Assets folder loaded successfully with ID: %d\n", fontId);
 	}
 
 	// Changing the window title

@@ -152,14 +152,12 @@ static void L2FindFreeSpawnCell(int startRow, int startCol, float& outX, float& 
                 if (avoidRow >= 0 && avoidCol >= 0)
                     if (abs(r - avoidRow) + abs(c - avoidCol) < minDist) continue; // too close
                 GridToWorldCenter(r, c, outX, outY);
-                //std::cout << "L2 Spawn at grid (" << r << "," << c << ")\n";
                 return;
             }
         }
     }
     // Fallback: use start cell even if not ideal
     GridToWorldCenter(startRow, startCol, outX, outY);
-    std::cout << "L2 Spawn fallback at grid (" << startRow << "," << startCol << ")\n";
 }
 
 // ----------------------------------------------------------------------------
@@ -177,7 +175,6 @@ static void L2LoadLevelTxt()
     std::ifstream is(path);
     if (!is.is_open())
     {
-        std::cout << "Level2: Could not open " << path << " - grid all zeros\n";
         for (int r = 0; r < GRID_ROWS; ++r)
             for (int c = 0; c < GRID_COLS; ++c)
                 level[r][c] = 0;
@@ -188,7 +185,6 @@ static void L2LoadLevelTxt()
         for (int col = 0; col < GRID_COLS; ++col)
             level[row][col] = (is >> tile >> comma) ? tile : 0;
     is.close();
-    //std::cout << "Level2: Loaded grid from " << path << "\n";
 }
 
 // ===== Reachability helpers to keep scorpion out of sealed pockets =====
@@ -469,7 +465,6 @@ static void L2SpawnTreasureBox()
         l2_treasureBox.y = wy;
         l2_treasureBox.size = l2_gridStep * 0.9f;
         l2_treasureBoxActive = true;
-        printf("L2 TreasureBox spawned (fallback) at grid (%d,%d)\n", r, c);
         return;
     }
     l2_treasureBoxActive = false;
@@ -493,7 +488,6 @@ static void L2OpenTreasureBox()
     if (!spawnMummy)
     {
         l2_coinCounter++;
-        printf("L2 Treasure Box: COIN! Total: %d\n", l2_coinCounter);
         std::snprintf(l2_popupMsg, sizeof(l2_popupMsg), "Treasure: +1 Coin! (Total: %d)", l2_coinCounter);
         l2_popupFrames = 240;
     }
@@ -514,7 +508,6 @@ static void L2OpenTreasureBox()
 
             L2BoxMummy& bm = l2_boxMummies[l2_boxMummyCount++];
             bm.x = sx; bm.y = sy; bm.size = l2_gridStep;
-            printf("L2 Treasure Box: MUMMY spawned at (%.0f,%.0f)!\n", sx, sy);
             std::snprintf(l2_popupMsg, sizeof(l2_popupMsg), "Treasure: A Mummy appeared!");
             l2_popupFrames = 240;
         }
@@ -872,8 +865,8 @@ void Level2_Update()
         next = GS_QUIT; return;
     }
     // --- Save (F5) / Load (F9) ---
-    if (AEInputCheckReleased(AEVK_F5)) { if (SaveLevel2State("Assets/save2.txt")) std::cout << "Saved (Assets/save2.txt)\n"; }
-    if (AEInputCheckReleased(AEVK_F9)) { if (LoadLevel2State("Assets/save2.txt")) std::cout << "Loaded (Assets/save2.txt)\n"; }
+    if (AEInputCheckReleased(AEVK_F5)) { SaveLevel2State("Assets/save2.txt"); }
+    if (AEInputCheckReleased(AEVK_F9)) { LoadLevel2State("Assets/save2.txt"); }
 
     // --- Debug overlay toggle (F1) ---
     Debug_HandleToggle();
@@ -1127,7 +1120,6 @@ void Level2_Update()
         {
             level[r][c] = 0;
             l2_coinCounter++;
-            std::cout << "L2 Coin collected! Total: " << l2_coinCounter << "\n";
             if (AEAudioIsValidAudio(l2_sfxButton))
                 AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);
         }
@@ -1419,7 +1411,6 @@ void Level2_Update()
             if (AEAudioIsValidAudio(l2_sfxExitDoor))
                 AEAudioPlay(l2_sfxExitDoor, l2AudioGroup, 1.0f, 1.0f, 0);
 
-            printf("L2: You Escaped!\n");
 
             gLastLevelPlayed = 2;  // tell WinPage we came from Level 2
 
@@ -1438,7 +1429,6 @@ void Level2_Update()
         fabsf(l2_player.y - l2_coin.y) < 1.0f)
     {
         ++l2_coinCounter;
-        printf("L2 Coin! Total: %d\n", l2_coinCounter);
         l2_coin.x = l2_coin.y = 2000.0f;
         if (AEAudioIsValidAudio(l2_sfxButton))
             AEAudioPlay(l2_sfxButton, l2AudioGroup, 1.0f, 1.0f, 0);

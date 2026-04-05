@@ -138,7 +138,6 @@ static void SpawnTreasureBox()
         gTreasureBox.y = wy;
         gTreasureBox.size = gridStep * 0.9f;
         gTreasureBoxActive = true;
-        //printf("TreasureBox spawned at grid (%d, %d) | world (%.1f, %.1f)\n", r, c, wx, wy);
         return;
     }
     // Fallback: retry without distance constraint so the box is always visible
@@ -182,7 +181,6 @@ static void OpenTreasureBox()
     {
         // Reward: instant bonus coin
         coinCounter++;
-        printf("Treasure Box: COIN! Total coins: %d\n", coinCounter);
         if (AEAudioIsValidAudio(sfxButton))
          AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
         std::snprintf(gPopupMsg, sizeof(gPopupMsg), "Treasure: +1 Coin! (Total: %d)", coinCounter);
@@ -525,7 +523,6 @@ static void LoadLevelTxt()
     std::ifstream is(path);
     if (!is.is_open())
     {
-        std::cout << "Level1: Could not open " << path << " - grid will be all zeros\n";
         for (int r = 0; r < GRID_ROWS; ++r)
             for (int c = 0; c < GRID_COLS; ++c)
                 level[r][c] = 0;
@@ -541,7 +538,6 @@ static void LoadLevelTxt()
             else
                 level[row][col] = 0; // fallback for truncated files
     is.close();
-    //std::cout << "Level1: Loaded grid from " << path << "\n";
 }
 
 // ----------------------------------------------------------------------------
@@ -645,14 +641,12 @@ static void FindFreeSpawnCell(int startRow, int startCol, float& outX, float& ou
                 }
                 // Found a valid cell - convert to world coordinates and return
                 GridToWorldCenter(r, c, outX, outY);
-                //std::cout << "Spawn found at grid (" << r << "," << c << ")\n";
                 return;
             }
         }
     }
     // Fallback: use the start cell even if it wasn't empty
     GridToWorldCenter(startRow, startCol, outX, outY);
-    std::cout << "Spawn fallback at grid (" << startRow << "," << startCol << ")\n";
 }
 
 // ----------------------------------------------------------------------------
@@ -984,8 +978,8 @@ void Level1_Update()
     }
 
     // --- Save (F5) / Load (F9) ---
-    if (AEInputCheckReleased(AEVK_F5)) { if (SaveLevel1State("Assets/save1.txt")) std::cout << "Saved (Assets/save1.txt)\n"; }
-    if (AEInputCheckReleased(AEVK_F9)) { if (LoadLevel1State("Assets/save1.txt")) std::cout << "Loaded (Assets/save1.txt)\n"; }
+    if (AEInputCheckReleased(AEVK_F5)) { SaveLevel1State("Assets/save1.txt"); }
+    if (AEInputCheckReleased(AEVK_F9)) { LoadLevel1State("Assets/save1.txt"); }
 
     // --- Debug overlay toggle (F1) ---
     Debug_HandleToggle();
@@ -1061,7 +1055,6 @@ void Level1_Update()
         if (level[r][c] == 4) {
             level[r][c] = 0;
             coinCounter++;
-            std::cout << "Collected! Coins: " << coinCounter << "\n";
             if (AEAudioIsValidAudio(sfxButton))
                 AEAudioPlay(sfxButton, level1Group, 1.0f, 1.0f, 0);
         }
@@ -1334,7 +1327,6 @@ void Level1_Update()
             if (AEAudioIsValidAudio(sfxExitDoor))
                 AEAudioPlay(sfxExitDoor, level1Group, 1.0f, 1.0f, 0);
 
-            //printf("You Escaped the Maze!\n");
             level1_counter = 0;
             next = GS_WIN;
         }
@@ -1351,7 +1343,6 @@ void Level1_Update()
         fabsf(player.y - coin.y) < 1.0f)
     {
         ++coinCounter;
-        printf("Coin Collected! Total Coins: %d\n", coinCounter);
         coin.x = 2000.0f;
         coin.y = 2000.0f;
         if (AEAudioIsValidAudio(sfxButton))
